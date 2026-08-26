@@ -1,9 +1,13 @@
 <div align="center">
-  <h1>CipherVault</h1>
+  <h1>🔒 CipherVault</h1>
+  <p><b>Universal Data Hiding & Cryptography Toolkit</b></p>[cite: 1]
 
-  <a href="https://git.io/typing-svg">
-    <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=20&pause=1000&color=00F0FF&center=true&vcenter=true&width=600&lines=Universal+Data+Hiding+%26+Cryptography+Toolkit;6+Information+Hiding+Paradigms;Built+with+Next.js+%26+FastAPI" alt="Typing SVG" />
-  </a>
+  [![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org/)[cite: 1]
+  [![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)[cite: 1]
+  [![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org/)[cite: 1]
+  [![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)[cite: 1]
 </div>
+
+<br />
 
 A full-stack web toolkit unifying cryptography, steganography, text-hiding, encoding, covert channels, and digital watermarking into an interactive platform[cite: 1].
