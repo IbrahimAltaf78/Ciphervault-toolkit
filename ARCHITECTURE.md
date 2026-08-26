@@ -3,29 +3,31 @@
 ## 1. High-Level Architecture & App Flow
 CipherVault uses a hybrid client-side and microservice architecture designed for stateless, low-latency execution.
 
-+-----------------------------------------------------------------------+
-|                         CLIENT (Next.js / React)                       |
-|                                                                       |
-|  +--------------------+   +---------------------+   +--------------+  |
-|  | Cryptography &     |   | Text Hiding &       |   | Mode Toggle  |  |
-|  | Encoding Modules   |   | Simple Stego        |   | (Hide/Extract|  |
-|  +---------+----------+   +----------+----------+   +-------+------+  |
-|            |                         |                      |         |
-|            v                         v                      v         |
-|     (WebCrypto API)           (In-Browser Processing)  (Unified UI)    |
-+------------+-------------------------+----------------------+---------+
-|                                                |
-| Lightweight Payload                             | Heavy Payload
-v                                                v
-+-----------------------------+               +-------------------------+
-| Client-Side Local Execution |               | Python FastAPI Backend  |
-| (Instant response < 100ms)  |               | (Media Stego Engine)    |
-+-----------------------------+               +------------+------------+
-|
-+------------+------------+
-| OpenCV / Pillow / NumPy |
-| Digital Watermarking    |
-+-------------------------+
+```text
++-----------------------------------------------------------------------------------+
+|                            CLIENT (Next.js / React)                               |
+|                                                                                   |
+|  +--------------------+      +---------------------+      +--------------------+  |
+|  |  Cryptography &    |      |   Text Hiding &     |      |    Mode Toggle     |  |
+|  |  Encoding Modules  |      |   Simple Stego      |      |   (Hide/Extract)   |  |
+|  +---------+----------+      +----------+----------+      +---------+----------+  |
+|            |                            |                           |             |
+|            v                            v                           v             |
+|     (WebCrypto API)            (In-Browser Processing)       (Unified UI)         |
++------------+----------------------------+---------------------------+-------------+
+             |                                                        |
+             | Lightweight Payload                                    | Heavy Payload
+             v                                                        v
++-----------------------------+                          +--------------------------+
+| Client-Side Local Execution |                          | Python FastAPI Backend   |
+| (Instant response < 100ms)  |                          | (Media Stego Engine)     |
++-----------------------------+                          +------------+-------------+
+                                                                      |
+                                                         +------------+-------------+
+                                                         | OpenCV / Pillow / NumPy  |
+                                                         | Digital Watermarking     |
+                                                         +--------------------------+
+```
 
 ### Application Data Flow
 1. **User Interaction:** The user selects a paradigm tool (e.g., LSB Steganography) and toggles between **Forward Operation** (Hide/Encrypt) and **Reverse Operation** (Extract/Decrypt).
