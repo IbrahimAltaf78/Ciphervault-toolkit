@@ -23,3 +23,8 @@ CipherVault is a web-based toolkit unifying cryptography, steganography, text-hi
   * Verified endpoints via Swagger UI (`/docs`).
   * Created a local `decode.py` helper script to bypass browser network errors and convert base64 API responses directly back into `.png` files for extraction testing.
 * **DCT Stubs:** Added basic route stubs for the upcoming DCT endpoints.
+
+## Immediate Next Steps (Week 3)
+1. **Target:** Implement Image Steganography via DCT/DWT (Discrete Cosine Transform / Discrete Wavelet Transform).
+2. **Setup Required:** Install `opencv-python` and `scipy` for frequency-domain matrix mathematics.
+3. **Implementation:** Write the actual hiding and extraction algorithms for `POST /api/stego/image/dct/hide` and `POST /api/stego/image/dct/extract`.
