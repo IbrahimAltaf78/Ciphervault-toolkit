@@ -1,0 +1,271 @@
+@import "tailwindcss";
+
+/* CipherVault design tokens — see DESIGN.md
+   Dark-first cybersecurity aesthetic: slate surfaces + paradigm accents. */
+@theme {
+  --color-background: #090d16;
+  --color-surface: #0f172a;
+  --color-edge: #1e293b;
+  --color-foreground: #f8fafc;
+  --color-muted: #94a3b8;
+
+  /* Paradigm accents */
+  --color-crypto: #8b5cf6;
+  --color-stego: #10b981;
+  --color-texthide: #06b6d4;
+  --color-encoding: #3b82f6;
+  --color-covert: #f59e0b;
+  --color-watermark: #ec4899;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background-color: color-mix(in oklab, var(--color-crypto) 40%, transparent);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-background);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-edge);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #334155;
+  }
+}
+
+@layer components {
+  /* --- Ambient backdrop: survey grid + aurora bloom ---------------------- */
+  .cv-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: -10;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .cv-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(to right, rgba(148, 163, 184, 0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(148, 163, 184, 0.07) 1px, transparent 1px);
+    background-size: 60px 60px;
+    -webkit-mask-image: radial-gradient(ellipse 95% 55% at 50% 0%, #000 25%, transparent 80%);
+    mask-image: radial-gradient(ellipse 95% 55% at 50% 0%, #000 25%, transparent 80%);
+  }
+
+  .cv-aurora {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(130px);
+    opacity: 0.25;
+    animation: cv-float 18s ease-in-out infinite;
+  }
+
+  /* --- Accent helpers -----------------------------------------------------
+     Each module sets --cv-accent once on its root; everything below inherits,
+     which keeps paradigm colouring out of the class names. */
+  .accent-text {
+    color: var(--cv-accent);
+  }
+  .accent-fill {
+    background-color: var(--cv-accent);
+  }
+  .accent-soft {
+    background-color: color-mix(in oklab, var(--cv-accent) 14%, transparent);
+  }
+  .accent-border {
+    border-color: color-mix(in oklab, var(--cv-accent) 45%, transparent);
+  }
+  .accent-glow {
+    box-shadow: 0 0 28px -8px var(--cv-accent);
+  }
+  .accent-ring:focus-visible {
+    outline: 2px solid var(--cv-accent);
+    outline-offset: 2px;
+  }
+
+  /* --- Glassmorphic tool panel -------------------------------------------- */
+  .cv-panel {
+    position: relative;
+    overflow: hidden;
+    border-radius: 0.875rem;
+    border: 1px solid var(--color-edge);
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.6));
+    backdrop-filter: blur(14px);
+    box-shadow: 0 30px 70px -40px rgba(0, 0, 0, 0.95);
+  }
+
+  /* Accent hairline running along the panel's top edge. */
+  .cv-panel::before {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--cv-accent), transparent);
+  }
+
+  /* Slow light sweep across that hairline. */
+  .cv-panel::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 1px;
+    width: 33%;
+    background: linear-gradient(90deg, transparent, #f8fafc, transparent);
+    opacity: 0.55;
+    animation: cv-sweep 7s ease-in-out infinite;
+  }
+
+  /* --- Monospace payload field -------------------------------------------- */
+  .cv-field {
+    width: 100%;
+    border-radius: 0.625rem;
+    border: 1px solid var(--color-edge);
+    background-color: #060a11;
+    padding: 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--color-foreground);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .cv-field::placeholder {
+    color: #475569;
+  }
+  .cv-field:focus-visible {
+    outline: none;
+    border-color: var(--cv-accent);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--cv-accent) 16%, transparent);
+  }
+
+  /* --- Small type: labels, badges, chips ---------------------------------- */
+  .cv-label {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  .cv-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    border-radius: 0.375rem;
+    border: 1px solid;
+    padding: 0.125rem 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* --- Interactive card ---------------------------------------------------- */
+  .cv-card {
+    transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
+  }
+  .cv-card:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in oklab, var(--cv-accent) 55%, transparent);
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--cv-accent) 18%, transparent),
+      0 30px 60px -34px var(--cv-accent);
+  }
+
+  /* --- Ghost / icon button ------------------------------------------------- */
+  .cv-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--color-edge);
+    padding: 0.3125rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--color-muted);
+    transition: color 0.2s, border-color 0.2s, background-color 0.2s;
+  }
+  .cv-btn:hover:not(:disabled) {
+    color: var(--color-foreground);
+    border-color: #334155;
+    background-color: rgba(30, 41, 59, 0.6);
+  }
+  .cv-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .cv-pulse {
+    animation: cv-blink 2.4s ease-in-out infinite;
+  }
+}
+
+@keyframes cv-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(0, -28px, 0) scale(1.06);
+  }
+}
+
+@keyframes cv-sweep {
+  0% {
+    transform: translateX(-120%);
+  }
+  55%,
+  100% {
+    transform: translateX(400%);
+  }
+}
+
+@keyframes cv-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cv-aurora,
+  .cv-panel::after,
+  .cv-pulse {
+    animation: none;
+  }
+  .cv-card:hover {
+    transform: none;
+  }
+}
