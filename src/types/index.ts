@@ -17,6 +17,9 @@ export type Paradigm =
   | "covert-channels"
   | "watermarking";
 
+/** The six encoding sub-techniques, doubling as the /encoding/[type] slugs. */
+export type EncodingType = "base64" | "base32" | "hex" | "binary" | "url" | "ascii";
+
 /**
  * Result of a local (client-side) transformation. Operations never throw at the
  * UI boundary — failures come back as `ok: false` with a readable reason.
