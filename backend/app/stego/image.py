@@ -1,8 +1,6 @@
 import io
 import base64
 import numpy as np
-import cv2
-import scipy.fftpack as fft
 from PIL import Image
 from fastapi import APIRouter, UploadFile, File, Form
 
