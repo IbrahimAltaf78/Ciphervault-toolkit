@@ -26,7 +26,6 @@ build/
 .idea/
 .DS_Store
 Thumbs.db
-
 # Next.js / Node
 /node_modules
 /.next/
