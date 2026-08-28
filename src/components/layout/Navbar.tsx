@@ -35,7 +35,9 @@ export function Navbar() {
 
         <ul className="flex flex-wrap items-center gap-1">
           {NAV_LINKS.map((link) => {
-            const isActive = pathname === link.href;
+            // Nested tools such as /encoding/hex keep their parent lit.
+            const isActive =
+              pathname === link.href || pathname.startsWith(`${link.href}/`);
             return (
               <li key={link.href}>
                 <Link
