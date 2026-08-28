@@ -1,21 +1,21 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.stego import image
+from app.steganography.image import router as image_router
 
-app = FastAPI(title="CipherVault Python Microservice")
+app = FastAPI(title="CipherVault API")
 
-# Allow Next.js frontend to communicate with this backend
+# Configure CORS for Next.js frontend integration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-@app.get("/health")
-async def health_check():
-    return {"success": True, "message": "Backend is healthy"}
+# Register image steganography routes
+app.include_router(image_router)
 
-# Delegate all /api/stego/image routes to the image.py router
-app.include_router(image.router, prefix="/api/stego/image")
+@app.get("/")
+def read_root():
+    return {"status": "online", "message": "CipherVault API is running"}
