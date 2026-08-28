@@ -1,5 +1,6 @@
-from fastapi import FastAPI, UploadFile, Form, File
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.stego import image
 
 app = FastAPI(title="CipherVault Python Microservice")
 
@@ -16,15 +17,5 @@ app.add_middleware(
 async def health_check():
     return {"success": True, "message": "Backend is healthy"}
 
-@app.post("/api/stego/image/lsb/hide")
-async def hide_lsb_image(
-    image: UploadFile = File(...),
-    secretText: str = Form(...)
-):
-    # TODO: Implement Pillow and NumPy logic to embed text into the image LSB
-    return {
-        "success": True,
-        "data": {
-            "message": f"Stub: Received {image.filename} and secret text of length {len(secretText)}"
-        }
-    }
+# Delegate all /api/stego/image routes to the image.py router
+app.include_router(image.router, prefix="/api/stego/image")
