@@ -18,6 +18,15 @@ export type Paradigm =
   | "watermarking";
 
 /** The six encoding sub-techniques, doubling as the /encoding/[type] slugs. */
+/** The six text-hiding sub-techniques, doubling as the /text-hiding/[technique] slugs. */
+export type TextHidingType =
+  | "zero-width"
+  | "whitespace"
+  | "capitalization"
+  | "punctuation"
+  | "acrostic"
+  | "word-choice";
+
 export type EncodingType = "base64" | "base32" | "hex" | "binary" | "url" | "ascii";
 
 /**
