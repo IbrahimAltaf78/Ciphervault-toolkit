@@ -44,10 +44,11 @@ const MODULES: ModuleCard[] = [
   {
     paradigm: "text-hiding",
     title: "Text Hiding",
-    description: "Zero-width Unicode, whitespace, capitalisation and acrostic concealment.",
+    description:
+      "Zero-width Unicode, whitespace, capitalisation, punctuation, acrostic and word-choice concealment.",
     icon: Type,
     href: "/text-hiding",
-    status: "Phase 2",
+    status: "Live",
   },
   {
     paradigm: "steganography",
