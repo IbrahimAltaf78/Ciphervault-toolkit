@@ -5,7 +5,8 @@ import base64
 import numpy as np
 from PIL import Image
 
-router = APIRouter(prefix="/stego/image", tags=["Image Steganography"])
+# Removed the prefix from here because main.py handles it!
+router = APIRouter()
 
 def create_envelope(data: dict = None, success: bool = True, message: str = None, code: str = None):
     if success:
