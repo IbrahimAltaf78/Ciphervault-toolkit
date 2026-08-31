@@ -3,28 +3,52 @@
  *
  * These techniques borrow their carriers from features the cover already has,
  * so capacity is set by the cover, not the algorithm. Each sample is written to
- * be dense in whatever the technique actually consumes — word gaps, punctuation
- * marks or swappable words — so a first-time user can hide a short message
- * without hunting for suitable text.
+ * be dense in whatever its technique actually consumes — word gaps, word
+ * initials, punctuation marks or swappable words — and each technique gets a
+ * different passage, so switching tools does not look like nothing changed.
  */
 
-/** General prose: long, so it offers plenty of gaps and word initials. */
-export const PROSE_COVER = [
-  "The quarterly review has been moved to Thursday morning, and the agenda is",
-  "now circulating with the meeting notes attached. Please bring a printed copy",
-  "of the summary so we can work through the figures together rather than",
-  "reading them off a shared screen. The finance team has asked for questions in",
-  "advance, which gives everyone a little more time to prepare something useful.",
-  "Last quarter the discussion ran long because half the room was seeing the",
-  "numbers for the first time, and nobody wants to repeat that experience.",
-  "If you cannot attend in person, the call details are at the bottom of the",
-  "invitation and a recording will be posted the same afternoon. Anyone who",
-  "needs the underlying spreadsheet should ask before Wednesday, since access",
-  "requests take a day to clear. We will close with a short planning segment",
-  "covering the next two months, so it is worth glancing at the roadmap first.",
+/** Zero-width: capacity is unbounded, so a short realistic note is enough. */
+export const ZERO_WIDTH_COVER = [
+  "Thanks for sending the draft over so quickly. I read it on the train this",
+  "morning and I think it holds together well. The middle section is the one",
+  "I would look at again, mostly because the argument arrives before the",
+  "evidence does. Happy to talk it through on Monday if that suits you.",
 ].join(" ");
 
-/** Punctuation-dense: apostrophes, quotes, hyphens, semicolons, colons. */
+/** Whitespace: long, because capacity is one bit per word gap. */
+export const WHITESPACE_COVER = [
+  "The winter timetable comes into effect on the first of next month and a few",
+  "services are moving by ten or fifteen minutes. Most passengers will not",
+  "notice the difference, but anyone connecting at the junction should check",
+  "the new departure boards before travelling, since two of the later evening",
+  "connections now leave from a different platform. Printed copies of the",
+  "revised timetable are available at every staffed ticket office, and the same",
+  "information is on the notice boards at the far end of each concourse.",
+  "Engineering work continues on the northern line for another three weekends,",
+  "so replacement buses will run between the two terminus stations on those",
+  "days. Journey times are roughly twenty minutes longer than usual, which is",
+  "worth allowing for if you are catching an onward service. Staff will be on",
+  "hand at both ends to point people towards the right stop, and the usual",
+  "ticket conditions apply throughout the period of the works.",
+].join(" ");
+
+/** Capitalization: long, because capacity is one bit per word initial. */
+export const CAPITALIZATION_COVER = [
+  "The reading room reopens on Tuesday after the shelving work finishes, and",
+  "the reference collection has moved to the gallery on the upper floor. Most",
+  "of the older bound volumes are now stored off site, so anything published",
+  "before nineteen sixty needs to be requested a day in advance through the",
+  "catalogue. Requests placed before four in the afternoon are usually",
+  "available the following morning, and the desk will send a message when an",
+  "item arrives. The microfilm readers have been serviced and both machines",
+  "are working again, though the older one still needs a firm hand to load a",
+  "reel properly. Anyone who has not used them before should ask at the desk",
+  "rather than guessing, since the film is easy to crease. Quiet study spaces",
+  "remain on the ground floor and the group rooms can be booked by the hour.",
+].join(" ");
+
+/** Punctuation: dense in apostrophes, quotes, hyphens, semicolons and colons. */
 export const PUNCTUATION_COVER = [
   `Well - that's the plan; we ship on Friday!`,
   `The client's notes were blunt: "keep it simple; don't over-think it!"`,
@@ -36,7 +60,7 @@ export const PUNCTUATION_COVER = [
   `Jae's follow-up said much the same: "ship it; iterate later!"`,
 ].join(" ");
 
-/** Synonym-dense: written around the word-choice pair table. */
+/** Word-choice: written around the synonym pair table. */
 export const SYNONYM_COVER = [
   "We need to begin the big handover early, so please help the new starter",
   "choose a quiet desk near the window and show them where the main files",
