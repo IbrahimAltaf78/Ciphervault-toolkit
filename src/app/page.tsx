@@ -28,10 +28,11 @@ const MODULES: ModuleCard[] = [
   {
     paradigm: "cryptography",
     title: "Cryptography",
-    description: "AES-GCM, RSA keygen and SHA-256 / SHA-3 through the native WebCrypto API.",
+    description:
+      "AES, DES, Triple DES, RSA, ECC, SHA-2, SHA-3 and hybrid encryption, in the browser.",
     icon: KeyRound,
     href: "/cryptography",
-    status: "Phase 2",
+    status: "Live",
   },
   {
     paradigm: "encoding",

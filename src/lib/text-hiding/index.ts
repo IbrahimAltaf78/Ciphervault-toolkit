@@ -32,9 +32,11 @@ import {
 import { extractAcrostic, hideAcrostic } from "./acrostic";
 import { extractWordChoice, hideWordChoice, wordChoiceCapacity } from "./word-choice";
 import {
-  PROSE_COVER,
+  CAPITALIZATION_COVER,
   PUNCTUATION_COVER,
   SYNONYM_COVER,
+  WHITESPACE_COVER,
+  ZERO_WIDTH_COVER,
 } from "./data/sample-covers";
 
 export interface TextHidingTechnique {
@@ -81,7 +83,7 @@ export const TEXT_HIDING_TECHNIQUES: Record<TextHidingType, TextHidingTechnique>
     extract: extractZeroWidth,
     capacity: zeroWidthCapacity,
     reveal: revealZeroWidth,
-    sampleCover: PROSE_COVER,
+    sampleCover: ZERO_WIDTH_COVER,
   },
   whitespace: {
     type: "whitespace",
@@ -96,7 +98,7 @@ export const TEXT_HIDING_TECHNIQUES: Record<TextHidingType, TextHidingTechnique>
     extract: extractWhitespace,
     capacity: whitespaceCapacity,
     reveal: revealWhitespace,
-    sampleCover: PROSE_COVER,
+    sampleCover: WHITESPACE_COVER,
   },
   capitalization: {
     type: "capitalization",
@@ -110,7 +112,7 @@ export const TEXT_HIDING_TECHNIQUES: Record<TextHidingType, TextHidingTechnique>
     hide: hideCapitalization,
     extract: extractCapitalization,
     capacity: capitalizationCapacity,
-    sampleCover: PROSE_COVER,
+    sampleCover: CAPITALIZATION_COVER,
   },
   punctuation: {
     type: "punctuation",
