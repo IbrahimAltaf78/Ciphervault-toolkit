@@ -1,140 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import {
-    Music,
-    Lock,
-    Key,
-    Upload,
-    Download,
-    RefreshCw,
-    FileAudio,
-    ShieldCheck,
-    HardDrive,
-    KeyRound,
-    Activity,
-} from 'lucide-react';
-
-// Web Audio API Waveform Component
-function AudioWaveform({
-    fileOrUrl,
-    height = 80,
-    waveColor = '#22d3ee',
-    backgroundColor = '#020617',
-}: {
-    fileOrUrl: File | string | null;
-    height?: number;
-    waveColor?: string;
-    backgroundColor?: string;
-}) {
-    const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-    useEffect(() => {
-        if (!fileOrUrl || !canvasRef.current) return;
-
-        let animationFrameId: number;
-        let audioCtx: AudioContext | null = null;
-        const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        const renderWaveform = async () => {
-            try {
-                let arrayBuffer: ArrayBuffer;
-                if (typeof fileOrUrl === 'string') {
-                    const response = await fetch(fileOrUrl);
-                    arrayBuffer = await response.arrayBuffer();
-                } else {
-                    arrayBuffer = await fileOrUrl.arrayBuffer();
-                }
-
-                const AudioContextClass =
-                    window.AudioContext ||
-                    (window as unknown as { webkitAudioContext: typeof AudioContext })
-                        .webkitAudioContext;
-                audioCtx = new AudioContextClass();
-
-                const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-                const channelData = audioBuffer.getChannelData(0);
-
-                const dpr = window.devicePixelRatio || 1;
-                const displayWidth = canvas.offsetWidth || 300;
-
-                canvas.width = displayWidth * dpr;
-                canvas.height = height * dpr;
-                ctx.scale(dpr, dpr);
-
-                const width = displayWidth;
-                const amp = height / 2;
-
-                ctx.fillStyle = backgroundColor;
-                ctx.fillRect(0, 0, width, height);
-
-                const step = Math.ceil(channelData.length / width);
-                ctx.lineWidth = 1.5;
-                ctx.strokeStyle = waveColor;
-                ctx.beginPath();
-
-                for (let i = 0; i < width; i++) {
-                    let min = 1.0;
-                    let max = -1.0;
-
-                    for (let j = 0; j < step; j++) {
-                        const datum = channelData[i * step + j];
-                        if (datum !== undefined) {
-                            if (datum < min) min = datum;
-                            if (datum > max) max = datum;
-                        }
-                    }
-
-                    const x = i;
-                    const yMin = (1 + min) * amp;
-                    const yMax = (1 + max) * amp;
-
-                    ctx.moveTo(x, yMin);
-                    ctx.lineTo(x, yMax);
-                }
-
-                ctx.stroke();
-            } catch (err) {
-                console.error('Failed to render waveform:', err);
-            } finally {
-                if (audioCtx && audioCtx.state !== 'closed') {
-                    await audioCtx.close();
-                }
-            }
-        };
-
-        animationFrameId = requestAnimationFrame(() => {
-            renderWaveform();
-        });
-
-        return () => {
-            cancelAnimationFrame(animationFrameId);
-            if (audioCtx && audioCtx.state !== 'closed') {
-                audioCtx.close();
-            }
-        };
-    }, [fileOrUrl, height, waveColor, backgroundColor]);
-
-    if (!fileOrUrl) return null;
-
-    return (
-        <div className="w-full overflow-hidden rounded-lg border border-slate-800 bg-slate-950 p-2">
-            <canvas
-                ref={canvasRef}
-                style={{ height: `${height}px` }}
-                className="w-full block"
-            />
-        </div>
-    );
-}
+import { Image as ImageIcon, Lock, Key, Upload, Download, RefreshCw, ShieldCheck, HardDrive, KeyRound, Eye, Layers } from 'lucide-react';
 
 // Web Crypto API Helper Functions for AES-GCM
-async function deriveKey(
-    passphrase: string,
-    salt: Uint8Array
-): Promise<CryptoKey> {
+async function deriveKey(passphrase: string, salt: Uint8Array): Promise<CryptoKey> {
     const enc = new TextEncoder();
     const keyMaterial = await crypto.subtle.importKey(
         'raw',
@@ -157,10 +27,7 @@ async function deriveKey(
     );
 }
 
-async function encryptPayload(
-    text: string,
-    passphrase: string
-): Promise<string> {
+async function encryptPayload(text: string, passphrase: string): Promise<string> {
     const enc = new TextEncoder();
     const salt = crypto.getRandomValues(new Uint8Array(16));
     const iv = crypto.getRandomValues(new Uint8Array(12));
@@ -172,9 +39,7 @@ async function encryptPayload(
         enc.encode(text)
     );
 
-    const combined = new Uint8Array(
-        salt.length + iv.length + encryptedContent.byteLength
-    );
+    const combined = new Uint8Array(salt.length + iv.length + encryptedContent.byteLength);
     combined.set(salt, 0);
     combined.set(iv, salt.length);
     combined.set(new Uint8Array(encryptedContent), salt.length + iv.length);
@@ -182,19 +47,11 @@ async function encryptPayload(
     return btoa(String.fromCharCode(...combined));
 }
 
-async function decryptPayload(
-    base64Payload: string,
-    passphrase: string
-): Promise<string> {
-    let combined: Uint8Array;
-    try {
-        combined = Uint8Array.from(atob(base64Payload), (c) => c.charCodeAt(0));
-    } catch {
-        throw new Error('Invalid base64 structure in encrypted payload.');
-    }
+async function decryptPayload(base64Payload: string, passphrase: string): Promise<string> {
+    const combined = Uint8Array.from(atob(base64Payload), (c) => c.charCodeAt(0));
 
     if (combined.length < 28) {
-        throw new Error('Payload is too short to contain valid encrypted data.');
+        throw new Error('Payload is too short to contain encrypted data.');
     }
 
     const salt = combined.slice(0, 16);
@@ -215,40 +72,144 @@ async function decryptPayload(
     }
 }
 
-export default function AudioStegoPage() {
+// Interactive Bit-Plane Viewer Component
+function BitPlaneViewer({ imageUrl }: { imageUrl: string }) {
+    const [selectedBit, setSelectedBit] = useState<number>(0);
+    const [selectedChannel, setSelectedChannel] = useState<'all' | 'r' | 'g' | 'b'>('all');
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+    useEffect(() => {
+        if (!imageUrl || !canvasRef.current) return;
+
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = imageUrl;
+
+        img.onload = () => {
+            const canvas = canvasRef.current;
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+
+            for (let i = 0; i < data.length; i += 4) {
+                const rBit = (data[i] >> selectedBit) & 1;
+                const gBit = (data[i + 1] >> selectedBit) & 1;
+                const bBit = (data[i + 2] >> selectedBit) & 1;
+
+                let valR = rBit ? 255 : 0;
+                let valG = gBit ? 255 : 0;
+                let valB = bBit ? 255 : 0;
+
+                if (selectedChannel === 'r') {
+                    valG = 0;
+                    valB = 0;
+                } else if (selectedChannel === 'g') {
+                    valR = 0;
+                    valB = 0;
+                } else if (selectedChannel === 'b') {
+                    valR = 0;
+                    valG = 0;
+                }
+
+                data[i] = valR;
+                data[i + 1] = valG;
+                data[i + 2] = valB;
+            }
+
+            ctx.putImageData(imageData, 0, 0);
+        };
+    }, [imageUrl, selectedBit, selectedChannel]);
+
+    return (
+        <div className="bg-slate-950 border border-slate-800 rounded-lg p-4 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                <span className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
+                    <Layers className="w-4 h-4 text-cyan-400" /> Visual Bit-Plane Inspector
+                </span>
+
+                <div className="flex items-center gap-1">
+                    <span className="text-xs text-slate-400 mr-1">Bit:</span>
+                    {[0, 1, 2, 3, 4, 5, 6, 7].map((bit) => (
+                        <button
+                            key={bit}
+                            onClick={() => setSelectedBit(bit)}
+                            className={`px-2 py-0.5 text-xs rounded transition-colors ${selectedBit === bit
+                                ? 'bg-cyan-500 text-slate-950 font-bold'
+                                : 'bg-slate-900 text-slate-400 hover:text-slate-200'
+                                }`}
+                        >
+                            {bit}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="flex items-center gap-1">
+                    <span className="text-xs text-slate-400 mr-1">Channel:</span>
+                    {(['all', 'r', 'g', 'b'] as const).map((ch) => (
+                        <button
+                            key={ch}
+                            onClick={() => setSelectedChannel(ch)}
+                            className={`px-2 py-0.5 text-xs rounded uppercase font-medium transition-colors ${selectedChannel === ch
+                                ? 'bg-cyan-500 text-slate-950 font-bold'
+                                : 'bg-slate-900 text-slate-400 hover:text-slate-200'
+                                }`}
+                        >
+                            {ch}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            <div className="flex justify-center overflow-auto max-h-80 bg-slate-900/50 p-2 rounded">
+                <canvas ref={canvasRef} className="max-w-full h-auto object-contain rounded" />
+            </div>
+            <p className="text-[11px] text-slate-500 text-center">
+                Bit 0 is the Least Significant Bit (LSB). Random noise patterns in Bit 0 usually indicate embedded hidden payloads.
+            </p>
+        </div>
+    );
+}
+
+export default function ImageStegoPage() {
     const [mode, setMode] = useState<'hide' | 'extract'>('hide');
     const [file, setFile] = useState<File | null>(null);
-    const [audioPreview, setAudioPreview] = useState<string | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [secretText, setSecretText] = useState<string>('');
     const [passphrase, setPassphrase] = useState<string>('');
     const [extractedText, setExtractedText] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(false);
-    const [stegoAudioUrl, setStegoAudioUrl] = useState<string | null>(null);
+    const [stegoImageUrl, setStegoImageUrl] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState<boolean>(false);
     const [maxCapacityBytes, setMaxCapacityBytes] = useState<number>(0);
+    const [showInspector, setShowInspector] = useState<boolean>(false);
 
-    // Clean up object URLs to prevent memory leaks
+    // Clean up memory when imagePreview or stegoImageUrl changes
     useEffect(() => {
         return () => {
-            if (audioPreview) URL.revokeObjectURL(audioPreview);
-            if (stegoAudioUrl) URL.revokeObjectURL(stegoAudioUrl);
+            if (imagePreview) URL.revokeObjectURL(imagePreview);
+            if (stegoImageUrl) URL.revokeObjectURL(stegoImageUrl);
         };
-    }, [audioPreview, stegoAudioUrl]);
+    }, [imagePreview, stegoImageUrl]);
 
     const switchMode = (newMode: 'hide' | 'extract') => {
-        if (audioPreview) URL.revokeObjectURL(audioPreview);
-        if (stegoAudioUrl) URL.revokeObjectURL(stegoAudioUrl);
-
         setMode(newMode);
         setFile(null);
-        setAudioPreview(null);
+        setImagePreview(null);
         setSecretText('');
         setPassphrase('');
         setExtractedText('');
-        setStegoAudioUrl(null);
+        setStegoImageUrl(null);
         setError(null);
         setMaxCapacityBytes(0);
+        setShowInspector(false);
     };
 
     useEffect(() => {
@@ -261,53 +222,26 @@ export default function AudioStegoPage() {
         };
     }, []);
 
-    const calculateWavCapacity = async (audioFile: File) => {
-        try {
-            const arrayBuffer = await audioFile.slice(0, 44).arrayBuffer();
-            const view = new DataView(arrayBuffer);
-            const isRiff =
-                String.fromCharCode(...new Uint8Array(arrayBuffer, 0, 4)) === 'RIFF';
-            const isWave =
-                String.fromCharCode(...new Uint8Array(arrayBuffer, 8, 4)) === 'WAVE';
-
-            if (!isRiff || !isWave) {
-                const approxBytes = Math.floor((audioFile.size - 44) / 8);
-                setMaxCapacityBytes(Math.max(0, approxBytes));
-                return;
-            }
-
-            const numChannels = view.getUint16(22, true);
-            const bitsPerSample = view.getUint16(34, true);
-            const bytesPerSample = bitsPerSample / 8;
-            const dataSizeBytes = audioFile.size - 44;
-            const totalSamples =
-                dataSizeBytes / (bytesPerSample * (numChannels || 1));
-            const usableCapacityBytes = Math.floor(totalSamples / 8) - 32;
-            setMaxCapacityBytes(Math.max(0, usableCapacityBytes));
-        } catch {
-            const fallbackCapacity = Math.floor((audioFile.size - 44) / 16);
-            setMaxCapacityBytes(Math.max(0, fallbackCapacity));
-        }
-    };
-
     const processSelectedFile = (selectedFile: File) => {
-        if (!selectedFile.name.match(/\.wav$/i)) {
-            setError('Please upload a valid .wav audio file.');
+        if (!selectedFile.type.match(/^image\/(png|bmp)$/i)) {
+            setError('Please upload a lossless image format (.png or .bmp).');
             return;
         }
 
-        if (audioPreview) URL.revokeObjectURL(audioPreview);
-        if (stegoAudioUrl) URL.revokeObjectURL(stegoAudioUrl);
-
         setFile(selectedFile);
-        setAudioPreview(URL.createObjectURL(selectedFile));
+        const url = URL.createObjectURL(selectedFile);
+        setImagePreview(url);
         setExtractedText('');
-        setStegoAudioUrl(null);
+        setStegoImageUrl(null);
         setError(null);
 
-        if (mode === 'hide') {
-            calculateWavCapacity(selectedFile);
-        }
+        // Load image to calculate capacity & prevent memory leak by revoking URL
+        const img = new Image();
+        img.src = url;
+        img.onload = () => {
+            const totalBytes = Math.floor((img.width * img.height * 3) / 8) - 32;
+            setMaxCapacityBytes(Math.max(0, totalBytes));
+        };
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -318,7 +252,7 @@ export default function AudioStegoPage() {
 
     const handleHide = async () => {
         if (!file || !secretText) {
-            setError('Please provide a valid .wav file and secret text.');
+            setError('Please select an image and enter a secret message.');
             return;
         }
 
@@ -334,34 +268,31 @@ export default function AudioStegoPage() {
 
             const payloadBytes = new TextEncoder().encode(payloadToEmbed).length;
             if (payloadBytes > maxCapacityBytes && maxCapacityBytes > 0) {
-                throw new Error(
-                    `Payload exceeds file capacity (${payloadBytes} / ${maxCapacityBytes} bytes).`
-                );
+                throw new Error(`Encrypted payload exceeds image capacity (${payloadBytes} / ${maxCapacityBytes} bytes).`);
             }
 
             const formData = new FormData();
             formData.append('file', file);
             formData.append('text', payloadToEmbed);
 
-            const response = await fetch('http://localhost:8000/api/stego/audio/hide', {
+            const response = await fetch('http://localhost:8000/api/stego/image/hide', {
                 method: 'POST',
                 body: formData,
             });
 
             if (!response.ok) {
                 const errorData = await response.text();
-                throw new Error(errorData || 'Failed to encode audio');
+                throw new Error(errorData || 'Failed to encode image.');
             }
 
             const blob = await response.blob();
-            if (stegoAudioUrl) URL.revokeObjectURL(stegoAudioUrl);
             const url = URL.createObjectURL(blob);
-            setStegoAudioUrl(url);
+            setStegoImageUrl(url);
         } catch (err: unknown) {
             if (err instanceof Error) {
                 setError(err.message);
             } else {
-                setError('An unexpected error occurred while encoding audio.');
+                setError('An unexpected error occurred while encoding image.');
             }
         } finally {
             setLoading(false);
@@ -370,7 +301,7 @@ export default function AudioStegoPage() {
 
     const handleExtract = async () => {
         if (!file) {
-            setError('Please select a stego .wav file first.');
+            setError('Please select a stego PNG image first.');
             return;
         }
 
@@ -381,28 +312,22 @@ export default function AudioStegoPage() {
         formData.append('file', file);
 
         try {
-            const response = await fetch(
-                'http://localhost:8000/api/stego/audio/extract',
-                {
-                    method: 'POST',
-                    body: formData,
-                }
-            );
+            const response = await fetch('http://localhost:8000/api/stego/image/extract', {
+                method: 'POST',
+                body: formData,
+            });
 
             if (!response.ok) {
                 const errorData = await response.text();
-                throw new Error(errorData || 'Failed to extract data');
+                throw new Error(errorData || 'Failed to extract data.');
             }
 
-            const data: { extracted_text?: string; message?: string } =
-                await response.json();
+            const data: { extracted_text?: string; message?: string } = await response.json();
             const rawPayload = data.extracted_text || data.message || '';
 
             if (rawPayload.startsWith('ENC:')) {
                 if (!passphrase.trim()) {
-                    throw new Error(
-                        'This message is encrypted. Please enter the passphrase to decrypt it.'
-                    );
+                    throw new Error('This message is encrypted. Please enter the passphrase to decrypt it.');
                 }
                 const encryptedB64 = rawPayload.replace(/^ENC:/, '');
                 const decrypted = await decryptPayload(encryptedB64, passphrase);
@@ -425,10 +350,7 @@ export default function AudioStegoPage() {
         ? new TextEncoder().encode(`ENC:${secretText}`).length + 28
         : new TextEncoder().encode(secretText).length;
 
-    const capacityPercentage =
-        maxCapacityBytes > 0
-            ? Math.min(100, (payloadLength / maxCapacityBytes) * 100)
-            : 0;
+    const capacityPercentage = maxCapacityBytes > 0 ? Math.min(100, (payloadLength / maxCapacityBytes) * 100) : 0;
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-10">
@@ -436,10 +358,10 @@ export default function AudioStegoPage() {
                 {/* Header */}
                 <div>
                     <h1 className="text-3xl font-bold flex items-center gap-3">
-                        <Music className="text-cyan-400" /> Audio Steganography
+                        <ImageIcon className="text-cyan-400" /> Image Steganography
                     </h1>
                     <p className="text-slate-400 mt-1">
-                        Embed and extract hidden text payloads inside uncompressed WAV audio signals using LSB modification.
+                        Hide and reveal secret text inside PNG bit planes with optional AES-GCM encryption.
                     </p>
                 </div>
 
@@ -448,8 +370,8 @@ export default function AudioStegoPage() {
                     <button
                         onClick={() => switchMode('hide')}
                         className={`pb-3 font-medium transition-colors flex items-center gap-2 border-b-2 ${mode === 'hide'
-                                ? 'border-cyan-400 text-cyan-400'
-                                : 'border-transparent text-slate-400 hover:text-slate-200'
+                            ? 'border-cyan-400 text-cyan-400'
+                            : 'border-transparent text-slate-400 hover:text-slate-200'
                             }`}
                     >
                         <Lock className="w-4 h-4" /> Hide Data
@@ -457,8 +379,8 @@ export default function AudioStegoPage() {
                     <button
                         onClick={() => switchMode('extract')}
                         className={`pb-3 font-medium transition-colors flex items-center gap-2 border-b-2 ${mode === 'extract'
-                                ? 'border-cyan-400 text-cyan-400'
-                                : 'border-transparent text-slate-400 hover:text-slate-200'
+                            ? 'border-cyan-400 text-cyan-400'
+                            : 'border-transparent text-slate-400 hover:text-slate-200'
                             }`}
                     >
                         <Key className="w-4 h-4" /> Extract Data
@@ -475,62 +397,57 @@ export default function AudioStegoPage() {
                 <div className="bg-slate-900 border border-slate-800 p-6 rounded-xl space-y-6">
                     {/* File Upload Section */}
                     <div className="space-y-2">
-                        <label className="text-sm text-slate-400 font-medium">
-                            Upload WAV Audio File
-                        </label>
+                        <label className="text-sm text-slate-400 font-medium">Upload Image (PNG/BMP)</label>
                         <div
-                            onDragEnter={(e) => {
-                                e.preventDefault();
-                                setIsDragging(true);
-                            }}
-                            onDragOver={(e) => {
-                                e.preventDefault();
-                                setIsDragging(true);
-                            }}
-                            onDragLeave={(e) => {
-                                e.preventDefault();
-                                setIsDragging(false);
-                            }}
+                            onDragEnter={(e) => { e.preventDefault(); setIsDragging(true); }}
+                            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                            onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
                             onDrop={(e) => {
                                 e.preventDefault();
                                 setIsDragging(false);
-                                if (e.dataTransfer.files?.length)
-                                    processSelectedFile(e.dataTransfer.files[0]);
+                                if (e.dataTransfer.files?.length) processSelectedFile(e.dataTransfer.files[0]);
                             }}
                             className={`relative border-2 border-dashed rounded-lg p-6 text-center transition cursor-pointer ${isDragging
-                                    ? 'border-cyan-500 bg-cyan-500/10'
-                                    : 'border-slate-700 bg-slate-950/50 hover:border-cyan-500/50'
+                                ? 'border-cyan-500 bg-cyan-500/10'
+                                : 'border-slate-700 bg-slate-950/50 hover:border-cyan-500/50'
                                 }`}
                         >
                             <input
                                 key={mode}
                                 type="file"
-                                accept="audio/wav, audio/x-wav, .wav"
+                                accept="image/png, image/bmp"
                                 onChange={handleFileChange}
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                             />
                             <div className="pointer-events-none flex flex-col items-center justify-center">
                                 <Upload className="w-6 h-6 text-slate-400 mb-1" />
                                 <span className="text-xs text-slate-400">
-                                    {file ? file.name : 'Click to upload or drag .wav file'}
+                                    {file ? file.name : 'Click to upload or drag .png file'}
                                 </span>
                             </div>
                         </div>
                     </div>
 
-                    {audioPreview && (
-                        <div className="p-4 bg-slate-950 border border-slate-800 rounded-lg space-y-3">
-                            <p className="text-xs font-medium text-slate-400 flex items-center gap-2">
-                                <FileAudio className="w-4 h-4 text-cyan-400" /> Selected Audio Preview:
-                            </p>
-                            <audio controls src={audioPreview} className="w-full" />
-
-                            <div className="space-y-1 pt-1">
-                                <p className="text-xs text-slate-400 flex items-center gap-1.5 font-medium">
-                                    <Activity className="w-3.5 h-3.5 text-cyan-400" /> Carrier Signal Waveform:
+                    {imagePreview && (
+                        <div className="p-4 bg-slate-950 border border-slate-800 rounded-lg space-y-4">
+                            <div className="flex items-center justify-between">
+                                <p className="text-xs font-medium text-slate-400 flex items-center gap-2">
+                                    <ImageIcon className="w-4 h-4 text-cyan-400" /> Carrier Image Preview
                                 </p>
-                                <AudioWaveform fileOrUrl={file} height={70} waveColor="#22d3ee" />
+                                <button
+                                    onClick={() => setShowInspector(!showInspector)}
+                                    className="text-xs bg-slate-900 hover:bg-slate-800 border border-slate-700 text-cyan-400 px-3 py-1 rounded flex items-center gap-1.5 transition-colors"
+                                >
+                                    <Eye className="w-3.5 h-3.5" />
+                                    {showInspector ? 'Hide Bit Inspector' : 'Inspect Bit Planes'}
+                                </button>
                             </div>
+
+                            <div className="flex justify-center bg-slate-900/40 p-2 rounded">
+                                <img src={imagePreview} alt="Carrier Preview" className="max-h-64 rounded object-contain" />
+                            </div>
+
+                            {showInspector && <BitPlaneViewer imageUrl={imagePreview} />}
                         </div>
                     )}
 
@@ -541,12 +458,7 @@ export default function AudioStegoPage() {
                                 <div className="flex justify-between items-center text-sm font-medium mb-1">
                                     <label className="text-slate-400">Secret Text to Hide</label>
                                     {file && maxCapacityBytes > 0 && (
-                                        <span
-                                            className={`text-xs flex items-center gap-1 ${payloadLength > maxCapacityBytes
-                                                    ? 'text-red-400 font-semibold'
-                                                    : 'text-slate-400'
-                                                }`}
-                                        >
+                                        <span className={`text-xs flex items-center gap-1 ${payloadLength > maxCapacityBytes ? 'text-red-400 font-semibold' : 'text-slate-400'}`}>
                                             <HardDrive className="w-3.5 h-3.5" />
                                             {payloadLength} / {maxCapacityBytes} bytes ({capacityPercentage.toFixed(1)}%)
                                         </span>
@@ -557,22 +469,15 @@ export default function AudioStegoPage() {
                                     rows={4}
                                     value={secretText}
                                     onChange={(e) => setSecretText(e.target.value)}
-                                    placeholder="Enter secret message to encode inside audio samples..."
+                                    placeholder="Enter secret message to encode inside pixel bit planes..."
                                     className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:outline-none focus:border-cyan-500 text-slate-100"
                                 />
 
                                 {file && maxCapacityBytes > 0 && (
                                     <div className="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden border border-slate-800 mt-2">
                                         <div
-                                            className={`h-full transition-all duration-300 ${payloadLength > maxCapacityBytes
-                                                    ? 'bg-red-500'
-                                                    : capacityPercentage > 85
-                                                        ? 'bg-amber-400'
-                                                        : 'bg-cyan-500'
-                                                }`}
-                                            style={{
-                                                width: `${Math.min(100, capacityPercentage)}%`,
-                                            }}
+                                            className={`h-full transition-all duration-300 ${payloadLength > maxCapacityBytes ? 'bg-red-500' : capacityPercentage > 85 ? 'bg-amber-400' : 'bg-cyan-500'}`}
+                                            style={{ width: `${Math.min(100, capacityPercentage)}%` }}
                                         />
                                     </div>
                                 )}
@@ -593,45 +498,26 @@ export default function AudioStegoPage() {
 
                             <button
                                 onClick={handleHide}
-                                disabled={
-                                    loading ||
-                                    !file ||
-                                    !secretText ||
-                                    payloadLength > maxCapacityBytes
-                                }
-                                className="w-full bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-800 disabled:text-slate-600 font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                                disabled={loading || !file || !secretText || payloadLength > maxCapacityBytes}
+                                className="w-full bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-800 disabled:text-slate-600 font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors"
                             >
-                                {loading ? (
-                                    <RefreshCw className="w-4 h-4 animate-spin" />
-                                ) : (
-                                    'Hide Text into Audio'
-                                )}
+                                {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : 'Hide Text into Image'}
                             </button>
 
-                            {stegoAudioUrl && (
+                            {stegoImageUrl && (
                                 <div className="p-4 bg-slate-950 border border-emerald-500/40 rounded-lg space-y-4 mt-4">
                                     <p className="text-sm font-semibold text-emerald-400 flex items-center gap-2">
-                                        <ShieldCheck className="w-5 h-5" /> Encoding Complete! Stego-Audio Output:
+                                        <ShieldCheck className="w-5 h-5" /> Encoding Complete! Stego Image Output:
                                     </p>
-                                    <audio controls src={stegoAudioUrl} className="w-full" />
-
-                                    <div className="space-y-1 pt-1">
-                                        <p className="text-xs text-slate-400 flex items-center gap-1.5 font-medium">
-                                            <Activity className="w-3.5 h-3.5 text-emerald-400" /> Stego Signal Waveform:
-                                        </p>
-                                        <AudioWaveform
-                                            fileOrUrl={stegoAudioUrl}
-                                            height={70}
-                                            waveColor="#10b981"
-                                        />
+                                    <div className="flex justify-center bg-slate-900/40 p-2 rounded">
+                                        <img src={stegoImageUrl} alt="Stego Output" className="max-h-64 rounded object-contain" />
                                     </div>
-
                                     <a
-                                        href={stegoAudioUrl}
-                                        download={`stego_${file?.name || 'audio.wav'}`}
+                                        href={stegoImageUrl}
+                                        download={`stego_${file?.name || 'image.png'}`}
                                         className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                                     >
-                                        <Download className="w-4 h-4" /> Download Stego Audio
+                                        <Download className="w-4 h-4" /> Download Stego Image
                                     </a>
                                 </div>
                             )}
@@ -657,13 +543,9 @@ export default function AudioStegoPage() {
                             <button
                                 onClick={handleExtract}
                                 disabled={loading || !file}
-                                className="w-full bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-800 disabled:text-slate-600 font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                                className="w-full bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-800 disabled:text-slate-600 font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors"
                             >
-                                {loading ? (
-                                    <RefreshCw className="w-4 h-4 animate-spin" />
-                                ) : (
-                                    'Extract Hidden Text'
-                                )}
+                                {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : 'Extract Hidden Text'}
                             </button>
 
                             {extractedText && (
