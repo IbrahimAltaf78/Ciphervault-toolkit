@@ -6,6 +6,7 @@ import {
   CRYPTO_TOOLS,
   CRYPTO_TOOL_IDS,
 } from "@/lib/crypto";
+import SteganalysisDashboard from "@/components/SteganalysisDashboard";
 
 export const metadata: Metadata = {
   title: "Cryptography — CipherVault",
@@ -80,6 +81,11 @@ export default function CryptographyHubPage() {
           </section>
         );
       })}
+
+      {/* Embedded Steganalysis Dashboard Section */}
+      <section className="pt-10 border-t border-edge">
+        <SteganalysisDashboard />
+      </section>
     </div>
   );
 }
