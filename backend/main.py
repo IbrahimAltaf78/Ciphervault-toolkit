@@ -12,10 +12,12 @@ from app.steganography.audio import router as audio_stego_router
 from app.steganography.video import router as video_stego_router
 from app.steganography.image import router as image_stego_router
 
-# THIS LINE MUST BE EXACTLY LIKE THIS:
+# Import Steganalysis Router
+from app.steganalysis.router import router as steganalysis_router
+
 app = FastAPI(
     title="CipherVault Security Toolkit",
-    description="Backend API for media steganography and watermarking operations.",
+    description="Backend API for media steganography, watermarking, and steganalysis operations.",
     version="1.0.0",
 )
 
@@ -52,6 +54,9 @@ app.include_router(robust_router, prefix="/api/watermark/robust", tags=["Robust 
 app.include_router(audio_stego_router, prefix="/api/stego/audio", tags=["Audio Steganography"])
 app.include_router(video_stego_router, prefix="/api/stego/video", tags=["Video Steganography"])
 app.include_router(image_stego_router, prefix="/api/stego/image", tags=["Image Steganography"])
+
+# Mount Steganalysis Router
+app.include_router(steganalysis_router)
 
 if __name__ == "__main__":
     import uvicorn
