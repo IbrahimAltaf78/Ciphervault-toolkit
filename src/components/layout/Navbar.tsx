@@ -2,15 +2,29 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Binary, KeyRound, ShieldCheck, Type } from "lucide-react";
+import {
+  Binary,
+  Image as ImageIcon,
+  KeyRound,
+  ScanSearch,
+  ShieldCheck,
+  Type,
+} from "lucide-react";
 import { PARADIGM_ACCENT } from "@/lib/paradigm-theme";
 import type { Paradigm } from "@/types";
 
-/** Routes wired so far. Remaining paradigms join as they ship. */
+/**
+ * Routes wired so far. Remaining paradigms join as they ship.
+ *
+ * The media tools live under /stego after the route migration — the old
+ * /steganography paths are gone, so nothing should ever link to them again.
+ */
 const NAV_LINKS = [
   { href: "/cryptography", label: "Cryptography", icon: KeyRound, paradigm: "cryptography" },
   { href: "/encoding", label: "Encoding", icon: Binary, paradigm: "encoding" },
   { href: "/text-hiding", label: "Text Hiding", icon: Type, paradigm: "text-hiding" },
+  { href: "/stego", label: "Steganography", icon: ImageIcon, paradigm: "steganography" },
+  { href: "/steganalysis", label: "Steganalysis", icon: ScanSearch, paradigm: "steganalysis" },
 ] as const satisfies ReadonlyArray<{
   href: string;
   label: string;
