@@ -1,128 +1,104 @@
 import cv2
 import os
 import tempfile
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
-from fastapi.responses import FileResponse, Response
+import numpy as np
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, status
+from fastapi.responses import FileResponse, JSONResponse
 
-# Removed the prefix from here because main.py handles it!
 router = APIRouter()
-DELIMITER = "#####"
+DELIMITER = '1111111111111110'
 
 def text_to_bits(text: str) -> str:
-    """Convert text to a binary string."""
-    return ''.join([format(ord(char), '08b') for char in text])
-
-def bits_to_text(bits: str) -> str:
-    """Convert a binary string back to text."""
-    chars = [chr(int(bits[i:i+8], 2)) for i in range(0, len(bits), 8)]
-    return "".join(chars)
+    return ''.join(format(ord(c), '08b') for c in text)
 
 @router.post("/hide")
-async def hide_video_route(file: UploadFile = File(...), text: str = Form(...)):
-    # 1. Save uploaded file to a temporary location
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as temp_in:
+async def hide_video(
+    file: UploadFile = File(...),
+    secret_text: str = Form(None),
+    text: str = Form(None),
+    payload: str = Form(None)
+):
+    content = secret_text or text or payload
+    if not content:
+        raise HTTPException(status_code=400, detail="Secret text payload is required.")
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".avi") as temp_in:
         temp_in.write(await file.read())
         input_path = temp_in.name
 
-    output_path = input_path.replace(".mp4", "_stego.avi").replace(".avi", "_stego.avi")
-    
+    output_path = tempfile.NamedTemporaryFile(delete=False, suffix=".avi").name
+
     try:
         cap = cv2.VideoCapture(input_path)
-        if not cap.isOpened():
-            raise ValueError("Could not open video file.")
-
-        fps = cap.get(cv2.CAP_PROP_FPS)
+        fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        
-        # 2. Setup VideoWriter with a Lossless Codec (FFV1) to preserve LSB data
-        fourcc = cv2.VideoWriter_fourcc(*'FFV1') 
+        fourcc = cv2.VideoWriter_fourcc(*'FFV1')
         out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
 
-        secret_bits = text_to_bits(text + DELIMITER)
-        bit_idx = 0
-        total_bits = len(secret_bits)
+        binary_secret = text_to_bits(content) + DELIMITER
+        total_bits = len(binary_secret)
+        bits_embedded = 0
 
-        # 3. Read frames and embed data
-        while True:
+        while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
                 break
+            
+            # Embed bits into frame only if bits remain
+            if bits_embedded < total_bits:
+                flat = frame.flatten()
+                remaining = total_bits - bits_embedded
+                chunk_size = min(remaining, len(flat))
                 
-            # If we still have bits to hide, embed them in the current frame
-            if bit_idx < total_bits:
-                for row in range(height):
-                    for col in range(width):
-                        for channel in range(3): # B, G, R channels
-                            if bit_idx < total_bits:
-                                # Modify the least significant bit safely using 254
-                                frame[row, col, channel] = (frame[row, col, channel] & 254) | int(secret_bits[bit_idx])
-                                bit_idx += 1
-                                
+                bits_chunk = np.fromiter(binary_secret[bits_embedded:bits_embedded + chunk_size], dtype=np.uint8) - 48
+                flat[:chunk_size] = (flat[:chunk_size] & 254) | bits_chunk
+                bits_embedded += chunk_size
+                frame = flat.reshape(frame.shape)
+
             out.write(frame)
 
         cap.release()
         out.release()
 
-        if bit_idx < total_bits:
-            raise ValueError("Video is too short to hold this amount of data.")
-
-        # 4. Read the processed file into memory to return it, then clean up
-        with open(output_path, "rb") as f:
-            stego_bytes = f.read()
-            
-        return Response(
-            content=stego_bytes,
-            media_type="video/x-msvideo",
-            headers={"Content-Disposition": f'attachment; filename="stego_{file.filename.split(".")[0]}.avi"'}
-        )
-
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        return FileResponse(output_path, media_type="video/x-msvideo", filename=f"stego_{file.filename}")
     finally:
-        # Cleanup temporary files
         if os.path.exists(input_path): os.remove(input_path)
-        if os.path.exists(output_path): os.remove(output_path)
-
 
 @router.post("/extract")
-async def extract_video_route(file: UploadFile = File(...)):
-    # 1. Save uploaded file to a temporary location
+async def extract_video(file: UploadFile = File(...)):
     with tempfile.NamedTemporaryFile(delete=False, suffix=".avi") as temp_in:
         temp_in.write(await file.read())
         input_path = temp_in.name
 
     try:
         cap = cv2.VideoCapture(input_path)
-        if not cap.isOpened():
-            raise ValueError("Could not open video file.")
+        extracted_bits = []
 
-        extracted_bits = ""
-        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        
-        # 2. Read frames and extract the LSB
-        while True:
+        while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
                 break
-                
-            for row in range(height):
-                for col in range(width):
-                    for channel in range(3):
-                        extracted_bits += str(frame[row, col, channel] & 1)
-                        
-                        # Periodically check if we've hit the delimiter
-                        if len(extracted_bits) % 8 == 0 and len(extracted_bits) >= len(DELIMITER) * 8:
-                            current_text = bits_to_text(extracted_bits)
-                            if DELIMITER in current_text:
-                                cap.release()
-                                return {"extracted_text": current_text.split(DELIMITER)[0]}
-                                
-        cap.release()
-        raise ValueError("No hidden data found or delimiter missing.")
+            
+            flat = frame.flatten()
+            bits = (flat & 1).astype(str)
+            extracted_bits.append("".join(bits))
+            
+            bit_str = "".join(extracted_bits)
+            if DELIMITER in bit_str:
+                break
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        cap.release()
+        full_bit_str = "".join(extracted_bits)
+        pos = full_bit_str.find(DELIMITER)
+
+        if pos != -1:
+            raw_bits = full_bit_str[:pos]
+            chars = [chr(int(raw_bits[i:i+8], 2)) for i in range(0, len(raw_bits), 8)]
+            extracted_text = "".join(chars)
+        else:
+            extracted_text = "No hidden payload found in video."
+
+        return JSONResponse(content={"success": True, "secret_text": extracted_text, "extracted_text": extracted_text})
     finally:
         if os.path.exists(input_path): os.remove(input_path)

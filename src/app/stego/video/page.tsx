@@ -1,208 +1,201 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from "react";
 
 export default function VideoStegoPage() {
-    const [mode, setMode] = useState<'hide' | 'extract'>('hide');
+    const [tab, setTab] = useState<"hide" | "extract">("hide");
     const [file, setFile] = useState<File | null>(null);
-    const [videoPreview, setVideoPreview] = useState<string | null>(null);
-
-    const [secretText, setSecretText] = useState('');
-    const [extractedText, setExtractedText] = useState('');
-
+    const [filePreviewUrl, setFilePreviewUrl] = useState<string | null>(null);
+    const [secretText, setSecretText] = useState("");
+    const [extractedText, setExtractedText] = useState("");
     const [loading, setLoading] = useState(false);
     const [stegoVideoUrl, setStegoVideoUrl] = useState<string | null>(null);
-    const [stegoFileName, setStegoFileName] = useState<string>('stego_video.avi');
+    const [error, setError] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Handle file selection and generate a preview URL
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            const selectedFile = e.target.files[0];
-            setFile(selectedFile);
-            setVideoPreview(URL.createObjectURL(selectedFile));
+    // Clean up created object URLs to prevent memory leaks
+    useEffect(() => {
+        return () => {
+            if (filePreviewUrl) URL.revokeObjectURL(filePreviewUrl);
+            if (stegoVideoUrl) URL.revokeObjectURL(stegoVideoUrl);
+        };
+    }, [filePreviewUrl, stegoVideoUrl]);
 
-            // Reset states on new file
-            setExtractedText('');
-            setStegoVideoUrl(null);
-        }
+    const handleTabChange = (newTab: "hide" | "extract") => {
+        setTab(newTab);
+        setError(null);
+        setExtractedText("");
     };
 
-    // Connect to the backend /hide endpoint
-    const handleHide = async () => {
-        if (!file || !secretText) return alert('Please provide a video file and secret text.');
+    const handleFileSelect = (selectedFile: File) => {
+        if (filePreviewUrl) URL.revokeObjectURL(filePreviewUrl);
+        if (stegoVideoUrl) URL.revokeObjectURL(stegoVideoUrl);
 
-        setLoading(true);
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('text', secretText);
-
-        try {
-            const response = await fetch('http://localhost:8000/api/stego/video/hide', {
-                method: 'POST',
-                body: formData,
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.detail || 'Failed to encode video');
-            }
-
-            // Extract the filename from headers if possible, or default to .avi
-            const contentDisposition = response.headers.get('Content-Disposition');
-            let filename = file.name.split('.')[0] + '_stego.avi';
-            if (contentDisposition && contentDisposition.includes('filename=')) {
-                filename = contentDisposition.split('filename=')[1].replace(/"/g, '');
-            }
-            setStegoFileName(filename);
-
-            // The backend returns a raw AVI file blob
-            const blob = await response.blob();
-            const url = URL.createObjectURL(blob);
-            setStegoVideoUrl(url);
-        } catch (error: any) {
-            console.error(error);
-            alert(`Error encoding video: ${error.message}`);
-        } finally {
-            setLoading(false);
-        }
+        setFile(selectedFile);
+        setFilePreviewUrl(URL.createObjectURL(selectedFile));
+        setStegoVideoUrl(null);
+        setError(null);
     };
 
-    // Connect to the backend /extract endpoint
-    const handleExtract = async () => {
-        if (!file) return alert('Please provide a stego .avi file.');
-
+    const handleSubmit = async () => {
+        if (!file) return;
         setLoading(true);
+        setError(null);
+
         const formData = new FormData();
-        formData.append('file', file);
+        formData.append("file", file);
 
         try {
-            const response = await fetch('http://localhost:8000/api/stego/video/extract', {
-                method: 'POST',
-                body: formData,
-            });
+            if (tab === "hide") {
+                formData.append("secret_text", secretText);
+                const res = await fetch("http://localhost:8000/api/stego/video/hide", {
+                    method: "POST",
+                    body: formData,
+                });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.detail || 'Failed to extract data');
+                if (!res.ok) {
+                    throw new Error("Failed to encode hidden text into video.");
+                }
+
+                const blob = await res.blob();
+                if (stegoVideoUrl) URL.revokeObjectURL(stegoVideoUrl);
+
+                // Store Blob URL in state instead of auto-downloading
+                const url = URL.createObjectURL(blob);
+                setStegoVideoUrl(url);
+            } else {
+                const res = await fetch("http://localhost:8000/api/stego/video/extract", {
+                    method: "POST",
+                    body: formData,
+                });
+
+                if (!res.ok) {
+                    throw new Error("Failed to extract hidden text from video.");
+                }
+
+                const data = await res.json();
+                setExtractedText(data.secret_text || data.extracted_text || "No hidden payload found.");
             }
-
-            const data = await response.json();
-            setExtractedText(data.extracted_text);
-        } catch (error: any) {
-            console.error(error);
-            alert(`Error extracting text: ${error.message}`);
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError("An unexpected error occurred during processing.");
+            }
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="max-w-3xl mx-auto p-6 space-y-8">
-            <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Video Steganography</h1>
-            <p className="text-gray-600 dark:text-gray-300">Hide and extract secret text inside video files.</p>
-
-            {/* Mode Toggles */}
-            <div className="flex bg-gray-200 dark:bg-gray-800 rounded-lg p-1">
+        <div className="max-w-4xl mx-auto p-6">
+            {/* Tab Switcher */}
+            <div className="flex space-x-4 border-b border-slate-700 mb-6">
                 <button
-                    className={`flex-1 py-2 rounded-md font-medium transition-colors ${mode === 'hide' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                    onClick={() => setMode('hide')}
+                    onClick={() => handleTabChange("hide")}
+                    className={`pb-2 px-4 font-medium transition-colors ${tab === "hide"
+                            ? "border-b-2 border-cyan-400 text-cyan-400"
+                            : "text-slate-400 hover:text-slate-200"
+                        }`}
                 >
-                    Hide Data (.mp4)
+                    🔒 Hide Data
                 </button>
                 <button
-                    className={`flex-1 py-2 rounded-md font-medium transition-colors ${mode === 'extract' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-                    onClick={() => setMode('extract')}
+                    onClick={() => handleTabChange("extract")}
+                    className={`pb-2 px-4 font-medium transition-colors ${tab === "extract"
+                            ? "border-b-2 border-cyan-400 text-cyan-400"
+                            : "text-slate-400 hover:text-slate-200"
+                        }`}
                 >
-                    Extract Data (.avi)
+                    🔑 Extract Data
                 </button>
             </div>
 
-            <div className="space-y-6 bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
-                {/* File Dropzone / Input */}
-                <div className="flex flex-col gap-2">
-                    <label className="font-semibold text-sm">
-                        {mode === 'hide' ? 'Upload Original Video (.mp4, .avi)' : 'Upload Stego Video (.avi)'}
-                    </label>
-                    <input
-                        type="file"
-                        accept={mode === 'hide' ? "video/mp4,video/avi,video/x-msvideo" : "video/avi,video/x-msvideo"}
-                        onChange={handleFileChange}
-                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            {error && (
+                <div className="bg-red-950/50 border border-red-500/50 text-red-300 p-4 rounded-xl mb-6 text-sm">
+                    {error}
+                </div>
+            )}
+
+            {/* Drag & Drop File Input */}
+            <div
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                    e.preventDefault();
+                    if (e.dataTransfer.files?.[0]) handleFileSelect(e.dataTransfer.files[0]);
+                }}
+                className="border-2 border-dashed border-cyan-500/30 rounded-xl p-8 text-center cursor-pointer hover:border-cyan-400 transition mb-6"
+            >
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="video/avi,video/mp4"
+                    className="hidden"
+                    onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
+                />
+                <p className="text-slate-300 font-medium">
+                    {file ? file.name : "Click to upload or drag .avi / .mp4 video file"}
+                </p>
+            </div>
+
+            {/* Source Video Preview */}
+            {filePreviewUrl && (
+                <div className="mb-6 bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-2">
+                    <p className="text-xs text-slate-400 font-medium">Original Video Preview:</p>
+                    <video controls src={filePreviewUrl} className="w-full max-h-64 rounded-lg bg-black" />
+                </div>
+            )}
+
+            {tab === "hide" ? (
+                <div className="space-y-4 mb-6">
+                    <textarea
+                        value={secretText}
+                        onChange={(e) => setSecretText(e.target.value)}
+                        placeholder="Enter secret message to embed..."
+                        rows={4}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-white focus:outline-none focus:border-cyan-400"
                     />
                 </div>
-
-                {/* Video Preview Player (Only for formats browsers support well, like MP4) */}
-                {videoPreview && mode === 'hide' && (
-                    <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                        <p className="text-sm font-medium mb-2 text-gray-600 dark:text-gray-300">Original Video Preview:</p>
-                        <video controls src={videoPreview} className="w-full max-h-64 object-contain rounded bg-black" />
+            ) : (
+                extractedText && (
+                    <div className="bg-slate-900 border border-cyan-500/30 rounded-xl p-4 text-cyan-300 mb-6">
+                        <p className="font-semibold text-sm mb-1">Extracted Payload:</p>
+                        <p className="font-mono text-slate-100 break-words">{extractedText}</p>
                     </div>
-                )}
+                )
+            )}
 
-                {/* Dynamic Fields based on Mode */}
-                {mode === 'hide' ? (
-                    <>
-                        <div className="flex flex-col gap-2">
-                            <label className="font-semibold text-sm">Secret Text to Hide</label>
-                            <textarea
-                                rows={4}
-                                value={secretText}
-                                onChange={(e) => setSecretText(e.target.value)}
-                                placeholder="Enter the secret message here..."
-                                className="w-full p-3 border rounded-md dark:bg-gray-800 dark:border-gray-700"
-                            />
-                        </div>
+            <button
+                onClick={handleSubmit}
+                disabled={loading || !file || (tab === "hide" && !secretText)}
+                className="w-full py-3 bg-cyan-500 text-black font-semibold rounded-xl hover:bg-cyan-400 disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed mb-6"
+            >
+                {loading
+                    ? "Processing..."
+                    : tab === "hide"
+                        ? "Hide Text into Video"
+                        : "Extract Text from Video"}
+            </button>
 
-                        <button
-                            onClick={handleHide}
-                            disabled={loading || !file || !secretText}
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg disabled:opacity-50 transition-colors"
+            {/* Output Stego Video & Manual Download Action */}
+            {tab === "hide" && stegoVideoUrl && (
+                <div className="p-4 bg-slate-900 border border-emerald-500/40 rounded-xl space-y-4">
+                    <p className="text-sm font-semibold text-emerald-400">
+                        Encoding Complete! Preview or download your output video below:
+                    </p>
+                    <video controls src={stegoVideoUrl} className="w-full max-h-64 rounded-lg bg-black" />
+                    <div>
+                        <a
+                            href={stegoVideoUrl}
+                            download={`stego_${file?.name || "video.mp4"}`}
+                            className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors"
                         >
-                            {loading ? 'Processing Video (This may take a moment)...' : 'Hide Text into Video'}
-                        </button>
-
-                        {stegoVideoUrl && (
-                            <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg space-y-4 text-center">
-                                <p className="font-semibold text-green-700 dark:text-green-400">
-                                    Success! Your data is hidden.
-                                </p>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">
-                                    (Note: Stego videos are saved as lossless .avi to protect hidden data. Browsers cannot preview this format.)
-                                </p>
-                                <a
-                                    href={stegoVideoUrl}
-                                    download={stegoFileName}
-                                    className="inline-block px-6 py-2 bg-green-600 text-white font-medium rounded hover:bg-green-700 transition-colors"
-                                >
-                                    Download {stegoFileName}
-                                </a>
-                            </div>
-                        )}
-                    </>
-                ) : (
-                    <>
-                        <button
-                            onClick={handleExtract}
-                            disabled={loading || !file}
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg disabled:opacity-50 transition-colors"
-                        >
-                            {loading ? 'Analyzing Video Frames...' : 'Extract Hidden Text'}
-                        </button>
-
-                        {extractedText && (
-                            <div className="flex flex-col gap-2 mt-4">
-                                <label className="font-semibold text-sm text-green-600">Extracted Secret Text:</label>
-                                <textarea
-                                    readOnly
-                                    value={extractedText}
-                                    rows={4}
-                                    className="w-full p-3 border-2 border-green-500 bg-green-50 rounded-md dark:bg-gray-800 text-gray-900 dark:text-white"
-                                />
-                            </div>
-                        )}
-                    </>
-                )}
-            </div>
+                            Download Stego Video
+                        </a>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
