@@ -16,6 +16,9 @@ export const PARADIGM_ACCENT: Record<Paradigm, string> = {
   encoding: "#3b82f6", // Cobalt Blue
   "covert-channels": "#f59e0b", // Amber Gold
   watermarking: "#ec4899", // Neon Pink
+  // Extends the six accents in DESIGN.md: steganalysis is the detection
+  // counterpart to steganography, and reads as a forensic/alert hue.
+  steganalysis: "#f43f5e", // Signal Rose
 };
 
 /** Inline style that scopes an accent to a subtree. */
