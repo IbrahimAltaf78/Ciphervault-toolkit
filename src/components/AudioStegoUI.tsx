@@ -2,27 +2,16 @@
 
 import React, { useState, useEffect } from 'react';
 
-interface ImageStegoUIProps {
-    initialAlgorithm?: 'lsb' | 'dwt';
-}
-
-export default function ImageStegoUI({ initialAlgorithm = 'lsb' }: ImageStegoUIProps) {
+export default function AudioStegoUI() {
     const [mode, setMode] = useState<'hide' | 'extract'>('hide');
-    const [algorithm, setAlgorithm] = useState<'lsb' | 'dwt'>(initialAlgorithm);
     const [file, setFile] = useState<File | null>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [secretText, setSecretText] = useState('');
-    const [resultImage, setResultImage] = useState<string | null>(null);
     const [extractedText, setExtractedText] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState(false);
 
-    useEffect(() => {
-        setAlgorithm(initialAlgorithm);
-    }, [initialAlgorithm]);
-
-    // Global listener to prevent the browser from opening dropped files in a new tab
+    // FIX: Global listener prevents Chrome/Edge from opening dropped files in a new tab
     useEffect(() => {
         const preventGlobalDrop = (e: DragEvent) => {
             e.preventDefault();
@@ -40,9 +29,7 @@ export default function ImageStegoUI({ initialAlgorithm = 'lsb' }: ImageStegoUIP
     const handleModeSwitch = (newMode: 'hide' | 'extract') => {
         setMode(newMode);
         setFile(null);
-        setPreviewUrl(null);
         setSecretText('');
-        setResultImage(null);
         setExtractedText(null);
         setError(null);
     };
@@ -50,20 +37,17 @@ export default function ImageStegoUI({ initialAlgorithm = 'lsb' }: ImageStegoUIP
     const handleFileSelect = (selectedFile: File | null) => {
         if (!selectedFile) {
             setFile(null);
-            setPreviewUrl(null);
             return;
         }
 
-        if (selectedFile.type === 'image/jpeg' || selectedFile.name.match(/\.(jpg|jpeg)$/i)) {
-            setError('JPEG format rejected: Compression destroys steganographic data. Please upload lossless PNG or BMP files.');
+        if (!selectedFile.name.match(/\.wav$/i)) {
+            setError('Invalid file format. Please upload a standard uncompressed .WAV file.');
             setFile(null);
-            setPreviewUrl(null);
             return;
         }
 
         setError(null);
         setFile(selectedFile);
-        setPreviewUrl(URL.createObjectURL(selectedFile));
     };
 
     const handleDragEnter = (e: React.DragEvent) => {
@@ -100,50 +84,49 @@ export default function ImageStegoUI({ initialAlgorithm = 'lsb' }: ImageStegoUIP
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!file) {
-            setError(mode === 'hide' ? 'Please upload a cover image.' : 'Please upload the generated stego image.');
+            setError('Please upload a WAV audio file.');
             return;
         }
 
         setLoading(true);
         setError(null);
-        setResultImage(null);
         setExtractedText(null);
 
         try {
             const formData = new FormData();
+            formData.append('file', file);
 
             if (mode === 'hide') {
                 if (!secretText) throw new Error('Secret text is required.');
-
-                formData.append('file', file);
                 formData.append('secret_text', secretText);
-                formData.append('algorithm', algorithm);
 
-                const res = await fetch('http://localhost:8000/api/stego/image/hide', {
+                const res = await fetch('http://localhost:8000/api/stego/audio/hide', {
                     method: 'POST',
                     body: formData,
                 });
 
                 if (!res.ok) {
                     const errorDetail = await res.json().catch(() => null);
-                    throw new Error(errorDetail?.detail || 'Failed to hide message');
+                    throw new Error(errorDetail?.detail || 'Failed to hide message in audio');
                 }
 
                 const blob = await res.blob();
-                const imageObjectURL = URL.createObjectURL(blob);
-                setResultImage(imageObjectURL);
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'stego_audio.wav';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
             } else {
-                formData.append('file', file);
-                formData.append('algorithm', algorithm);
-
-                const res = await fetch('http://localhost:8000/api/stego/image/extract', {
+                const res = await fetch('http://localhost:8000/api/stego/audio/extract', {
                     method: 'POST',
                     body: formData,
                 });
 
                 if (!res.ok) {
                     const errorDetail = await res.json().catch(() => null);
-                    throw new Error(errorDetail?.detail || 'Failed to extract message');
+                    throw new Error(errorDetail?.detail || 'Failed to extract message from audio');
                 }
 
                 const data = await res.json();
@@ -162,15 +145,18 @@ export default function ImageStegoUI({ initialAlgorithm = 'lsb' }: ImageStegoUIP
 
     return (
         <div className="max-w-2xl mx-auto p-6 bg-slate-900 text-white rounded-xl shadow-lg border border-slate-800">
-            <h2 className="text-2xl font-bold mb-6 text-center text-indigo-400">
-                Image Steganography ({algorithm.toUpperCase()})
+            <h2 className="text-2xl font-bold mb-2 text-center text-cyan-400">
+                Audio Steganography
             </h2>
+            <p className="text-xs text-slate-400 text-center mb-6">
+                Embed and extract hidden text payloads inside uncompressed WAV audio signals using LSB modification.
+            </p>
 
             <div className="flex justify-center gap-4 mb-6">
                 <button
                     type="button"
                     onClick={() => handleModeSwitch('hide')}
-                    className={`px-4 py-2 rounded-lg font-medium transition ${mode === 'hide' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'
+                    className={`px-4 py-2 rounded-lg font-medium transition ${mode === 'hide' ? 'bg-cyan-600 text-white' : 'bg-slate-800 text-slate-400'
                         }`}
                 >
                     Hide Data
@@ -178,7 +164,7 @@ export default function ImageStegoUI({ initialAlgorithm = 'lsb' }: ImageStegoUIP
                 <button
                     type="button"
                     onClick={() => handleModeSwitch('extract')}
-                    className={`px-4 py-2 rounded-lg font-medium transition ${mode === 'extract' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'
+                    className={`px-4 py-2 rounded-lg font-medium transition ${mode === 'extract' ? 'bg-cyan-600 text-white' : 'bg-slate-800 text-slate-400'
                         }`}
                 >
                     Extract Data
@@ -187,20 +173,8 @@ export default function ImageStegoUI({ initialAlgorithm = 'lsb' }: ImageStegoUIP
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                    <label className="block text-sm font-medium mb-1 text-slate-300">Algorithm</label>
-                    <select
-                        value={algorithm}
-                        onChange={(e) => setAlgorithm(e.target.value as 'lsb' | 'dwt')}
-                        className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white"
-                    >
-                        <option value="lsb">LSB (Least Significant Bit)</option>
-                        <option value="dwt">DWT (Discrete Wavelet Transform)</option>
-                    </select>
-                </div>
-
-                <div>
                     <label className="block text-sm font-medium mb-1 text-slate-300">
-                        {mode === 'hide' ? 'Upload Cover Image (PNG/BMP)' : 'Upload Stego Image (PNG/BMP)'}
+                        {mode === 'hide' ? 'Upload WAV Audio File' : 'Upload Stego WAV File'}
                     </label>
 
                     <div
@@ -208,46 +182,38 @@ export default function ImageStegoUI({ initialAlgorithm = 'lsb' }: ImageStegoUIP
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
                         onDrop={handleDrop}
-                        className={`relative border-2 border-dashed rounded-lg p-6 text-center transition cursor-pointer ${isDragging
-                            ? 'border-indigo-500 bg-indigo-500/10'
-                            : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
+                        className={`relative border-2 border-dashed rounded-lg p-8 text-center transition cursor-pointer ${isDragging
+                                ? 'border-cyan-500 bg-cyan-500/10'
+                                : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
                             }`}
                     >
                         <input
                             key={mode}
                             type="file"
-                            accept="image/png, image/bmp"
+                            accept="audio/wav, .wav"
                             onChange={(e) => handleFileSelect(e.target.files?.[0] || null)}
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                         />
-                        {previewUrl ? (
-                            <div className="space-y-2 pointer-events-none">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={previewUrl} alt="Preview" className="max-h-40 mx-auto rounded border border-slate-700 object-contain" />
-                                <p className="text-xs text-slate-400">{file?.name}</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-1 pointer-events-none">
-                                <p className="text-sm font-medium text-slate-300">
-                                    {mode === 'hide'
-                                        ? 'Drag & drop cover image here, or '
-                                        : 'Drag & drop downloaded stego image here, or '}
-                                    <span className="text-indigo-400 underline">browse</span>
-                                </p>
-                                <p className="text-xs text-slate-500">Supports PNG or BMP (JPEG auto-rejected)</p>
-                            </div>
-                        )}
+                        <div className="pointer-events-none space-y-2">
+                            <svg className="w-8 h-8 mx-auto text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            <p className="text-sm font-medium text-slate-300">
+                                {file ? file.name : 'Click to upload or drag .wav file'}
+                            </p>
+                            <p className="text-xs text-slate-500">Supports uncompressed .WAV audio</p>
+                        </div>
                     </div>
                 </div>
 
                 {mode === 'hide' && (
                     <div>
-                        <label className="block text-sm font-medium mb-1 text-slate-300">Secret Text</label>
+                        <label className="block text-sm font-medium mb-1 text-slate-300">Secret Text to Hide</label>
                         <textarea
                             rows={3}
                             value={secretText}
                             onChange={(e) => setSecretText(e.target.value)}
-                            placeholder="Enter text to conceal..."
+                            placeholder="Enter secret message to encode inside audio samples..."
                             className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white"
                         />
                     </div>
@@ -255,10 +221,10 @@ export default function ImageStegoUI({ initialAlgorithm = 'lsb' }: ImageStegoUIP
 
                 <button
                     type="submit"
-                    disabled={loading}
-                    className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 rounded-lg transition disabled:opacity-50"
+                    disabled={loading || !file}
+                    className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-medium py-2.5 rounded-lg transition disabled:opacity-50"
                 >
-                    {loading ? 'Processing...' : mode === 'hide' ? 'Encode Secret Image' : 'Extract Hidden Text'}
+                    {loading ? 'Processing Audio...' : mode === 'hide' ? 'Hide Text into Audio' : 'Extract Hidden Text'}
                 </button>
             </form>
 
@@ -268,25 +234,10 @@ export default function ImageStegoUI({ initialAlgorithm = 'lsb' }: ImageStegoUIP
                 </div>
             )}
 
-            {mode === 'hide' && resultImage && (
-                <div className="mt-6 text-center">
-                    <h3 className="text-lg font-semibold text-emerald-400 mb-2">Stego Image Generated</h3>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={resultImage} alt="Stego Result" className="max-h-64 mx-auto rounded-lg border border-slate-700 mb-4 object-contain" />
-                    <a
-                        href={resultImage}
-                        download="stego_image.png"
-                        className="inline-block bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-4 py-2 rounded-lg"
-                    >
-                        Download Image
-                    </a>
-                </div>
-            )}
-
             {mode === 'extract' && extractedText && (
                 <div className="mt-6 p-4 bg-slate-800 border border-slate-700 rounded-lg">
                     <h3 className="text-sm font-medium text-slate-400 mb-1">Extracted Secret Message:</h3>
-                    <p className="text-emerald-400 text-lg font-mono break-all">{extractedText}</p>
+                    <p className="text-cyan-400 text-lg font-mono break-all">{extractedText}</p>
                 </div>
             )}
         </div>
