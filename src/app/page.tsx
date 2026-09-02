@@ -7,6 +7,7 @@ import {
   KeyRound,
   Lock,
   Radio,
+  ScanSearch,
   Type,
   Zap,
   type LucideIcon,
@@ -56,7 +57,16 @@ const MODULES: ModuleCard[] = [
     title: "Steganography",
     description: "LSB and DCT payload embedding across image, audio and video carriers.",
     icon: ImageIcon,
-    status: "Phase 3",
+    href: "/stego",
+    status: "Live",
+  },
+  {
+    paradigm: "steganalysis",
+    title: "Steganalysis",
+    description: "Test a suspect file for a payload: statistical attacks, LSB histograms, metadata sweep.",
+    icon: ScanSearch,
+    href: "/steganalysis",
+    status: "Live",
   },
   {
     paradigm: "watermarking",
@@ -91,7 +101,7 @@ export default function HomePage() {
       <section className="space-y-6">
         <span className="cv-badge border-crypto/40 bg-crypto/10 text-crypto">
           <span className="cv-pulse size-1.5 rounded-full bg-crypto" />
-          Six paradigms · one workspace
+          Seven paradigms · one workspace
         </span>
 
         <h1 className="max-w-3xl text-4xl font-bold leading-[1.15] tracking-tight sm:text-5xl">
@@ -129,7 +139,7 @@ export default function HomePage() {
       <section className="space-y-5">
         <div className="flex items-baseline justify-between gap-4 border-b border-edge pb-3">
           <h2 className="text-xl font-semibold tracking-tight">Modules</h2>
-          <p className="cv-label">6 paradigms</p>
+          <p className="cv-label">7 paradigms</p>
         </div>
 
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
