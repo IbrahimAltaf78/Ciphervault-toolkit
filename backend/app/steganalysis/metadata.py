@@ -1,86 +1,231 @@
 import io
+import logging
+import struct
+from typing import Dict, List, Optional, Tuple, Any
 import exifread
 from PIL import Image
-from typing import List, Tuple, Dict, Any, Optional
+
 from app.steganalysis.schemas import Anomaly
 
-# Standard End-Of-File (EOF) hex signatures
-EOF_MARKERS = {
-    "JPEG": b"\xff\xd9",
-    "PNG": b"\x00\x00\x00\x00IEND\xaeB`\x82",
-    "GIF": b"\x00\x3b",
-}
+logger = logging.getLogger(__name__)
 
-def analyze_metadata_and_eof(file_bytes: bytes, filename: str) -> Tuple[float, List[Anomaly], Dict[str, Any]]:
+# Known editing or steganographic software signatures to flag
+STEGO_SOFTWARE_KEYWORDS = [
+    "outguess", "steghide", "openstego", "stegdetect", "photoshop", 
+    "gimp", "paint.net", "exiftool", "imagemagick", "stegosuite"
+]
+
+
+def extract_and_validate_metadata(image_bytes: bytes) -> Tuple[Dict[str, Any], List[Anomaly]]:
     """
-    Scans raw file bytes for EXIF data anomalies and trailing data appended past the EOF marker.
-    Returns (anomaly_score, list_of_anomalies, metadata_dict).
+    Extracts detailed EXIF metadata and checks for suspicious software tags,
+    hidden user comment fields, or missing metadata.
+    Returns a dictionary of extracted metadata and a list of detected Anomaly objects.
     """
+    metadata: Dict[str, Any] = {
+        "has_exif": False,
+        "camera_info": {},
+        "software": None,
+        "comment": None,
+        "raw_tags": {},
+    }
     anomalies: List[Anomaly] = []
-    metadata_info: Dict[str, Any] = {}
-    
-    # 1. Extract EXIF Metadata
+
     try:
-        tags = exifread.process_file(io.BytesIO(file_bytes), details=False)
-        for tag, value in tags.items():
-            if tag not in ["JPEGThumbnail", "TIFFThumbnail"]:
-                metadata_info[tag] = str(value)
+        buffer = io.BytesIO(image_bytes)
+        tags = exifread.process_file(buffer, details=False)
+
+        if tags:
+            metadata["has_exif"] = True
+            
+            # Format raw tags cleanly, ensuring all values are printable strings
+            raw_tags = {}
+            for tag_key, tag_val in tags.items():
+                if tag_key not in ["JPEGThumbnail", "TIFFThumbnail"]:
+                    raw_tags[tag_key] = str(tag_val)
+            metadata["raw_tags"] = raw_tags
+
+            # 1. Camera Details Extraction & Consistency
+            make = tags.get("Image Make")
+            model = tags.get("Image Model")
+            exposure = tags.get("EXIF ExposureTime")
+            fnumber = tags.get("EXIF FNumber")
+            iso = tags.get("EXIF ISOSpeedRatings")
+
+            if make or model:
+                camera_dict = {
+                    "make": str(make).strip() if make else "Unknown",
+                    "model": str(model).strip() if model else "Unknown",
+                }
+                if exposure:
+                    camera_dict["exposure_time"] = str(exposure)
+                if fnumber:
+                    camera_dict["f_number"] = str(fnumber)
+                if iso:
+                    camera_dict["iso"] = str(iso)
+
+                metadata["camera_info"] = camera_dict
+            
+            # Inconsistency check: Model exists without Make
+            if model and not make:
+                anomalies.append(
+                    Anomaly(
+                        category="Metadata Anomaly",
+                        severity="MEDIUM",
+                        description="EXIF data contains Camera Model information without a Camera Make.",
+                    )
+                )
+
+            # 2. Check Software Signatures
+            software = tags.get("Image Software") or tags.get("EXIF ProcessingSoftware")
+            if software:
+                soft_str = str(software).strip()
+                metadata["software"] = soft_str
+                
+                if any(kw in soft_str.lower() for kw in STEGO_SOFTWARE_KEYWORDS):
+                    anomalies.append(
+                        Anomaly(
+                            category="Metadata Anomaly",
+                            severity="MEDIUM",
+                            description=f"Image contains metadata indicating processing by known editing/stego tool: '{soft_str}'",
+                        )
+                    )
+
+            # 3. User Comment / Image Description Payload Checks
+            comment = (
+                tags.get("EXIF UserComment") 
+                or tags.get("Image ImageDescription") 
+                or tags.get("Image XPComment")
+            )
+            if comment:
+                comm_str = str(comment).strip()
+                if comm_str:
+                    metadata["comment"] = comm_str
+                    anomalies.append(
+                        Anomaly(
+                            category="Metadata Anomaly",
+                            severity="LOW",
+                            description="Image contains explicit UserComment or Description tags which can store hidden text payloads.",
+                        )
+                    )
+
+        else:
+            # Check for stripped JPEG EXIF data
+            pil_img = Image.open(io.BytesIO(image_bytes))
+            if pil_img.format in ["JPEG", "JPG"]:
+                anomalies.append(
+                    Anomaly(
+                        category="Metadata Anomaly",
+                        severity="LOW",
+                        description="EXIF metadata is missing or stripped from JPEG image.",
+                    )
+                )
+
     except Exception as e:
-        metadata_info["exif_error"] = f"Failed to parse EXIF: {str(e)}"
-
-    # Check for suspicious or missing EXIF software signatures
-    software_tag = metadata_info.get("Image Software", "").lower()
-    if any(stego_tool in software_tag for stego_tool in ["steghide", "outguess", "openpuff"]):
-        anomalies.append(Anomaly(
-            category="Metadata EXIF",
-            severity="HIGH",
-            description=f"EXIF software tag indicates known steganography tool: '{software_tag}'."
-        ))
-
-    # 2. Check for Appended Data Past EOF (End-of-File)
-    eof_score, eof_anomaly = _check_eof_appended_data(file_bytes)
-    if eof_anomaly:
-        anomalies.append(eof_anomaly)
-
-    overall_score = 0.90 if eof_anomaly and eof_anomaly.severity == "HIGH" else (0.50 if anomalies else 0.0)
-    
-    return overall_score, anomalies, metadata_info
-
-
-def _check_eof_appended_data(file_bytes: bytes) -> Tuple[float, Optional[Anomaly]]:
-    """
-    Detects if extra payload bytes exist beyond standard JPEG/PNG EOF markers.
-    """
-    file_type = None
-    if file_bytes.startswith(b"\xff\xd8"):
-        file_type = "JPEG"
-    elif file_bytes.startswith(b"\x89PNG\r\n\x1a\n"):
-        file_type = "PNG"
-    elif file_bytes.startswith(b"GIF8"):
-        file_type = "GIF"
-
-    if not file_type or file_type not in EOF_MARKERS:
-        return 0.0, None
-
-    marker = EOF_MARKERS[file_type]
-    marker_pos = file_bytes.rfind(marker)
-
-    if marker_pos == -1:
-        return 0.5, Anomaly(
-            category="EOF Scan",
-            severity="MEDIUM",
-            description=f"Corrupted structure: Standard {file_type} EOF marker not found."
+        logger.error(f"Error parsing EXIF metadata: {e}")
+        anomalies.append(
+            Anomaly(
+                category="Metadata Parsing Error",
+                severity="LOW",
+                description=f"Failed to parse EXIF metadata: {str(e)}",
+            )
         )
 
-    expected_end = marker_pos + len(marker)
-    extra_bytes_count = len(file_bytes) - expected_end
+    return metadata, anomalies
 
-    # Allow minor padding bytes (e.g. 1-4 trailing null bytes)
-    if extra_bytes_count > 10:
-        return 1.0, Anomaly(
-            category="EOF Scan",
-            severity="HIGH",
-            description=f"Detected {extra_bytes_count} trailing bytes appended beyond the official {file_type} EOF marker."
+
+def check_eof_payload(
+    image_bytes: bytes, image_format: Optional[str] = None
+) -> Tuple[float, Optional[Anomaly], Optional[bytes]]:
+    """
+    Checks for trailing data appended past the file's expected EOF marker.
+    Returns: (anomaly_score, Anomaly or None, raw_payload_bytes or None)
+    """
+    eof_markers = {
+        "JPEG": b"\xff\xd9",
+        "JPG": b"\xff\xd9",
+        "PNG": b"\x49\x45\x4e\x44\xae\x42\x60\x82",
+    }
+
+    # Auto-detect format via Pillow if not explicitly supplied
+    fmt = image_format.upper() if image_format else None
+    if not fmt:
+        try:
+            pil_img = Image.open(io.BytesIO(image_bytes))
+            fmt = pil_img.format.upper() if pil_img.format else "JPEG"
+        except Exception:
+            fmt = "JPEG"
+
+    marker = eof_markers.get(fmt, b"\xff\xd9")
+    eof_pos = image_bytes.rfind(marker)
+
+    if eof_pos != -1:
+        expected_end = eof_pos + len(marker)
+        if expected_end < len(image_bytes):
+            extra_bytes = image_bytes[expected_end:]
+            extra_len = len(extra_bytes)
+            
+            # Calculate severity based on trailing payload size
+            score = 0.95 if extra_len > 100 else 0.70
+            anomaly = Anomaly(
+                category="EOF Payload Detected",
+                severity="HIGH" if extra_len > 100 else "MEDIUM",
+                description=f"Detected {extra_len} trailing bytes appended beyond file end marker.",
+            )
+            return score, anomaly, extra_bytes
+
+    return 0.0, None, None
+
+
+def extract_mp3_metadata(file_bytes: bytes) -> Tuple[Dict[str, Any], List[Anomaly]]:
+    """
+    Scans MP3 frame headers and ID3 tags for steganographic anomalies or non-standard padding.
+    """
+    metadata: Dict[str, Any] = {
+        "format": "MP3",
+        "has_id3v2": False,
+        "valid_frames": 0,
+        "corrupted_bytes": 0,
+    }
+    anomalies: List[Anomaly] = []
+
+    pos = 0
+    total_len = len(file_bytes)
+
+    # Check for ID3v2 Header
+    if total_len > 10 and file_bytes[:3] == b"ID3":
+        metadata["has_id3v2"] = True
+        id3_size = (
+            (file_bytes[6] & 0x7F) << 21
+            | (file_bytes[7] & 0x7F) << 14
+            | (file_bytes[8] & 0x7F) << 7
+            | (file_bytes[9] & 0x7F)
+        )
+        pos = 10 + id3_size
+
+    invalid_bytes = 0
+    valid_frames = 0
+
+    while pos < total_len - 4:
+        header = struct.unpack(">I", file_bytes[pos:pos+4])[0]
+        # Frame sync bitmask: 11 bits set (0xFFE00000)
+        if (header & 0xFFE00000) == 0xFFE00000:
+            valid_frames += 1
+            pos += 418  # Approximate frame step
+        else:
+            invalid_bytes += 1
+            pos += 1
+
+    metadata["valid_frames"] = valid_frames
+    metadata["corrupted_bytes"] = invalid_bytes
+
+    if invalid_bytes > 500:
+        anomalies.append(
+            Anomaly(
+                category="MP3 Structure Anomaly",
+                severity="HIGH",
+                description=f"Detected {invalid_bytes} bytes of non-audio padding/junk embedded inside MP3 stream.",
+            )
         )
 
-    return 0.0, None
+    return metadata, anomalies
