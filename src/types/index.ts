@@ -15,7 +15,8 @@ export type Paradigm =
   | "text-hiding"
   | "encoding"
   | "covert-channels"
-  | "watermarking";
+  | "watermarking"
+  | "steganalysis";
 
 /** The six encoding sub-techniques, doubling as the /encoding/[type] slugs. */
 /** The six text-hiding sub-techniques, doubling as the /text-hiding/[technique] slugs. */
