@@ -1,210 +1,121 @@
 import Link from "next/link";
 import {
-  ArrowRight,
-  Binary,
-  Fingerprint,
-  Image as ImageIcon,
-  KeyRound,
+  ShieldCheck,
   Lock,
-  Radio,
-  ScanSearch,
-  Type,
-  Zap,
-  type LucideIcon,
+  FileSearch,
+  EyeOff,
+  Sparkles,
+  ChevronRight,
+  Cpu,
+  Layers
 } from "lucide-react";
-import { PARADIGM_ACCENT } from "@/lib/paradigm-theme";
-import type { Paradigm } from "@/types";
 
-interface ModuleCard {
-  paradigm: Paradigm;
+interface ModuleCardProps {
   title: string;
   description: string;
-  icon: LucideIcon;
-  /** Live modules link out; the rest render as inert cards with a phase chip. */
-  href?: string;
-  status: string;
+  icon: React.ReactNode;
+  href: string;
+  badge?: string;
 }
 
-const MODULES: ModuleCard[] = [
-  {
-    paradigm: "cryptography",
-    title: "Cryptography",
-    description:
-      "AES, DES, Triple DES, RSA, ECC, SHA-2, SHA-3 and hybrid encryption, in the browser.",
-    icon: KeyRound,
-    href: "/cryptography",
-    status: "Live",
-  },
-  {
-    paradigm: "encoding",
-    title: "Encoding",
-    description: "Base64, Base32, Hex, Binary, URL and ASCII transforms in under 200 ms.",
-    icon: Binary,
-    href: "/encoding",
-    status: "Live",
-  },
-  {
-    paradigm: "text-hiding",
-    title: "Text Hiding",
-    description:
-      "Zero-width Unicode, whitespace, capitalisation, punctuation, acrostic and word-choice concealment.",
-    icon: Type,
-    href: "/text-hiding",
-    status: "Live",
-  },
-  {
-    paradigm: "steganography",
-    title: "Steganography & Stegananalysis",
-    description: "LSB embedding and statistical steganalysis detection across image and audio carriers.",
-    icon: ImageIcon,
-    href: "/stego",
-    status: "Live",
-dev/stego-engine
-
-  },
-  {
-    paradigm: "steganalysis",
-    title: "Steganalysis",
-    description: "Test a suspect file for a payload: statistical attacks, LSB histograms, metadata sweep.",
-    icon: ScanSearch,
-    href: "/steganalysis",
-    status: "Live",
-    main
-  },
-  {
-    paradigm: "watermarking",
-    title: "Watermarking",
-    description: "Visible overlays plus fragile and robust marks for tamper detection.",
-    icon: Fingerprint,
-    status: "Phase 3",
-  },
-  {
-    paradigm: "covert-channels",
-    title: "Covert Channels",
-    description: "Sandboxed timing, storage and protocol-field exfiltration visualisers.",
-    icon: Radio,
-    status: "Phase 4",
-  },
-];
-
-const PILLARS = [
-  { icon: Lock, title: "Stateless by design", body: "Payloads live in memory for the length of one operation, then vanish. No database, no disk, no key logging." },
-  { icon: Zap, title: "Local execution track", body: "Encoding and WebCrypto work never leaves the browser, so results land in well under 200 ms." },
-  { icon: ArrowRight, title: "Bidirectional everywhere", body: "Every panel carries the same toggle: Hide / Encrypt / Encode against Extract / Decrypt / Decode." },
-];
-
-function accentVar(paradigm: Paradigm) {
-  return { "--cv-accent": PARADIGM_ACCENT[paradigm] } as React.CSSProperties;
-}
-
-export default function HomePage() {
+function ModuleCard({ title, description, icon, href, badge }: ModuleCardProps) {
   return (
-    <div className="space-y-16">
-      {/* Hero */}
-      <section className="space-y-6">
-        <span className="cv-badge border-crypto/40 bg-crypto/10 text-crypto">
-          <span className="cv-pulse size-1.5 rounded-full bg-crypto" />
-          Seven paradigms · one workspace
-        </span>
-
-        <h1 className="max-w-3xl text-4xl font-bold leading-[1.15] tracking-tight sm:text-5xl">
-          Hide anything.{" "}
-          <span className="bg-gradient-to-r from-crypto via-texthide to-encoding bg-clip-text text-transparent">
-            Reveal everything.
-          </span>
-        </h1>
-
-        <p className="max-w-2xl text-base leading-relaxed text-muted">=
-          CipherVault unifies cryptography, steganography, text-based hiding,
-          encoding, covert channels and digital watermarking into a single
-          interactive toolkit — built for students, CTF competitors and analysts
-          who need the mechanism visible, not hidden behind a black box.
-        </p>
-
-        <div className="flex flex-wrap items-center gap-3 pt-1">
-          <Link
-            href="/stego"
-            className="inline-flex items-center gap-2 rounded-lg border border-encoding/50 bg-encoding/15 px-4 py-2 font-medium text-encoding shadow-[0_0_30px_-10px_#3b82f6] transition-colors hover:bg-encoding/25"
-          >
-            Open Stegananalysis Detector
-            <ArrowRight aria-hidden className="size-4" />
-          </Link>
-          <Link
-            href="/cryptography"
-            className="cv-btn px-4 py-2 text-sm"
-          >
-            Browse cryptography
-          </Link>
-        </div>
-      </section>
-
-      {/* Module grid */}
-      <section className="space-y-5">
-        <div className="flex items-baseline justify-between gap-4 border-b border-edge pb-3">
-          <h2 className="text-xl font-semibold tracking-tight">Modules</h2>
-          <p className="cv-label">7 paradigms</p>
-        </div>
-
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {MODULES.map((module) => {
-            const isLive = Boolean(module.href);
-            const body = (
-              <>
-                <div className="flex items-start justify-between gap-3">
-                  <span className="accent-soft accent-border accent-text flex size-10 items-center justify-center rounded-xl border">
-                    <module.icon aria-hidden className="size-5" />
-                  </span>
-                  <span
-                    className={`cv-badge ${module.status === "Live"
-                        ? "border-emerald-800 bg-emerald-950/60 text-emerald-400"
-                        : "border-edge bg-edge/40 text-muted"
-                      }`}
-                  >
-                    {module.status}
-                  </span>
-                </div>
-                <div className="mt-4 space-y-1.5">
-                  <h3 className="text-lg font-medium tracking-tight">
-                    {module.title}
-                  </h3>
-                  <p className="text-muted">{module.description}</p>
-                </div>
-              </>
-            );
-
-            return (
-              <li key={module.paradigm} style={accentVar(module.paradigm)}>
-                {isLive ? (
-                  <Link
-                    href={module.href!}
-                    className="cv-card accent-ring block h-full rounded-xl border border-edge bg-surface/70 p-5 backdrop-blur-md"
-                  >
-                    {body}
-                  </Link>
-                ) : (
-                  <div className="h-full rounded-xl border border-edge/70 bg-surface/40 p-5 opacity-70 backdrop-blur-md">
-                    {body}
-                  </div>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      </section>
-
-      {/* Pillars */}
-      <section className="grid gap-4 sm:grid-cols-3">
-        {PILLARS.map((pillar) => (
-          <div
-            key={pillar.title}
-            className="rounded-xl border border-edge bg-surface/50 p-5 backdrop-blur-md"
-          >
-            <pillar.icon aria-hidden className="size-5 text-muted" />
-            <h3 className="mt-3 font-medium tracking-tight">{pillar.title}</h3>
-            <p className="mt-1 text-muted">{pillar.body}</p>
+    <Link
+      href={href}
+      className="group relative flex flex-col justify-between rounded-xl border border-slate-800 bg-slate-900/50 p-6 backdrop-blur-sm transition-all duration-300 hover:border-cyan-500/50 hover:bg-slate-900/80 hover:shadow-lg hover:shadow-cyan-500/10"
+    >
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <div className="rounded-lg bg-cyan-500/10 p-3 text-cyan-400 group-hover:bg-cyan-500/20 group-hover:text-cyan-300 transition-colors">
+            {icon}
           </div>
-        ))}
-      </section>
-    </div>
+          {badge && (
+            <span className="rounded-full bg-cyan-500/10 px-2.5 py-0.5 text-xs font-medium text-cyan-400 border border-cyan-500/20">
+              {badge}
+            </span>
+          )}
+        </div>
+        <h3 className="text-xl font-bold text-slate-100 group-hover:text-cyan-300 transition-colors mb-2">
+          {title}
+        </h3>
+        <p className="text-sm text-slate-400 leading-relaxed mb-6">
+          {description}
+        </p>
+      </div>
+      <div className="flex items-center text-sm font-semibold text-cyan-400 group-hover:text-cyan-300">
+        <span>Launch Module</span>
+        <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+      </div>
+    </Link>
+  );
+}
+
+export default function Home() {
+  const modules: ModuleCardProps[] = [
+    {
+      title: "Steganography Engine",
+      description: "Hide encrypted text messages and secret payloads inside images, audio files, and digital media.",
+      icon: <EyeOff className="h-6 w-6" />,
+      href: "/stego",
+      badge: "Core"
+    },
+    {
+      title: "Steganalysis",
+      description: "Analyze suspect media with Chi-Square test algorithms and structural histogram checks to detect hidden data.",
+      icon: <FileSearch className="h-6 w-6" />,
+      href: "/steganalysis",
+      badge: "Detection"
+    },
+    {
+      title: "Cryptography Toolkit",
+      description: "AES-256 encryption, RSA key pair generation, and secure hashing utilities for data protection.",
+      icon: <Lock className="h-6 w-6" />,
+      href: "/cryptography",
+    },
+    {
+      title: "Text Hiding",
+      description: "Zero-width character manipulation and invisible text embedding mechanisms.",
+      icon: <Layers className="h-6 w-6" />,
+      href: "/text-hiding",
+    },
+    {
+      title: "Digital Watermarking",
+      description: "Embed robust ownership markers and verify copyright signatures on media assets.",
+      icon: <ShieldCheck className="h-6 w-6" />,
+      href: "/watermark",
+    },
+    {
+      title: "Encoding & Decoding",
+      description: "Base64, Hex, Binary, and custom format conversions for forensic payload analysis.",
+      icon: <Cpu className="h-6 w-6" />,
+      href: "/encoding",
+    }
+  ];
+
+  return (
+    <main className="min-h-screen bg-slate-950 text-slate-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto space-y-12">
+        {/* Hero Section */}
+        <div className="text-center space-y-4 max-w-3xl mx-auto">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-medium">
+            <Sparkles className="h-3.5 w-3.5" />
+            <span>CipherVault Toolkit v1.0</span>
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-slate-100 via-slate-200 to-slate-400 bg-clip-text text-transparent">
+            Digital Forensic & Steganography Suite
+          </h1>
+          <p className="text-lg text-slate-400">
+            Advanced detection, encryption, and covert communication tools engineered for security research and forensic analysis.
+          </p>
+        </div>
+
+        {/* Modules Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {modules.map((mod) => (
+            <ModuleCard key={mod.title} {...mod} />
+          ))}
+        </div>
+      </div>
+    </main>
   );
 }
