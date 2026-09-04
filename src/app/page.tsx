@@ -7,6 +7,7 @@ import {
   KeyRound,
   Lock,
   Radio,
+  ScanSearch,
   Type,
   Zap,
   type LucideIcon,
@@ -58,6 +59,17 @@ const MODULES: ModuleCard[] = [
     icon: ImageIcon,
     href: "/stego",
     status: "Live",
+dev/stego-engine
+
+  },
+  {
+    paradigm: "steganalysis",
+    title: "Steganalysis",
+    description: "Test a suspect file for a payload: statistical attacks, LSB histograms, metadata sweep.",
+    icon: ScanSearch,
+    href: "/steganalysis",
+    status: "Live",
+    main
   },
   {
     paradigm: "watermarking",
@@ -92,7 +104,7 @@ export default function HomePage() {
       <section className="space-y-6">
         <span className="cv-badge border-crypto/40 bg-crypto/10 text-crypto">
           <span className="cv-pulse size-1.5 rounded-full bg-crypto" />
-          Six paradigms · one workspace
+          Seven paradigms · one workspace
         </span>
 
         <h1 className="max-w-3xl text-4xl font-bold leading-[1.15] tracking-tight sm:text-5xl">
@@ -102,7 +114,7 @@ export default function HomePage() {
           </span>
         </h1>
 
-        <p className="max-w-2xl text-base leading-relaxed text-muted">
+        <p className="max-w-2xl text-base leading-relaxed text-muted">=
           CipherVault unifies cryptography, steganography, text-based hiding,
           encoding, covert channels and digital watermarking into a single
           interactive toolkit — built for students, CTF competitors and analysts
@@ -130,7 +142,7 @@ export default function HomePage() {
       <section className="space-y-5">
         <div className="flex items-baseline justify-between gap-4 border-b border-edge pb-3">
           <h2 className="text-xl font-semibold tracking-tight">Modules</h2>
-          <p className="cv-label">6 paradigms</p>
+          <p className="cv-label">7 paradigms</p>
         </div>
 
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
