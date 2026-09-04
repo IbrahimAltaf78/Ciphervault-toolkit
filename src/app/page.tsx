@@ -53,10 +53,11 @@ const MODULES: ModuleCard[] = [
   },
   {
     paradigm: "steganography",
-    title: "Steganography",
-    description: "LSB and DCT payload embedding across image, audio and video carriers.",
+    title: "Steganography & Stegananalysis",
+    description: "LSB embedding and statistical steganalysis detection across image and audio carriers.",
     icon: ImageIcon,
-    status: "Phase 3",
+    href: "/stego",
+    status: "Live",
   },
   {
     paradigm: "watermarking",
@@ -110,10 +111,10 @@ export default function HomePage() {
 
         <div className="flex flex-wrap items-center gap-3 pt-1">
           <Link
-            href="/encoding"
+            href="/stego"
             className="inline-flex items-center gap-2 rounded-lg border border-encoding/50 bg-encoding/15 px-4 py-2 font-medium text-encoding shadow-[0_0_30px_-10px_#3b82f6] transition-colors hover:bg-encoding/25"
           >
-            Open Base64 converter
+            Open Stegananalysis Detector
             <ArrowRight aria-hidden className="size-4" />
           </Link>
           <Link
