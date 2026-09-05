@@ -7,7 +7,7 @@ import numpy as np
 import pywt
 from PIL import Image
 from scipy.stats import chi2
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 
 # Cryptography modules for AES-256-GCM
@@ -18,6 +18,15 @@ from cryptography.hazmat.primitives import hashes
 # Modular Stegananalysis Router Inclusion
 from app.steganalysis.router import router as steganalysis_router
 
+# ==========================================
+# Database & Auth Imports
+# ==========================================
+from app.db.database import engine, Base
+from app.api import auth
+
+# Create the database tables if they don't exist
+Base.metadata.create_all(bind=engine)
+
 app = FastAPI(
     title="CipherVault Toolkit API Engine",
     description="Backend steganography and steganalysis suite for images and audio.",
@@ -27,7 +36,7 @@ app = FastAPI(
 # CORS Configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:3000", "*"], # Next.js frontend + wildcard
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -36,7 +45,13 @@ app.add_middleware(
 # Root Health Check Endpoint
 @app.get("/health")
 def health_check():
-    return {"status": "healthy"}
+    return {"status": "healthy", "version": "1.0.0"}
+
+# ==========================================
+# Router Inclusions
+# ==========================================
+# Include the Authentication router
+app.include_router(auth.router)
 
 # Register steganalysis router directly (without duplicate /api prefix)
 app.include_router(steganalysis_router)
