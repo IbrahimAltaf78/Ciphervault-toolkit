@@ -33,6 +33,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Root Health Check Endpoint
+@app.get("/health")
+def health_check():
+    return {"status": "healthy"}
+
 # Register steganalysis router directly (without duplicate /api prefix)
 app.include_router(steganalysis_router)
 
