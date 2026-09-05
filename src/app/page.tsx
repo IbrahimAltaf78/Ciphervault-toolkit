@@ -7,7 +7,7 @@ import {
   Sparkles,
   ChevronRight,
   Cpu,
-  Layers
+  Layers,
 } from "lucide-react";
 
 interface ModuleCardProps {
@@ -54,42 +54,48 @@ export default function Home() {
   const modules: ModuleCardProps[] = [
     {
       title: "Steganography Engine",
-      description: "Hide encrypted text messages and secret payloads inside images, audio files, and digital media.",
+      description:
+        "Hide encrypted text messages and secret payloads inside images, audio files, and digital media.",
       icon: <EyeOff className="h-6 w-6" />,
       href: "/stego",
-      badge: "Core"
+      badge: "Core",
     },
     {
-      title: "Steganalysis",
-      description: "Analyze suspect media with Chi-Square test algorithms and structural histogram checks to detect hidden data.",
+      title: "Stegananalysis",
+      description:
+        "Analyze suspect media with Chi-Square test algorithms and structural histogram checks to detect hidden data.",
       icon: <FileSearch className="h-6 w-6" />,
       href: "/steganalysis",
-      badge: "Detection"
+      badge: "Detection",
     },
     {
       title: "Cryptography Toolkit",
-      description: "AES-256 encryption, RSA key pair generation, and secure hashing utilities for data protection.",
+      description:
+        "AES-256 encryption, RSA key pair generation, and secure hashing utilities for data protection.",
       icon: <Lock className="h-6 w-6" />,
       href: "/cryptography",
     },
     {
       title: "Text Hiding",
-      description: "Zero-width character manipulation and invisible text embedding mechanisms.",
+      description:
+        "Zero-width character manipulation and invisible text embedding mechanisms.",
       icon: <Layers className="h-6 w-6" />,
       href: "/text-hiding",
     },
     {
       title: "Digital Watermarking",
-      description: "Embed robust ownership markers and verify copyright signatures on media assets.",
+      description:
+        "Embed robust ownership markers and verify copyright signatures on media assets.",
       icon: <ShieldCheck className="h-6 w-6" />,
       href: "/watermark",
     },
     {
       title: "Encoding & Decoding",
-      description: "Base64, Hex, Binary, and custom format conversions for forensic payload analysis.",
+      description:
+        "Base64, Hex, Binary, and custom format conversions for forensic payload analysis.",
       icon: <Cpu className="h-6 w-6" />,
       href: "/encoding",
-    }
+    },
   ];
 
   return (
