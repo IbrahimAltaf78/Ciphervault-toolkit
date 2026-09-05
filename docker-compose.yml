@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: ciphervault-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount a local 'data' folder to persist the SQLite database
+      - ./backend/data:/app/data
+    environment:
+      - DATABASE_URL=sqlite:////app/data/ciphervault.db
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+    container_name: ciphervault-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      # Tell the frontend how to reach the backend inside the Docker network
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    restart: unless-stopped
