@@ -12,8 +12,8 @@ interface AudioWaveformProps {
 export default function AudioWaveform({
     fileOrUrl,
     height = 96,
-    waveColor = '#22d3ee', // Tailwind cyan-400
-    backgroundColor = '#020617', // Tailwind slate-950
+    waveColor = '#22d3ee', // Tailwind phos-hot
+    backgroundColor = '#020617', // Tailwind phos-deep
 }: AudioWaveformProps) {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -101,7 +101,7 @@ export default function AudioWaveform({
     if (!fileOrUrl) return null;
 
     return (
-        <div className="w-full overflow-hidden rounded-lg border border-slate-800 bg-slate-950 p-2">
+        <div className="w-full overflow-hidden rounded-lg border border-phos-line bg-phos-deep p-2">
             <canvas
                 ref={canvasRef}
                 style={{ height: `${height}px` }}

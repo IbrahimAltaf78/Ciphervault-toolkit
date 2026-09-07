@@ -144,11 +144,11 @@ export default function AudioStegoUI() {
     };
 
     return (
-        <div className="max-w-2xl mx-auto p-6 bg-slate-900 text-white rounded-xl shadow-lg border border-slate-800">
-            <h2 className="text-2xl font-bold mb-2 text-center text-cyan-400">
+        <div className="max-w-2xl mx-auto p-6 bg-phos-panel text-white rounded-xl shadow-lg border border-phos-line">
+            <h2 className="text-2xl font-bold mb-2 text-center text-phos-hot">
                 Audio Steganography
             </h2>
-            <p className="text-xs text-slate-400 text-center mb-6">
+            <p className="text-xs text-phos-dim text-center mb-6">
                 Embed and extract hidden text payloads inside uncompressed WAV audio signals using LSB modification.
             </p>
 
@@ -156,7 +156,7 @@ export default function AudioStegoUI() {
                 <button
                     type="button"
                     onClick={() => handleModeSwitch('hide')}
-                    className={`px-4 py-2 rounded-lg font-medium transition ${mode === 'hide' ? 'bg-cyan-600 text-white' : 'bg-slate-800 text-slate-400'
+                    className={`px-4 py-2 rounded-lg font-medium transition ${mode === 'hide' ? 'bg-phos text-white' : 'bg-phos-line text-phos-dim'
                         }`}
                 >
                     Hide Data
@@ -164,7 +164,7 @@ export default function AudioStegoUI() {
                 <button
                     type="button"
                     onClick={() => handleModeSwitch('extract')}
-                    className={`px-4 py-2 rounded-lg font-medium transition ${mode === 'extract' ? 'bg-cyan-600 text-white' : 'bg-slate-800 text-slate-400'
+                    className={`px-4 py-2 rounded-lg font-medium transition ${mode === 'extract' ? 'bg-phos text-white' : 'bg-phos-line text-phos-dim'
                         }`}
                 >
                     Extract Data
@@ -173,7 +173,7 @@ export default function AudioStegoUI() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                    <label className="block text-sm font-medium mb-1 text-slate-300">
+                    <label className="block text-sm font-medium mb-1 text-phos-dim">
                         {mode === 'hide' ? 'Upload WAV Audio File' : 'Upload Stego WAV File'}
                     </label>
 
@@ -183,8 +183,8 @@ export default function AudioStegoUI() {
                         onDragLeave={handleDragLeave}
                         onDrop={handleDrop}
                         className={`relative border-2 border-dashed rounded-lg p-8 text-center transition cursor-pointer ${isDragging
-                                ? 'border-cyan-500 bg-cyan-500/10'
-                                : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
+                                ? 'border-phos bg-phos/10'
+                                : 'border-phos-line bg-phos-line/50 hover:border-phos-dim'
                             }`}
                     >
                         <input
@@ -195,26 +195,26 @@ export default function AudioStegoUI() {
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                         />
                         <div className="pointer-events-none space-y-2">
-                            <svg className="w-8 h-8 mx-auto text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-8 h-8 mx-auto text-phos-dim" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                             </svg>
-                            <p className="text-sm font-medium text-slate-300">
+                            <p className="text-sm font-medium text-phos-dim">
                                 {file ? file.name : 'Click to upload or drag .wav file'}
                             </p>
-                            <p className="text-xs text-slate-500">Supports uncompressed .WAV audio</p>
+                            <p className="text-xs text-phos-dim">Supports uncompressed .WAV audio</p>
                         </div>
                     </div>
                 </div>
 
                 {mode === 'hide' && (
                     <div>
-                        <label className="block text-sm font-medium mb-1 text-slate-300">Secret Text to Hide</label>
+                        <label className="block text-sm font-medium mb-1 text-phos-dim">Secret Text to Hide</label>
                         <textarea
                             rows={3}
                             value={secretText}
                             onChange={(e) => setSecretText(e.target.value)}
                             placeholder="Enter secret message to encode inside audio samples..."
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white"
+                            className="w-full bg-phos-line border border-phos-line rounded-lg p-2.5 text-white"
                         />
                     </div>
                 )}
@@ -222,7 +222,7 @@ export default function AudioStegoUI() {
                 <button
                     type="submit"
                     disabled={loading || !file}
-                    className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-medium py-2.5 rounded-lg transition disabled:opacity-50"
+                    className="w-full bg-phos hover:bg-phos text-phos-deep font-semibold py-2.5 rounded-lg transition disabled:opacity-50"
                 >
                     {loading ? 'Processing Audio...' : mode === 'hide' ? 'Hide Text into Audio' : 'Extract Hidden Text'}
                 </button>
@@ -235,9 +235,9 @@ export default function AudioStegoUI() {
             )}
 
             {mode === 'extract' && extractedText && (
-                <div className="mt-6 p-4 bg-slate-800 border border-slate-700 rounded-lg">
-                    <h3 className="text-sm font-medium text-slate-400 mb-1">Extracted Secret Message:</h3>
-                    <p className="text-cyan-400 text-lg font-mono break-all">{extractedText}</p>
+                <div className="mt-6 p-4 bg-phos-line border border-phos-line rounded-lg">
+                    <h3 className="text-sm font-medium text-phos-dim mb-1">Extracted Secret Message:</h3>
+                    <p className="text-phos-hot text-lg font-mono break-all">{extractedText}</p>
                 </div>
             )}
         </div>
