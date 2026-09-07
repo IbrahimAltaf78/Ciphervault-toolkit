@@ -71,16 +71,25 @@ export function CommandPalette() {
 
   if (!isOpen) {
     return (
-      // A discoverable way in, for anyone who does not know the shortcut.
+      // Dressed as a search field rather than a button: people look for a
+      // search box, and a box says 'type here' where an icon only says
+      // 'something happens'. It does not take focus itself — clicking opens the
+      // real input in the overlay, so there is one field, not two.
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="cv-btn fixed bottom-5 right-5 z-40 text-xs shadow-lg"
-        aria-label="Open command palette"
+        aria-label="Search tools"
+        aria-keyshortcuts="Control+K"
+        className="group flex w-full items-center gap-2.5 rounded-md border border-phos-line bg-phos-deep/60 px-3 py-2 text-left transition-colors hover:border-phos sm:w-72"
       >
-        <Search aria-hidden className="size-3.5" />
-        <span className="hidden sm:inline">Jump to</span>
-        <kbd className="ml-1 rounded border border-phos-line px-1 font-mono text-[10px] text-phos">
+        <Search
+          aria-hidden
+          className="size-4 shrink-0 text-phos-dim transition-colors group-hover:text-phos"
+        />
+        <span className="flex-1 truncate font-mono text-xs text-phos-dim">
+          Search 35 tools...
+        </span>
+        <kbd className="hidden shrink-0 rounded border border-phos-line px-1.5 py-0.5 font-mono text-[10px] text-phos-dim sm:block">
           Ctrl K
         </kbd>
       </button>

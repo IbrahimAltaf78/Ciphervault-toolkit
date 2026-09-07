@@ -3,7 +3,6 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { BinaryRain } from "@/components/layout/BinaryRain";
-import { CommandPalette } from "@/components/layout/CommandPalette";
 import { ScrollProgress } from "@/components/layout/ScrollProgress";
 import "./globals.css";
 
@@ -71,10 +70,10 @@ export default function RootLayout({
           <Footer />
         </div>
 
-        {/* Sits outside the page flow: it is an overlay, and its trigger is
-            pinned to the viewport rather than to any one screen. */}
+        {/* Pinned to the viewport rather than to any one screen. The command
+            palette lives in the navbar now, since its trigger belongs beside
+            the wordmark where people look for search. */}
         <ScrollProgress />
-        <CommandPalette />
       </body>
     </html>
   );
