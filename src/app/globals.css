@@ -648,3 +648,62 @@ h1, h2 { text-shadow: 0 0 12px rgba(34, 197, 94, 0.35); }
 @media (prefers-reduced-motion: reduce) {
   .phos-dot { animation: none; }
 }
+
+/* ===========================================================================
+   PHOSPHOR — revisions
+   ===========================================================================
+   Three corrections, appended so they win over the rules above.
+
+   1. The binary field covered the full width but was masked to a pair of side
+      bands, which left the middle of every page empty. The mask is dropped and
+      the field is dimmed instead, so the digits run edge to edge and still sit
+      behind the text rather than fighting it.
+
+   2. The bezel painted a heavy black vignette and an inset shadow over the
+      screen. Between them they swallowed the corners and dulled the field
+      underneath, so both come off; the border and the outer bloom are enough to
+      read the panel as a screen.
+
+   3. The screen ground was opaque, hiding the field behind it. It is now
+      translucent, so the binary shows through the panel. */
+
+.phos-backdrop {
+  -webkit-mask-image: none;
+  mask-image: none;
+  opacity: 0.85;
+}
+
+/* Digits run everywhere, so each one has to be quieter. */
+.phos-rain { font-size: 12px; }
+
+.crt {
+  background: rgba(7, 16, 8, 0.55);
+  box-shadow:
+    inset 0 0 0 1px rgba(34, 197, 94, 0.18),
+    0 0 90px -30px rgba(34, 197, 94, 0.35);
+}
+
+/* The vignette and the scanline wash both darkened the field; the bezel keeps
+   only its faint scanlines. */
+.crt::before { display: none; }
+.crt::after {
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.1) 0px,
+    rgba(0, 0, 0, 0.1) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+}
+
+/* Panels stay legible over a live background by being translucent rather than
+   opaque — the digits pass behind the text instead of stopping at its edge. */
+.phos-card,
+.cv-panel {
+  background: linear-gradient(
+    160deg,
+    rgba(10, 26, 14, 0.82),
+    rgba(7, 16, 8, 0.72)
+  );
+  backdrop-filter: blur(2px);
+}
