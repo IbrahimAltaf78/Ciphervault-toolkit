@@ -707,3 +707,145 @@ h1, h2 { text-shadow: 0 0 12px rgba(34, 197, 94, 0.35); }
   );
   backdrop-filter: blur(2px);
 }
+
+/* ===========================================================================
+   PHOSPHOR — power-on sequence
+   ===========================================================================
+   One orchestrated moment rather than effects scattered across the page: the
+   screen strikes, a refresh line sweeps down it, and the content rises in
+   order. Scattered micro-animations are what make an interface feel restless;
+   a single sequence with a beginning and an end feels built.
+
+   Everything here runs on page load and finishes. Nothing waits on a scroll
+   observer, so no element is ever parked invisible — the whole sequence is done
+   inside 700ms. */
+
+/* --- 1. The tube strikes -------------------------------------------------- */
+.phos-boot {
+  animation: phos-strike 620ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
+@keyframes phos-strike {
+  0%   { opacity: 0; transform: scaleY(0.4); filter: brightness(2.4); }
+  35%  { opacity: 1; transform: scaleY(1.02); filter: brightness(1.7); }
+  55%  { filter: brightness(0.85); }
+  70%  { filter: brightness(1.3); }
+  100% { opacity: 1; transform: scaleY(1); filter: brightness(1); }
+}
+
+/* --- 2. Refresh line ------------------------------------------------------
+   A single bright line travelling down the glass once, the way a CRT looks
+   mid-refresh when a camera catches it. */
+.phos-sweep::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 120px;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(74, 222, 128, 0.14),
+    rgba(217, 255, 228, 0.28),
+    rgba(74, 222, 128, 0.14),
+    transparent
+  );
+  animation: phos-scan 1100ms ease-out 380ms backwards;
+}
+
+@keyframes phos-scan {
+  from { transform: translateY(-140px); opacity: 0; }
+  25%  { opacity: 1; }
+  to   { transform: translateY(105vh); opacity: 0; }
+}
+
+/* --- 3. Content rises ----------------------------------------------------
+   Staggered by depth on the page, so the eye is led down it rather than
+   everything arriving at once. */
+.phos-rise {
+  animation: phos-rise 520ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+@keyframes phos-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.phos-delay-1 { animation-delay: 120ms; }
+.phos-delay-2 { animation-delay: 220ms; }
+.phos-delay-3 { animation-delay: 320ms; }
+.phos-delay-4 { animation-delay: 420ms; }
+
+/* --- 4. Card hover: light crosses the border ------------------------------ */
+.phos-card {
+  transition:
+    box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.35s,
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.phos-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 35%,
+    rgba(74, 222, 128, 0.09) 50%,
+    transparent 65%
+  );
+  background-size: 250% 100%;
+  background-position: 100% 0;
+  transition: opacity 0.3s;
+}
+
+.phos-card:hover::after {
+  opacity: 1;
+  animation: phos-wipe 850ms ease-out;
+}
+
+@keyframes phos-wipe {
+  from { background-position: 100% 0; }
+  to   { background-position: -50% 0; }
+}
+
+/* The icon tile answers the hover too, so the whole card feels like one object. */
+.phos-card:hover .phos-tile {
+  box-shadow: inset 0 0 20px -4px rgba(74, 222, 128, 0.9);
+  border-color: var(--color-phos-hot);
+  transition: box-shadow 0.35s, border-color 0.35s;
+}
+
+/* --- 5. Caret ------------------------------------------------------------- */
+.phos-caret::after {
+  content: "_";
+  margin-left: 0.06em;
+  color: var(--color-phos);
+  animation: phos-blink 1.1s steps(1) infinite;
+}
+
+@keyframes phos-blink {
+  0%, 45%   { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+/* --- Reduced motion -------------------------------------------------------
+   Everything above is atmosphere, so it all goes. Content still arrives; it
+   simply arrives already in place. */
+@media (prefers-reduced-motion: reduce) {
+  .phos-boot,
+  .phos-rise,
+  .phos-sweep::before,
+  .phos-card:hover::after,
+  .phos-caret::after {
+    animation: none;
+  }
+  .phos-rise,
+  .phos-boot { opacity: 1; transform: none; }
+  .phos-sweep::before { display: none; }
+}
