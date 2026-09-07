@@ -559,3 +559,92 @@ h1, h2 { text-shadow: 0 0 12px rgba(34, 197, 94, 0.35); }
 .bg-surface { background-color: var(--color-phos-panel); }
 .bg-background { background-color: var(--color-phos-deep); }
 .border-edge { border-color: var(--color-phos-line); }
+
+/* ===========================================================================
+   PHOSPHOR — page-wide backdrop
+   ===========================================================================
+   The binary field sits behind every page, fixed to the viewport rather than
+   the document, so it stays put while the page scrolls — a field that scrolls
+   away reads as content, and this is atmosphere.
+
+   Masked heavily toward the middle: the digits must never compete with the text
+   sitting on top of them. */
+.phos-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    #000 0%, rgba(0,0,0,.35) 22%, transparent 40%,
+    transparent 60%, rgba(0,0,0,.35) 78%, #000 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    #000 0%, rgba(0,0,0,.35) 22%, transparent 40%,
+    transparent 60%, rgba(0,0,0,.35) 78%, #000 100%
+  );
+}
+
+/* Content rides above the field. */
+.phos-above { position: relative; z-index: 1; }
+
+/* --- Corner brackets ------------------------------------------------------
+   Four L-shaped marks at the screen corners, the way a targeting overlay or an
+   instrument display frames its viewport. Drawn with one element and a pair of
+   gradients rather than four spans. */
+.phos-corners::before,
+.phos-corners::after {
+  content: "";
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  z-index: 3;
+  pointer-events: none;
+  border-color: var(--color-phos);
+  opacity: 0.7;
+}
+.phos-corners::before {
+  top: 14px; left: 14px;
+  border-top: 1.5px solid; border-left: 1.5px solid;
+}
+.phos-corners::after {
+  bottom: 14px; right: 14px;
+  border-bottom: 1.5px solid; border-right: 1.5px solid;
+}
+
+/* --- Status strip ---------------------------------------------------------
+   A readout line, in the manner of a terminal status bar. */
+.phos-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.5rem;
+  border-top: 1px solid var(--color-phos-line);
+  padding: 0.75rem 0;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-phos-dim);
+}
+
+.phos-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--color-phos);
+  box-shadow: 0 0 8px var(--color-phos);
+  animation: phos-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes phos-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.25; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .phos-dot { animation: none; }
+}
