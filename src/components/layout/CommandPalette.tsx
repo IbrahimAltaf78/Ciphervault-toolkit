@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { CornerDownLeft, Search } from "lucide-react";
 import { searchCommands, type Command } from "@/lib/commands";
@@ -100,7 +101,16 @@ export function CommandPalette() {
         </kbd>
       </button>
 
-      {!isOpen ? null : (
+      {/* Portalled to the body, and this is not optional. The navbar carries
+          backdrop-blur, and any backdrop-filter makes an element a containing
+          block for its position:fixed descendants — exactly like transform
+          does. Rendered in place, this overlay was therefore sized to the
+          navbar strip rather than the viewport: the panel still showed, because
+          nothing clipped it, but the backdrop only covered the header, so a
+          click anywhere below it missed the overlay entirely. */}
+      {!isOpen || typeof document === "undefined"
+        ? null
+        : createPortal(
         <div
           /* A press anywhere on the screen dismisses — the backdrop, the panel,
              the field, all of it. Nothing stops the event on its way up.
@@ -194,7 +204,8 @@ export function CommandPalette() {
               <span className="ml-auto">{results.length} tools</span>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );
