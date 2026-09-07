@@ -102,13 +102,14 @@ export function CommandPalette() {
 
       {!isOpen ? null : (
         <div
-          /* A click anywhere dismisses, the same as Escape — a dialog you can
-             only leave by keyboard traps anyone already reaching for the mouse.
-             The two controls that need their own clicks stop the event below.
+          /* A press anywhere on the screen dismisses — the backdrop, the panel,
+             the field, all of it. Nothing stops the event on its way up.
 
-             Bound to pointerdown rather than click, so a press that starts here
-             still closes even if the pointer drifts before release — the case
-             where a click event never fires and the dialog appears stuck. */
+             Bound to pointerdown rather than click for two reasons: a press
+             that starts here still closes even if the pointer drifts before
+             release, and the result rows can then act on the same event. On
+             click they never would — the press closes the dialog, the row
+             unmounts, and the click lands on nothing. */
           className="fixed inset-0 z-50 flex items-start justify-center bg-phos-void/80 p-4 pt-[12vh] backdrop-blur-sm"
           onPointerDown={close}
           role="presentation"
@@ -117,12 +118,9 @@ export function CommandPalette() {
             role="dialog"
             aria-modal="true"
             aria-label="Jump to a tool"
-                className="phos-card phos-rise w-full max-w-lg overflow-hidden"
+            className="phos-card phos-rise w-full max-w-lg overflow-hidden"
           >
-            <div
-          className="flex items-center gap-3 border-b border-phos-line px-4"
-          onPointerDown={(event) => event.stopPropagation()}
-        >
+            <div className="flex items-center gap-3 border-b border-phos-line px-4">
               <Search aria-hidden className="size-4 shrink-0 text-phos" />
               <input
                 autoFocus
@@ -141,14 +139,11 @@ export function CommandPalette() {
                 ESC
               </kbd>
             </div>
-    
+
             <ul
               id="command-results"
               ref={listRef}
               role="listbox"
-              /* The rows keep their own clicks, or a row would dismiss the
-                 dialog before it could navigate. */
-              onPointerDown={(event) => event.stopPropagation()}
               className="max-h-[52vh] overflow-y-auto p-2"
             >
               {results.length === 0 && (
@@ -156,13 +151,13 @@ export function CommandPalette() {
                   Nothing matches “{query}”.
                 </li>
               )}
-    
+
               {results.map((command, index) => {
                 // Group headings appear only when the group changes, so a filtered
                 // list does not repeat one heading per row.
                 const heading = command.group !== lastGroup ? command.group : null;
                 lastGroup = command.group;
-    
+
                 return (
                   <li key={command.href}>
                     {heading && (
@@ -175,7 +170,7 @@ export function CommandPalette() {
                       role="option"
                       aria-selected={index === active}
                       onMouseEnter={() => setActive(index)}
-                      onClick={() => choose(command)}
+                      onPointerDown={() => choose(command)}
                       className={`flex w-full items-center gap-3 rounded px-3 py-2 text-left text-sm transition-colors ${
                         index === active
                           ? "bg-phos/12 text-phos-hot"
@@ -191,11 +186,11 @@ export function CommandPalette() {
                 );
               })}
             </ul>
-    
+
             <div className="flex items-center gap-4 border-t border-phos-line px-4 py-2 font-mono text-[10px] uppercase tracking-widest text-phos-dim">
               <span>↑↓ move</span>
               <span>↵ open</span>
-              <span>esc closes</span>
+              <span>click anywhere or esc</span>
               <span className="ml-auto">{results.length} tools</span>
             </div>
           </div>
