@@ -120,7 +120,7 @@ function AudioWaveform({
     if (!fileOrUrl) return null;
 
     return (
-        <div className="w-full overflow-hidden rounded-lg border border-slate-800 bg-slate-950 p-2">
+        <div className="w-full overflow-hidden rounded-lg border border-phos-line bg-phos-deep p-2">
             <canvas
                 ref={canvasRef}
                 style={{ height: `${height}px` }}
@@ -431,25 +431,25 @@ export default function AudioStegoPage() {
             : 0;
 
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-10">
+        <div className="min-h-screen bg-phos-deep text-phos-white p-6 md:p-10">
             <div className="max-w-4xl mx-auto space-y-8">
                 {/* Header */}
                 <div>
                     <h1 className="text-3xl font-bold flex items-center gap-3">
-                        <Music className="text-cyan-400" /> Audio Steganography
+                        <Music className="text-phos-hot" /> Audio Steganography
                     </h1>
-                    <p className="text-slate-400 mt-1">
+                    <p className="text-phos-dim mt-1">
                         Embed and extract hidden text payloads inside uncompressed WAV audio signals using LSB modification.
                     </p>
                 </div>
 
                 {/* Tab Controls */}
-                <div className="flex border-b border-slate-800 gap-4">
+                <div className="flex border-b border-phos-line gap-4">
                     <button
                         onClick={() => switchMode('hide')}
                         className={`pb-3 font-medium transition-colors flex items-center gap-2 border-b-2 ${mode === 'hide'
-                                ? 'border-cyan-400 text-cyan-400'
-                                : 'border-transparent text-slate-400 hover:text-slate-200'
+                                ? 'border-phos-hot text-phos-hot'
+                                : 'border-transparent text-phos-dim hover:text-phos-white'
                             }`}
                     >
                         <Lock className="w-4 h-4" /> Hide Data
@@ -457,8 +457,8 @@ export default function AudioStegoPage() {
                     <button
                         onClick={() => switchMode('extract')}
                         className={`pb-3 font-medium transition-colors flex items-center gap-2 border-b-2 ${mode === 'extract'
-                                ? 'border-cyan-400 text-cyan-400'
-                                : 'border-transparent text-slate-400 hover:text-slate-200'
+                                ? 'border-phos-hot text-phos-hot'
+                                : 'border-transparent text-phos-dim hover:text-phos-white'
                             }`}
                     >
                         <Key className="w-4 h-4" /> Extract Data
@@ -472,10 +472,10 @@ export default function AudioStegoPage() {
                 )}
 
                 {/* Main Card */}
-                <div className="bg-slate-900 border border-slate-800 p-6 rounded-xl space-y-6">
+                <div className="bg-phos-panel border border-phos-line p-6 rounded-xl space-y-6">
                     {/* File Upload Section */}
                     <div className="space-y-2">
-                        <label className="text-sm text-slate-400 font-medium">
+                        <label className="text-sm text-phos-dim font-medium">
                             Upload WAV Audio File
                         </label>
                         <div
@@ -498,8 +498,8 @@ export default function AudioStegoPage() {
                                     processSelectedFile(e.dataTransfer.files[0]);
                             }}
                             className={`relative border-2 border-dashed rounded-lg p-6 text-center transition cursor-pointer ${isDragging
-                                    ? 'border-cyan-500 bg-cyan-500/10'
-                                    : 'border-slate-700 bg-slate-950/50 hover:border-cyan-500/50'
+                                    ? 'border-phos bg-phos/10'
+                                    : 'border-phos-line bg-phos-deep/50 hover:border-phos/50'
                                 }`}
                         >
                             <input
@@ -510,8 +510,8 @@ export default function AudioStegoPage() {
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                             />
                             <div className="pointer-events-none flex flex-col items-center justify-center">
-                                <Upload className="w-6 h-6 text-slate-400 mb-1" />
-                                <span className="text-xs text-slate-400">
+                                <Upload className="w-6 h-6 text-phos-dim mb-1" />
+                                <span className="text-xs text-phos-dim">
                                     {file ? file.name : 'Click to upload or drag .wav file'}
                                 </span>
                             </div>
@@ -519,15 +519,15 @@ export default function AudioStegoPage() {
                     </div>
 
                     {audioPreview && (
-                        <div className="p-4 bg-slate-950 border border-slate-800 rounded-lg space-y-3">
-                            <p className="text-xs font-medium text-slate-400 flex items-center gap-2">
-                                <FileAudio className="w-4 h-4 text-cyan-400" /> Selected Audio Preview:
+                        <div className="p-4 bg-phos-deep border border-phos-line rounded-lg space-y-3">
+                            <p className="text-xs font-medium text-phos-dim flex items-center gap-2">
+                                <FileAudio className="w-4 h-4 text-phos-hot" /> Selected Audio Preview:
                             </p>
                             <audio controls src={audioPreview} className="w-full" />
 
                             <div className="space-y-1 pt-1">
-                                <p className="text-xs text-slate-400 flex items-center gap-1.5 font-medium">
-                                    <Activity className="w-3.5 h-3.5 text-cyan-400" /> Carrier Signal Waveform:
+                                <p className="text-xs text-phos-dim flex items-center gap-1.5 font-medium">
+                                    <Activity className="w-3.5 h-3.5 text-phos-hot" /> Carrier Signal Waveform:
                                 </p>
                                 <AudioWaveform fileOrUrl={file} height={70} waveColor="#22d3ee" />
                             </div>
@@ -539,12 +539,12 @@ export default function AudioStegoPage() {
                         <div className="space-y-4">
                             <div className="space-y-1">
                                 <div className="flex justify-between items-center text-sm font-medium mb-1">
-                                    <label className="text-slate-400">Secret Text to Hide</label>
+                                    <label className="text-phos-dim">Secret Text to Hide</label>
                                     {file && maxCapacityBytes > 0 && (
                                         <span
                                             className={`text-xs flex items-center gap-1 ${payloadLength > maxCapacityBytes
                                                     ? 'text-red-400 font-semibold'
-                                                    : 'text-slate-400'
+                                                    : 'text-phos-dim'
                                                 }`}
                                         >
                                             <HardDrive className="w-3.5 h-3.5" />
@@ -558,17 +558,17 @@ export default function AudioStegoPage() {
                                     value={secretText}
                                     onChange={(e) => setSecretText(e.target.value)}
                                     placeholder="Enter secret message to encode inside audio samples..."
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:outline-none focus:border-cyan-500 text-slate-100"
+                                    className="w-full bg-phos-deep border border-phos-line rounded-lg p-3 text-sm focus:outline-none focus:border-phos text-phos-white"
                                 />
 
                                 {file && maxCapacityBytes > 0 && (
-                                    <div className="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden border border-slate-800 mt-2">
+                                    <div className="w-full bg-phos-deep h-1.5 rounded-full overflow-hidden border border-phos-line mt-2">
                                         <div
                                             className={`h-full transition-all duration-300 ${payloadLength > maxCapacityBytes
                                                     ? 'bg-red-500'
                                                     : capacityPercentage > 85
                                                         ? 'bg-amber-400'
-                                                        : 'bg-cyan-500'
+                                                        : 'bg-phos'
                                                 }`}
                                             style={{
                                                 width: `${Math.min(100, capacityPercentage)}%`,
@@ -579,7 +579,7 @@ export default function AudioStegoPage() {
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-sm text-slate-400 font-medium flex items-center gap-2">
+                                <label className="text-sm text-phos-dim font-medium flex items-center gap-2">
                                     <KeyRound className="w-4 h-4 text-amber-400" /> Encryption Passphrase (Optional)
                                 </label>
                                 <input
@@ -587,7 +587,7 @@ export default function AudioStegoPage() {
                                     value={passphrase}
                                     onChange={(e) => setPassphrase(e.target.value)}
                                     placeholder="Enter a passphrase to encrypt your secret payload..."
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm focus:outline-none focus:border-cyan-500 text-slate-100"
+                                    className="w-full bg-phos-deep border border-phos-line rounded-lg p-2.5 text-sm focus:outline-none focus:border-phos text-phos-white"
                                 />
                             </div>
 
@@ -599,7 +599,7 @@ export default function AudioStegoPage() {
                                     !secretText ||
                                     payloadLength > maxCapacityBytes
                                 }
-                                className="w-full bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-800 disabled:text-slate-600 font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                                className="w-full bg-phos hover:bg-phos disabled:bg-phos-line disabled:text-phos-dim font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:cursor-not-allowed"
                             >
                                 {loading ? (
                                     <RefreshCw className="w-4 h-4 animate-spin" />
@@ -609,14 +609,14 @@ export default function AudioStegoPage() {
                             </button>
 
                             {stegoAudioUrl && (
-                                <div className="p-4 bg-slate-950 border border-emerald-500/40 rounded-lg space-y-4 mt-4">
+                                <div className="p-4 bg-phos-deep border border-emerald-500/40 rounded-lg space-y-4 mt-4">
                                     <p className="text-sm font-semibold text-emerald-400 flex items-center gap-2">
                                         <ShieldCheck className="w-5 h-5" /> Encoding Complete! Stego-Audio Output:
                                     </p>
                                     <audio controls src={stegoAudioUrl} className="w-full" />
 
                                     <div className="space-y-1 pt-1">
-                                        <p className="text-xs text-slate-400 flex items-center gap-1.5 font-medium">
+                                        <p className="text-xs text-phos-dim flex items-center gap-1.5 font-medium">
                                             <Activity className="w-3.5 h-3.5 text-emerald-400" /> Stego Signal Waveform:
                                         </p>
                                         <AudioWaveform
@@ -642,7 +642,7 @@ export default function AudioStegoPage() {
                     {mode === 'extract' && (
                         <div className="space-y-4">
                             <div className="space-y-1">
-                                <label className="text-sm text-slate-400 font-medium flex items-center gap-2">
+                                <label className="text-sm text-phos-dim font-medium flex items-center gap-2">
                                     <KeyRound className="w-4 h-4 text-amber-400" /> Decryption Passphrase
                                 </label>
                                 <input
@@ -650,14 +650,14 @@ export default function AudioStegoPage() {
                                     value={passphrase}
                                     onChange={(e) => setPassphrase(e.target.value)}
                                     placeholder="Enter passphrase if the hidden data was encrypted..."
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm focus:outline-none focus:border-cyan-500 text-slate-100"
+                                    className="w-full bg-phos-deep border border-phos-line rounded-lg p-2.5 text-sm focus:outline-none focus:border-phos text-phos-white"
                                 />
                             </div>
 
                             <button
                                 onClick={handleExtract}
                                 disabled={loading || !file}
-                                className="w-full bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-800 disabled:text-slate-600 font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                                className="w-full bg-phos hover:bg-phos disabled:bg-phos-line disabled:text-phos-dim font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:cursor-not-allowed"
                             >
                                 {loading ? (
                                     <RefreshCw className="w-4 h-4 animate-spin" />
@@ -668,14 +668,14 @@ export default function AudioStegoPage() {
 
                             {extractedText && (
                                 <div className="space-y-2 mt-4">
-                                    <label className="text-sm font-medium text-cyan-400 flex items-center gap-2">
+                                    <label className="text-sm font-medium text-phos-hot flex items-center gap-2">
                                         <ShieldCheck className="w-4 h-4" /> Extracted Secret Payload:
                                     </label>
                                     <textarea
                                         readOnly
                                         value={extractedText}
                                         rows={4}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 font-mono text-sm text-slate-200 focus:outline-none"
+                                        className="w-full bg-phos-deep border border-phos-line rounded-lg p-3 font-mono text-sm text-phos-white focus:outline-none"
                                     />
                                 </div>
                             )}
