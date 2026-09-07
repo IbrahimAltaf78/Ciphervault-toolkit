@@ -83,17 +83,17 @@ export default function TextHidingToolPage() {
         <h1 className="text-3xl font-bold text-white capitalize">
           {techniqueType.replace("-", " ")} Steganography
         </h1>
-        <p className="text-slate-400 text-sm mt-1">
+        <p className="text-phos-dim text-sm mt-1">
           Conceal messages using client-side or server-assisted text hiding techniques.
         </p>
       </div>
 
-      <div className="flex gap-4 border-b border-slate-800 pb-3">
+      <div className="flex gap-4 border-b border-phos-line pb-3">
         <button
           onClick={() => handleTabSwitch("hide")}
           className={`font-semibold pb-1 transition ${mode === "hide"
-              ? "text-cyan-400 border-b-2 border-cyan-400"
-              : "text-slate-400 hover:text-slate-200"
+              ? "text-phos-hot border-b-2 border-phos-hot"
+              : "text-phos-dim hover:text-phos-white"
             }`}
         >
           1. Hide Text
@@ -101,8 +101,8 @@ export default function TextHidingToolPage() {
         <button
           onClick={() => handleTabSwitch("reveal")}
           className={`font-semibold pb-1 transition ${mode === "reveal"
-              ? "text-cyan-400 border-b-2 border-cyan-400"
-              : "text-slate-400 hover:text-slate-200"
+              ? "text-phos-hot border-b-2 border-phos-hot"
+              : "text-phos-dim hover:text-phos-white"
             }`}
         >
           2. Reveal Text
@@ -112,35 +112,35 @@ export default function TextHidingToolPage() {
       {mode === "hide" ? (
         <div className="space-y-4">
           <div>
-            <label className="text-sm text-slate-300 font-medium">Cover Text (Public Carrier)</label>
+            <label className="text-sm text-phos-dim font-medium">Cover Text (Public Carrier)</label>
             <textarea
               rows={3}
               value={coverText}
               onChange={(e) => setCoverText(e.target.value)}
               placeholder="Enter public text..."
-              className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white outline-none focus:border-cyan-400 mt-1"
+              className="w-full bg-phos-panel border border-phos-line rounded-xl p-3 text-white outline-none focus:border-phos-hot mt-1"
             />
           </div>
           <div>
-            <label className="text-sm text-slate-300 font-medium">Secret Payload</label>
+            <label className="text-sm text-phos-dim font-medium">Secret Payload</label>
             <input
               type="text"
               value={secretText}
               onChange={(e) => setSecretText(e.target.value)}
               placeholder="Enter secret message to conceal..."
-              className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white outline-none focus:border-cyan-400 mt-1"
+              className="w-full bg-phos-panel border border-phos-line rounded-xl p-3 text-white outline-none focus:border-phos-hot mt-1"
             />
           </div>
         </div>
       ) : (
         <div>
-          <label className="text-sm text-slate-300 font-medium">Steganographic Text</label>
+          <label className="text-sm text-phos-dim font-medium">Steganographic Text</label>
           <textarea
             rows={4}
             value={stegoText}
             onChange={(e) => setStegoText(e.target.value)}
             placeholder="Paste steganographic text here..."
-            className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white outline-none focus:border-cyan-400 mt-1"
+            className="w-full bg-phos-panel border border-phos-line rounded-xl p-3 text-white outline-none focus:border-phos-hot mt-1"
           />
         </div>
       )}
@@ -148,7 +148,7 @@ export default function TextHidingToolPage() {
       <button
         onClick={handleProcess}
         disabled={loading}
-        className="w-full py-3 bg-cyan-500 text-slate-950 font-bold rounded-xl hover:bg-cyan-400 disabled:opacity-40 transition"
+        className="w-full py-3 bg-phos text-phos-deep font-bold rounded-xl hover:bg-phos-hot disabled:opacity-40 transition"
       >
         {loading ? "Processing..." : mode === "hide" ? "Generate Stego Text" : "Extract Secret Text"}
       </button>
@@ -160,17 +160,17 @@ export default function TextHidingToolPage() {
       )}
 
       {stegoText && mode === "hide" && (
-        <div className="p-6 bg-slate-900 border border-slate-800 rounded-2xl space-y-3">
-          <h2 className="text-sm font-semibold text-cyan-400">Stego Output:</h2>
+        <div className="p-6 bg-phos-panel border border-phos-line rounded-2xl space-y-3">
+          <h2 className="text-sm font-semibold text-phos-hot">Stego Output:</h2>
           <textarea
             readOnly
             rows={3}
             value={stegoText}
-            className="w-full bg-slate-950 p-3 rounded-xl font-mono text-slate-200 border border-slate-800 outline-none"
+            className="w-full bg-phos-deep p-3 rounded-xl font-mono text-phos-white border border-phos-line outline-none"
           />
           <button
             onClick={() => navigator.clipboard.writeText(stegoText)}
-            className="px-4 py-2 bg-slate-800 text-slate-200 hover:bg-slate-700 rounded-lg text-sm font-medium transition"
+            className="px-4 py-2 bg-phos-line text-phos-white hover:bg-phos-line rounded-lg text-sm font-medium transition"
           >
             Copy Output
           </button>
@@ -178,9 +178,9 @@ export default function TextHidingToolPage() {
       )}
 
       {extractedSecret && mode === "reveal" && (
-        <div className="p-6 bg-slate-900 border border-emerald-800/60 rounded-2xl space-y-2">
+        <div className="p-6 bg-phos-panel border border-emerald-800/60 rounded-2xl space-y-2">
           <h2 className="text-sm text-emerald-400 font-semibold">Extracted Payload:</h2>
-          <div className="p-4 bg-slate-950 rounded-xl font-mono text-cyan-300 text-lg break-all border border-slate-800">
+          <div className="p-4 bg-phos-deep rounded-xl font-mono text-phos-hot text-lg break-all border border-phos-line">
             {extractedSecret}
           </div>
         </div>
