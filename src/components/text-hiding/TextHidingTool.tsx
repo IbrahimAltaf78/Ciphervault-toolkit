@@ -113,7 +113,7 @@ export function TextHidingTool({ technique }: TextHidingToolProps) {
               className={`rounded-lg border px-3 py-1.5 font-mono text-xs uppercase tracking-widest transition-colors ${
                 isCurrent
                   ? "accent-soft accent-border accent-text"
-                  : "border-edge text-muted hover:border-slate-600 hover:text-foreground"
+                  : "border-edge text-muted hover:border-phos-dim hover:text-foreground"
               }`}
             >
               {TEXT_HIDING_TECHNIQUES[slug].label}
@@ -246,7 +246,7 @@ export function TextHidingTool({ technique }: TextHidingToolProps) {
             {result ? (
               result.ok ? (
                 displayed || (
-                  <span className="text-slate-600">
+                  <span className="text-phos-dim">
                     The message was empty, so the cover is unchanged.
                   </span>
                 )
@@ -254,7 +254,7 @@ export function TextHidingTool({ technique }: TextHidingToolProps) {
                 result.error
               )
             ) : (
-              <span className="text-slate-600">
+              <span className="text-phos-dim">
                 {isHiding
                   ? "Enter a secret message to see the result."
                   : "Paste text above to check it for a hidden message."}

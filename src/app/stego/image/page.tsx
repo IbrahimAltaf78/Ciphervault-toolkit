@@ -156,29 +156,29 @@ export default function ImageStegoPage() {
     };
 
     return (
-        <main className="min-h-screen bg-slate-950 text-slate-100 py-10 px-4 sm:px-6 lg:px-8">
+        <main className="min-h-screen bg-phos-deep text-phos-white py-10 px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl mx-auto space-y-6">
                 {/* Page Header */}
                 <div className="text-center space-y-2">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-phos/10 border border-phos/20 text-phos-hot text-xs font-semibold">
                         <EyeOff className="h-4 w-4" />
                         <span>LSB & DWT Steganography</span>
                     </div>
-                    <h1 className="text-3xl font-extrabold tracking-tight text-slate-100">
+                    <h1 className="text-3xl font-extrabold tracking-tight text-phos-white">
                         Image Steganography
                     </h1>
-                    <p className="text-sm text-slate-400">
+                    <p className="text-sm text-phos-dim">
                         Hide and reveal secret text inside PNG bit planes with optional AES-GCM encryption.
                     </p>
                 </div>
 
                 {/* Tab Switcher */}
-                <div className="flex border-b border-slate-800">
+                <div className="flex border-b border-phos-line">
                     <button
                         onClick={() => handleTabChange("hide")}
                         className={`flex items-center gap-2 py-3 px-6 text-sm font-semibold border-b-2 transition-colors ${activeTab === "hide"
-                                ? "border-cyan-500 text-cyan-400"
-                                : "border-transparent text-slate-400 hover:text-slate-200"
+                                ? "border-phos text-phos-hot"
+                                : "border-transparent text-phos-dim hover:text-phos-white"
                             }`}
                     >
                         <Lock className="h-4 w-4" />
@@ -187,8 +187,8 @@ export default function ImageStegoPage() {
                     <button
                         onClick={() => handleTabChange("extract")}
                         className={`flex items-center gap-2 py-3 px-6 text-sm font-semibold border-b-2 transition-colors ${activeTab === "extract"
-                                ? "border-cyan-500 text-cyan-400"
-                                : "border-transparent text-slate-400 hover:text-slate-200"
+                                ? "border-phos text-phos-hot"
+                                : "border-transparent text-phos-dim hover:text-phos-white"
                             }`}
                     >
                         <Eye className="h-4 w-4" />
@@ -205,10 +205,10 @@ export default function ImageStegoPage() {
                 )}
 
                 {/* Form Area */}
-                <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-6 backdrop-blur-sm space-y-6">
+                <div className="bg-phos-panel/60 border border-phos-line rounded-xl p-6 backdrop-blur-sm space-y-6">
                     {/* Image File Upload Area with Drag and Drop */}
                     <div>
-                        <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                        <label className="block text-xs font-semibold text-phos-dim uppercase tracking-wider mb-2">
                             {activeTab === "hide" ? "Upload Carrier Image (PNG/BMP)" : "Upload Stego Image (PNG/BMP)"}
                         </label>
                         <label
@@ -216,12 +216,12 @@ export default function ImageStegoPage() {
                             onDragLeave={handleDragLeave}
                             onDrop={handleDrop}
                             className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-6 cursor-pointer transition-colors ${isDragging
-                                    ? "border-cyan-400 bg-cyan-950/20"
-                                    : "border-slate-700 hover:border-cyan-500/50 bg-slate-950/40"
+                                    ? "border-phos-hot bg-phos-deep/20"
+                                    : "border-phos-line hover:border-phos/50 bg-phos-deep/40"
                                 }`}
                         >
-                            <Upload className={`h-8 w-8 mb-2 ${isDragging ? "text-cyan-400" : "text-slate-400"}`} />
-                            <span className="text-sm font-medium text-slate-300">
+                            <Upload className={`h-8 w-8 mb-2 ${isDragging ? "text-phos-hot" : "text-phos-dim"}`} />
+                            <span className="text-sm font-medium text-phos-dim">
                                 {selectedFile
                                     ? selectedFile.name
                                     : isDragging
@@ -241,10 +241,10 @@ export default function ImageStegoPage() {
                     {/* Image Preview */}
                     {previewUrl && (
                         <div className="space-y-2">
-                            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                            <span className="text-xs font-semibold text-phos-dim uppercase tracking-wider">
                                 {activeTab === "hide" ? "Carrier Image Preview" : "Stego Image Preview"}
                             </span>
-                            <div className="flex justify-center bg-slate-950 rounded-lg border border-slate-800 p-4 max-h-64 overflow-hidden">
+                            <div className="flex justify-center bg-phos-deep rounded-lg border border-phos-line p-4 max-h-64 overflow-hidden">
                                 <img src={previewUrl} alt="Preview" className="object-contain max-h-56 rounded" />
                             </div>
                         </div>
@@ -254,7 +254,7 @@ export default function ImageStegoPage() {
                     {activeTab === "hide" && (
                         <form onSubmit={handleHideSubmit} className="space-y-5">
                             <div>
-                                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                                <label className="block text-xs font-semibold text-phos-dim uppercase tracking-wider mb-2">
                                     Secret Text to Hide
                                 </label>
                                 <textarea
@@ -262,13 +262,13 @@ export default function ImageStegoPage() {
                                     value={secretText}
                                     onChange={(e) => setSecretText(e.target.value)}
                                     placeholder="Enter message to embed into image..."
-                                    className="w-full rounded-lg bg-slate-950 border border-slate-800 p-3 text-sm text-slate-100 focus:outline-none focus:border-cyan-500"
+                                    className="w-full rounded-lg bg-phos-deep border border-phos-line p-3 text-sm text-phos-white focus:outline-none focus:border-phos"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                    <Shield className="h-3.5 w-3.5 text-cyan-400" />
+                                <label className="block text-xs font-semibold text-phos-dim uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                    <Shield className="h-3.5 w-3.5 text-phos-hot" />
                                     Encryption Passphrase (Optional)
                                 </label>
                                 <input
@@ -276,14 +276,14 @@ export default function ImageStegoPage() {
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="Optional password for AES-256-GCM..."
-                                    className="w-full rounded-lg bg-slate-950 border border-slate-800 p-3 text-sm text-slate-100 focus:outline-none focus:border-cyan-500"
+                                    className="w-full rounded-lg bg-phos-deep border border-phos-line p-3 text-sm text-phos-white focus:outline-none focus:border-phos"
                                 />
                             </div>
 
                             <button
                                 type="submit"
                                 disabled={loading || !selectedFile}
-                                className="w-full py-3 px-4 rounded-lg bg-cyan-500 hover:bg-cyan-400 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-bold transition-colors flex items-center justify-center gap-2"
+                                className="w-full py-3 px-4 rounded-lg bg-phos hover:bg-phos-hot disabled:bg-phos-line disabled:text-phos-dim text-phos-deep font-bold transition-colors flex items-center justify-center gap-2"
                             >
                                 {loading ? <RefreshCw className="h-5 w-5 animate-spin" /> : <Lock className="h-5 w-5" />}
                                 {loading ? "Processing..." : "Hide Text into Image"}
@@ -295,8 +295,8 @@ export default function ImageStegoPage() {
                     {activeTab === "extract" && (
                         <form onSubmit={handleExtractSubmit} className="space-y-5">
                             <div>
-                                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                    <Shield className="h-3.5 w-3.5 text-cyan-400" />
+                                <label className="block text-xs font-semibold text-phos-dim uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                    <Shield className="h-3.5 w-3.5 text-phos-hot" />
                                     Decryption Passphrase (If encrypted)
                                 </label>
                                 <input
@@ -304,14 +304,14 @@ export default function ImageStegoPage() {
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="Enter passphrase if payload was encrypted..."
-                                    className="w-full rounded-lg bg-slate-950 border border-slate-800 p-3 text-sm text-slate-100 focus:outline-none focus:border-cyan-500"
+                                    className="w-full rounded-lg bg-phos-deep border border-phos-line p-3 text-sm text-phos-white focus:outline-none focus:border-phos"
                                 />
                             </div>
 
                             <button
                                 type="submit"
                                 disabled={loading || !selectedFile}
-                                className="w-full py-3 px-4 rounded-lg bg-cyan-500 hover:bg-cyan-400 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-bold transition-colors flex items-center justify-center gap-2"
+                                className="w-full py-3 px-4 rounded-lg bg-phos hover:bg-phos-hot disabled:bg-phos-line disabled:text-phos-dim text-phos-deep font-bold transition-colors flex items-center justify-center gap-2"
                             >
                                 {loading ? <RefreshCw className="h-5 w-5 animate-spin" /> : <Eye className="h-5 w-5" />}
                                 {loading ? "Extracting..." : "Extract Text from Image"}
@@ -322,15 +322,15 @@ export default function ImageStegoPage() {
 
                 {/* Results Display */}
                 {stegoImageResult && activeTab === "hide" && (
-                    <div className="bg-slate-900/80 border border-cyan-500/30 rounded-xl p-6 space-y-4">
-                        <h3 className="text-lg font-bold text-cyan-400">Stego Image Generated</h3>
-                        <div className="flex justify-center bg-slate-950 p-4 rounded-lg border border-slate-800">
+                    <div className="bg-phos-panel/80 border border-phos/30 rounded-xl p-6 space-y-4">
+                        <h3 className="text-lg font-bold text-phos-hot">Stego Image Generated</h3>
+                        <div className="flex justify-center bg-phos-deep p-4 rounded-lg border border-phos-line">
                             <img src={stegoImageResult} alt="Stego Result" className="max-h-64 object-contain rounded" />
                         </div>
                         <a
                             href={stegoImageResult}
                             download={downloadFilename}
-                            className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-400 font-semibold border border-cyan-500/20 transition-colors"
+                            className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-phos-line hover:bg-phos-line text-phos-hot font-semibold border border-phos/20 transition-colors"
                         >
                             <Download className="h-4 w-4" />
                             Download Stego Image
@@ -339,9 +339,9 @@ export default function ImageStegoPage() {
                 )}
 
                 {extractedResult !== null && activeTab === "extract" && (
-                    <div className="bg-slate-900/80 border border-cyan-500/30 rounded-xl p-6 space-y-3">
-                        <h3 className="text-lg font-bold text-cyan-400">Extracted Payload</h3>
-                        <div className="p-4 rounded-lg bg-slate-950 border border-slate-800 text-slate-100 font-mono text-sm whitespace-pre-wrap break-all">
+                    <div className="bg-phos-panel/80 border border-phos/30 rounded-xl p-6 space-y-3">
+                        <h3 className="text-lg font-bold text-phos-hot">Extracted Payload</h3>
+                        <div className="p-4 rounded-lg bg-phos-deep border border-phos-line text-phos-white font-mono text-sm whitespace-pre-wrap break-all">
                             {extractedResult || "(No text found)"}
                         </div>
                     </div>

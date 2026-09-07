@@ -90,7 +90,7 @@ export function EncodingTool({ type }: EncodingToolProps) {
               className={`rounded-lg border px-3 py-1.5 font-mono text-xs uppercase tracking-widest transition-colors ${
                 isCurrent
                   ? "accent-soft accent-border accent-text"
-                  : "border-edge text-muted hover:border-slate-600 hover:text-foreground"
+                  : "border-edge text-muted hover:border-phos-dim hover:text-foreground"
               }`}
             >
               {ENCODING_CODECS[slug].label}
@@ -169,7 +169,7 @@ export function EncodingTool({ type }: EncodingToolProps) {
           >
             {result.ok ? (
               result.value || (
-                <span className="text-slate-600">
+                <span className="text-phos-dim">
                   Output appears here as you type.
                 </span>
               )

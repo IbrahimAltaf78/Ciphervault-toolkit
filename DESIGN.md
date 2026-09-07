@@ -57,3 +57,33 @@ CipherVault adopts a **dark-first cybersecurity aesthetic**. The visual interfac
   * **Success / Encrypted:** Solid background `emerald-950` with text `emerald-400` and border `emerald-800`.
   * **Error / Invalid Key:** Solid background `red-950` with text `red-400` and border `red-800`.
 * **Payload Dropzones:** File upload areas display dashed borders (`border-dashed border-slate-700`) that turn accent color on hover or file drag events.
+
+---
+
+## Addendum — Phosphor theme (current)
+
+The palette above describes the original six-accent treatment. The interface now
+ships a **monochrome phosphor CRT** theme instead: one green hue across every
+module, on a near-black ground, with the light bleeding past each edge the way it
+does on a real tube.
+
+| Token | Hex | Purpose |
+| :--- | :--- | :--- |
+| `--color-phos-void` | `#050a06` | Outside the screen bezel |
+| `--color-phos-deep` | `#071008` | Screen ground |
+| `--color-phos-panel` | `#0a1a0e` | Card and panel fill |
+| `--color-phos-line` | `#1c4d2a` | Resting borders |
+| `--color-phos-dim` | `#2f7a44` | Secondary text |
+| `--color-phos` | `#22c55e` | The phosphor itself |
+| `--color-phos-hot` | `#4ade80` | Highlights and hover |
+| `--color-phos-white` | `#d9ffe4` | Headline ink |
+
+**What this trades away.** The six paradigm accents gave each module its own
+identity at a glance. A monochrome theme cannot do that, so module identity moved
+to the icon and the label.  in  is kept
+and now maps every paradigm to the same green — editing that one table is all it
+would take to give the six their colours back.
+
+**What is deliberately not green.** Status colours stay as they were: red for a
+failure, amber for a warning, emerald for success. Those carry meaning, and folding
+them into the theme hue would throw that meaning away.
