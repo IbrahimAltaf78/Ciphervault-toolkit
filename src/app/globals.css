@@ -849,3 +849,93 @@ h1, h2 { text-shadow: 0 0 12px rgba(34, 197, 94, 0.35); }
   .phos-boot { opacity: 1; transform: none; }
   .phos-sweep::before { display: none; }
 }
+
+/* ===========================================================================
+   PHOSPHOR — motion, second pass
+   =========================================================================== */
+
+/* --- Route change ---------------------------------------------------------
+   Shorter and flatter than the cold-boot strike: arriving at a new screen
+   should feel like the same device changing channel, not powering on again. */
+.phos-enter {
+  animation: phos-enter 380ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+@keyframes phos-enter {
+  from { opacity: 0; transform: translateY(8px); filter: brightness(1.5); }
+  to   { opacity: 1; transform: translateY(0); filter: brightness(1); }
+}
+
+/* --- Scroll position ------------------------------------------------------
+   A hairline across the top edge. On long tool pages it is the only indication
+   of how much is left. */
+.phos-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  z-index: 40;
+  width: 0;
+  background: linear-gradient(90deg, var(--color-phos), var(--color-phos-hot));
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.8);
+  transition: width 90ms linear;
+  pointer-events: none;
+}
+
+/* --- Press ----------------------------------------------------------------
+   Buttons take a real, if tiny, dent. Without it a click on a control that
+   does its work off-screen gives no feedback at all. */
+.cv-btn:active:not(:disabled),
+.phos-btn:active {
+  transform: translateY(1px) scale(0.985);
+}
+.cv-btn,
+.phos-btn {
+  transition:
+    color 0.2s,
+    background-color 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s,
+    transform 0.12s;
+}
+
+/* --- Focus ----------------------------------------------------------------
+   The glow opens outward rather than snapping on, so tabbing through a form
+   reads as movement between fields instead of a series of flashes. */
+.cv-field {
+  transition: border-color 0.25s, box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* --- Icon tiles -----------------------------------------------------------
+   A small lift on the card hover, so the glyph belongs to the card rather than
+   sitting on top of it. */
+.phos-card .phos-tile {
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s,
+    border-color 0.35s;
+}
+.phos-card:hover .phos-tile {
+  transform: translateY(-2px);
+}
+
+/* --- Confirmation ---------------------------------------------------------
+   A copied or succeeded state pops once. A confirmation that fades in is easy
+   to miss; one that overshoots is not. */
+.phos-pop {
+  animation: phos-pop 340ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes phos-pop {
+  0%   { transform: scale(0.6); opacity: 0; }
+  60%  { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .phos-enter,
+  .phos-pop { animation: none; }
+  .phos-enter { opacity: 1; transform: none; }
+  .phos-progress { transition: none; }
+  .cv-btn:active:not(:disabled),
+  .phos-btn:active,
+  .phos-card:hover .phos-tile { transform: none; }
+}

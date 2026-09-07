@@ -161,7 +161,7 @@ export function CommandPalette() {
                 >
                   <span className="flex-1 truncate">{command.label}</span>
                   {index === active && (
-                    <CornerDownLeft aria-hidden className="size-3.5 shrink-0" />
+                    <CornerDownLeft aria-hidden className="phos-pop size-3.5 shrink-0" />
                   )}
                 </button>
               </li>
