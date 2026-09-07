@@ -939,3 +939,198 @@ h1, h2 { text-shadow: 0 0 12px rgba(34, 197, 94, 0.35); }
   .phos-btn:active,
   .phos-card:hover .phos-tile { transform: none; }
 }
+
+/* ===========================================================================
+   PHOSPHOR — refinement pass
+   ===========================================================================
+   Same terminal, better built. What separates a convincing hacker interface
+   from a costume is restraint: the effects stay, but they stop being applied to
+   everything at once.
+
+   Three things were making the page shout. Every heading glowed, so nothing
+   did. Every card carried a full-brightness border, so the eye had no route
+   through the grid. And the secondary text sat too close to the ground to read
+   comfortably, which is the fastest way for a design to feel amateur. */
+
+/* --- 1. Text scale, made readable ---------------------------------------
+   #2f7a44 on the screen ground is around 3:1 — under the 4.5:1 body-text
+   floor, and it showed. Secondary text moves up; the old value survives as a
+   separate token for the things that genuinely should recede. */
+@theme {
+  --color-phos-dim: #6f9e80;    /* secondary text — now legible */
+  --color-phos-faint: #3d7a52;  /* captions, hints, disabled */
+}
+
+/* --- 2. Glow, spent in one place -----------------------------------------
+   A page where everything glows has no focal point. Only elements that opt in
+   with .phos-glow emit now. */
+h1, h2 { text-shadow: none; }
+
+/* --- 3. Cards at rest ----------------------------------------------------
+   Muted edge until the pointer arrives. The grid reads as a set of objects
+   rather than a wall of lit rectangles, and hover becomes meaningful because
+   it is the only thing lit. */
+.phos-card {
+  border-color: var(--color-phos-line);
+  box-shadow:
+    0 0 0 1px rgba(34, 197, 94, 0.04),
+    0 12px 28px -20px rgba(0, 0, 0, 0.9);
+}
+
+.phos-card:hover {
+  border-color: var(--color-phos);
+  box-shadow:
+    0 0 26px -8px rgba(34, 197, 94, 0.4),
+    0 14px 30px -20px rgba(0, 0, 0, 0.9);
+}
+
+/* Panels hold content rather than announce themselves. */
+.cv-panel {
+  border-color: var(--color-phos-line);
+  box-shadow: 0 14px 34px -24px rgba(0, 0, 0, 0.95);
+}
+
+/* --- 4. Small parts, quieter --------------------------------------------- */
+.phos-pill {
+  border-color: var(--color-phos-line);
+  color: var(--color-phos);
+  background: rgba(34, 197, 94, 0.06);
+  box-shadow: none;
+}
+
+.phos-tile {
+  border-color: var(--color-phos-line);
+  box-shadow: none;
+}
+.phos-card:hover .phos-tile {
+  border-color: var(--color-phos);
+  box-shadow: inset 0 0 18px -8px rgba(74, 222, 128, 0.8);
+}
+
+.phos-btn { box-shadow: none; }
+.phos-btn:hover { box-shadow: 0 0 20px -8px rgba(74, 222, 128, 0.7); }
+
+/* --- 5. Headline emission, softened --------------------------------------
+   Three stacked shadows read as a blur rather than a glow. Two, tighter. */
+.phos-glow-strong {
+  text-shadow:
+    0 0 12px rgba(74, 222, 128, 0.45),
+    0 0 42px rgba(34, 197, 94, 0.22);
+}
+.phos-glow {
+  text-shadow: 0 0 10px rgba(34, 197, 94, 0.35);
+}
+
+/* --- 6. Backdrop, down to texture ----------------------------------------
+   It should register at the edge of vision and never be read. */
+.phos-backdrop { opacity: 0.4; }
+.phos-rain { font-size: 11px; letter-spacing: 0.04em; }
+
+/* Scanlines finer and fainter — visible on a large flat colour, invisible
+   under text, which is the only place they were ever doing harm. */
+.crt::after {
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.055) 0px,
+    rgba(0, 0, 0, 0.055) 1px,
+    transparent 1px,
+    transparent 5px
+  );
+}
+
+/* --- 7. Type ------------------------------------------------------------
+   Headings settle from black to bold and tighten up. Black weight at display
+   size is a poster, not an interface. */
+h1 { font-weight: 800; letter-spacing: -0.035em; }
+h2, h3 { letter-spacing: -0.02em; }
+
+/* Uppercase mono labels need the tracking; sentence-case text does not. */
+.cv-label { color: var(--color-phos-faint); }
+
+/* ===========================================================================
+   PHOSPHOR — one system
+   ===========================================================================
+   Three inconsistencies were doing more damage than any single effect. Each is
+   fixed at the token level rather than by editing forty files. */
+
+/* --- 1. Corner radius ----------------------------------------------------
+   Six different radii were in use — lg, xl, 2xl, full, md and sm — because
+   each page picked its own. Mixed radii are the fastest way for an interface
+   to look assembled rather than designed.
+
+   The scale is redefined tight rather than removed: a terminal reads as
+   precise, and precision is square-ish. Existing classes keep working and
+   simply land closer together, so the difference between one card and the
+   next stops registering. */
+@theme {
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 6px;
+  --radius-2xl: 8px;
+  --radius-3xl: 10px;
+}
+
+/* --- 2. Ink --------------------------------------------------------------
+   Pure white was hardcoded in thirty-eight places. On a green-tinted ground it
+   reads as a foreign element — the eye notices it is the one colour that was
+   not chosen. Everything lands on the theme ink instead. */
+.text-white { color: var(--color-phos-white); }
+.bg-white { background-color: var(--color-phos-white); }
+.text-black { color: var(--color-phos-void); }
+.bg-black { background-color: var(--color-phos-void); }
+
+/* --- 3. Page headings ----------------------------------------------------
+   Four weights were in play across four hub pages: black, extrabold, bold and
+   a hardcoded white. One rule, so a hub looks like a hub wherever you land. */
+main h1 {
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--color-phos-white);
+}
+
+/* The hero is the deliberate exception, and says so by opting in. */
+main h1.phos-glow-strong,
+main h1 .phos-glow-strong {
+  font-weight: 800;
+}
+
+/* ===========================================================================
+   PHOSPHOR — correction
+   ===========================================================================
+   The previous pass over-corrected. Muting every border to #1c4d2a left cards
+   sitting at 2.04:1 against the ground — technically present, visually absent.
+   The page went from shouting to saying nothing, which is the emptiness that
+   reads as "something is missing".
+
+   Restraint is not the same as absence. Cards get their edge back at 3.1:1 —
+   enough to read as objects, well short of the lit wall they were before — plus
+   a faint inner light along the top, the way a panel catches its own glow. */
+@theme {
+  --color-phos-line: #276b40;   /* resting borders — visible again */
+  --color-phos-edge: #17402406; /* hairlines inside a panel */
+}
+
+.phos-card {
+  border-color: var(--color-phos-line);
+  box-shadow:
+    inset 0 1px 0 0 rgba(74, 222, 128, 0.07),
+    0 0 18px -14px rgba(34, 197, 94, 0.5),
+    0 14px 30px -22px rgba(0, 0, 0, 0.9);
+}
+
+.cv-panel {
+  border-color: var(--color-phos-line);
+  box-shadow:
+    inset 0 1px 0 0 rgba(74, 222, 128, 0.06),
+    0 16px 36px -26px rgba(0, 0, 0, 0.95);
+}
+
+/* The icon tile is the card's one bright note at rest — a single point of
+   colour per card gives the grid a rhythm without lighting all of it. */
+.phos-tile {
+  border-color: var(--color-phos-line);
+  color: var(--color-phos-hot);
+  background: rgba(34, 197, 94, 0.1);
+  box-shadow: inset 0 0 14px -8px rgba(74, 222, 128, 0.7);
+}

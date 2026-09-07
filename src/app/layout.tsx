@@ -59,7 +59,7 @@ export default function RootLayout({
             reads as content, and this is atmosphere. Masked toward the centre
             so it never competes with the text on top of it. */}
         <div aria-hidden className="phos-backdrop">
-          <BinaryRain columns={34} depth={90} />
+          <BinaryRain columns={20} depth={80} />
         </div>
 
         <div className="phos-above flex min-h-dvh flex-col">
