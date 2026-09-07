@@ -1,141 +1,153 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
-    Shield,
-    Lock,
-    FileSearch,
-    EyeOff,
-    Sparkles,
-    ChevronRight,
-    Cpu,
-    Type,
-    Stamp,
-    ExternalLink,
+  AudioLines,
+  ChevronRight,
+  Image as ImageIcon,
+  Layers,
+  ScanSearch,
+  Video,
+  type LucideIcon,
 } from "lucide-react";
 
-interface Module {
-    title: string;
-    description: string;
-    icon: React.ReactNode;
-    href: string;
-    badge?: string;
-    color: string;
+export const metadata: Metadata = {
+  title: "Steganography — CipherVault",
+  description:
+    "Hide payloads inside images, audio and video using LSB and frequency-domain embedding.",
+};
+
+interface Tool {
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  href: string;
+  carrier: string;
+  /** Why you would pick this one over its neighbour. */
+  tradeoff: string;
 }
 
-export default function Home() {
-    const modules: Module[] = [
-        {
-            title: "Steganography Engine",
-            description:
-                "Hide encrypted text payloads inside digital images and WAV audio files using LSB and DWT techniques.",
-            icon: <EyeOff className="h-6 w-6" />,
-            href: "/stego",
-            badge: "Core Feature",
-            color: "from-phos/20 to-phos/20 text-phos-hot border-phos/30",
-        },
-        {
-            title: "Stegananalysis",
-            description:
-                "Detect hidden data and analyze suspect media using Chi-Square tests and pixel structural histograms.",
-            icon: <FileSearch className="h-6 w-6" />,
-            href: "/steganalysis",
-            badge: "Forensics",
-            color: "from-emerald-500/20 to-phos/20 text-emerald-400 border-emerald-500/30",
-        },
-        {
-            title: "Cryptography Toolkit",
-            description:
-                "AES-256-GCM symmetric encryption, RSA key pair generation, and SHA-256 secure hashing utilities.",
-            icon: <Lock className="h-6 w-6" />,
-            href: "/cryptography",
-            color: "from-phos/20 to-phos/20 text-phos-hot border-phos/30",
-        },
-        {
-            title: "Text Hiding",
-            description:
-                "Manipulate zero-width characters and invisible unicode strings to conceal secret messages in plain text.",
-            icon: <Type className="h-6 w-6" />,
-            href: "/text-hiding",
-            color: "from-amber-500/20 to-orange-500/20 text-amber-400 border-amber-500/30",
-        },
-        {
-            title: "Digital Watermarking",
-            description:
-                "Embed robust ownership markers and verify digital signatures to protect media copyright.",
-            icon: <Stamp className="h-6 w-6" />,
-            href: "/watermark",
-            color: "from-phos/20 to-phos/20 text-phos-hot border-phos/30",
-        },
-        {
-            title: "Encoding & Decoding",
-            description:
-                "Base64, Hexadecimal, Binary, and custom format conversions for forensic payload inspection.",
-            icon: <Cpu className="h-6 w-6" />,
-            href: "/encoding",
-            color: "from-phos/20 to-phos/20 text-phos-hot border-phos/30",
-        },
-    ];
+/**
+ * The steganography tools.
+ *
+ * This page previously repeated the landing page — the same six paradigm cards,
+ * with one of them linking back to here. A hub has to go somewhere its parent
+ * does not, so it now lists what actually lives under /stego.
+ *
+ * Each entry names its trade-off, because the choice between LSB and DCT is the
+ * only real decision in this module and the tools cannot make it for you.
+ */
+const TOOLS: Tool[] = [
+  {
+    title: "Image — LSB",
+    description:
+      "Write payload bits into the least significant bit of each colour channel.",
+    icon: ImageIcon,
+    href: "/stego/image/lsb",
+    carrier: "PNG · BMP",
+    tradeoff: "Highest capacity, destroyed by any re-encode",
+  },
+  {
+    title: "Image — DCT / DWT",
+    description:
+      "Embed in the frequency domain rather than the pixels, so the payload survives compression.",
+    icon: Layers,
+    href: "/stego/image/dct-dwt",
+    carrier: "PNG · JPEG",
+    tradeoff: "Survives re-encoding, far less room",
+  },
+  {
+    title: "Audio",
+    description:
+      "Hide data in the sample stream of a lossless waveform, below the noise floor.",
+    icon: AudioLines,
+    href: "/stego/audio",
+    carrier: "WAV",
+    tradeoff: "Inaudible, but lossless carriers only",
+  },
+  {
+    title: "Video",
+    description: "Distribute a payload across the frames of a video container.",
+    icon: Video,
+    href: "/stego/video",
+    carrier: "MP4 · AVI",
+    tradeoff: "Largest capacity, slowest to process",
+  },
+];
 
-    return (
-        <main className="min-h-screen bg-phos-deep text-phos-white relative overflow-hidden py-12 px-4 sm:px-6 lg:px-8">
-            {/* Background Glows */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[350px] bg-gradient-to-tr from-phos/10 via-phos/10 to-phos/0 blur-3xl pointer-events-none rounded-full" />
+export default function StegoHubPage() {
+  return (
+    <div className="crt phos-corners px-5 py-10 sm:px-8 sm:py-12 lg:px-12">
+      <div className="relative z-[1] mx-auto max-w-5xl space-y-10">
+        <header className="space-y-4">
+          <p className="phos-pill">Module 01 · Steganography</p>
 
-            <div className="max-w-7xl mx-auto space-y-12 relative z-10">
+          <h1 className="phos-glow-strong text-balance text-3xl font-black tracking-tight text-phos-hot sm:text-4xl">
+            Hide a payload inside media
+          </h1>
 
-                {/* Header Section */}
-                <div className="text-center space-y-4 max-w-3xl mx-auto">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-phos/10 border border-phos/20 text-phos-hot text-xs font-semibold uppercase tracking-wider">
-                        <Sparkles className="h-3.5 w-3.5" />
-                        <span>CipherVault Toolkit v1.0</span>
-                    </div>
+          <p className="max-w-2xl text-pretty leading-relaxed text-phos-dim">
+            These tools run against the Python engine, which does the pixel and
+            sample work. Files are processed in memory and returned in the
+            response — nothing is written to disk.
+          </p>
+        </header>
 
-                    <h1 className="text-4xl sm:text-6xl font-black tracking-tight bg-gradient-to-r from-phos-white via-phos-white to-phos-dim bg-clip-text text-transparent drop-shadow-sm">
-                        Digital Forensics & Steganography Suite
-                    </h1>
-
-                    <p className="text-base sm:text-lg text-phos-dim leading-relaxed">
-                        Advanced detection, encryption, and covert communication tools engineered for security research and forensic analysis.
-                    </p>
+        <ul className="grid gap-5 sm:grid-cols-2">
+          {TOOLS.map((tool) => (
+            <li key={tool.href}>
+              <Link
+                href={tool.href}
+                className="phos-card group flex h-full flex-col p-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-phos-hot focus-visible:ring-offset-2 focus-visible:ring-offset-phos-deep"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <span className="phos-tile shrink-0">
+                    <tool.icon aria-hidden className="size-5" />
+                  </span>
+                  <span className="phos-pill">{tool.carrier}</span>
                 </div>
 
-                {/* Modules Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {modules.map((mod) => (
-                        <Link
-                            key={mod.title}
-                            href={mod.href}
-                            className="group relative flex flex-col justify-between rounded-2xl border border-phos-line/80 bg-phos-panel/40 p-6 backdrop-blur-md transition-all duration-300 hover:border-phos-line hover:bg-phos-panel/80 hover:shadow-2xl hover:shadow-phos/5 hover:-translate-y-1"
-                        >
-                            <div>
-                                <div className="flex items-center justify-between mb-5">
-                                    <div className={`rounded-xl bg-gradient-to-br ${mod.color} p-3 border shadow-inner`}>
-                                        {mod.icon}
-                                    </div>
-                                    {mod.badge && (
-                                        <span className="rounded-full bg-phos/10 px-2.5 py-0.5 text-xs font-medium text-phos-hot border border-phos/20">
-                                            {mod.badge}
-                                        </span>
-                                    )}
-                                </div>
+                <h2 className="phos-glow mt-5 text-lg font-bold tracking-tight text-phos-white">
+                  {tool.title}
+                </h2>
 
-                                <h2 className="text-xl font-bold text-phos-white group-hover:text-phos-hot transition-colors mb-2 flex items-center gap-1.5">
-                                    {mod.title}
-                                </h2>
+                <p className="mt-2 text-sm leading-relaxed text-phos-dim">
+                  {tool.description}
+                </p>
 
-                                <p className="text-sm text-phos-dim leading-relaxed mb-6">
-                                    {mod.description}
-                                </p>
-                            </div>
+                <p className="mt-3 flex-1 font-mono text-xs text-phos/70">
+                  {tool.tradeoff}
+                </p>
 
-                            <div className="flex items-center text-xs font-bold text-phos-hot group-hover:text-phos-hot transition-colors pt-2 border-t border-phos-line/50">
-                                <span>Launch Module</span>
-                                <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                            </div>
-                        </Link>
-                    ))}
-                </div>
+                <span className="mt-5 flex items-center gap-1 border-t border-phos-line pt-3 font-mono text-xs font-bold uppercase tracking-wider text-phos transition-colors group-hover:text-phos-hot">
+                  Open tool
+                  <ChevronRight
+                    aria-hidden
+                    className="size-3.5 transition-transform group-hover:translate-x-1"
+                  />
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
 
-            </div>
-        </main>
-    );
+        {/* The inverse operation, one click away — someone hiding a payload
+            usually wants to know whether it is detectable. */}
+        <aside className="phos-card flex flex-wrap items-center justify-between gap-4 p-5">
+          <div className="space-y-1">
+            <h2 className="flex items-center gap-2 font-bold tracking-tight text-phos-white">
+              <ScanSearch aria-hidden className="size-4 text-phos" />
+              Going the other way?
+            </h2>
+            <p className="text-sm text-phos-dim">
+              Steganalysis tests a file for a payload it was never told about.
+            </p>
+          </div>
+          <Link href="/steganalysis" className="phos-btn shrink-0 text-sm">
+            Open Steganalysis
+            <ChevronRight aria-hidden className="size-3.5" />
+          </Link>
+        </aside>
+      </div>
+    </div>
+  );
 }
