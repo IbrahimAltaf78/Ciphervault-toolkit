@@ -143,7 +143,7 @@ export default function VisibleWatermarkPage() {
             <button
                 onClick={handleApplyWatermark}
                 disabled={loading || !file || !watermarkText.trim()}
-                className="w-full py-3 bg-phos text-phos-deep font-bold rounded-xl hover:bg-phos-hot disabled:opacity-40 disabled:cursor-not-allowed transition"
+                className="w-full py-3 bg-phos text-phos-deep font-semibold rounded-xl hover:bg-phos-hot disabled:opacity-40 disabled:cursor-not-allowed transition"
             >
                 {loading ? "Embedding Watermark..." : "Embed Visible Watermark"}
             </button>

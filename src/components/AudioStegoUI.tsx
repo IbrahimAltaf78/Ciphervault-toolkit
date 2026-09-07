@@ -222,7 +222,7 @@ export default function AudioStegoUI() {
                 <button
                     type="submit"
                     disabled={loading || !file}
-                    className="w-full bg-phos hover:bg-phos text-white font-medium py-2.5 rounded-lg transition disabled:opacity-50"
+                    className="w-full bg-phos hover:bg-phos text-phos-deep font-semibold py-2.5 rounded-lg transition disabled:opacity-50"
                 >
                     {loading ? 'Processing Audio...' : mode === 'hide' ? 'Hide Text into Audio' : 'Extract Hidden Text'}
                 </button>

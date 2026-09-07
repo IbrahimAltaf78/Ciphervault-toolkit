@@ -169,7 +169,7 @@ export default function VideoStegoPage() {
             <button
                 onClick={handleSubmit}
                 disabled={loading || !file || (tab === "hide" && !secretText)}
-                className="w-full py-3 bg-phos text-black font-semibold rounded-xl hover:bg-phos-hot disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed mb-6"
+                className="w-full py-3 bg-phos text-phos-deep font-semibold rounded-xl hover:bg-phos-hot disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed mb-6"
             >
                 {loading
                     ? "Processing..."
