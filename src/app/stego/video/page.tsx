@@ -1,201 +1,330 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
 
 export default function VideoStegoPage() {
-    const [tab, setTab] = useState<"hide" | "extract">("hide");
+    const [activeTab, setActiveTab] = useState<"hide" | "extract">("extract");
+
+    // Form states
     const [file, setFile] = useState<File | null>(null);
-    const [filePreviewUrl, setFilePreviewUrl] = useState<string | null>(null);
     const [secretText, setSecretText] = useState("");
-    const [extractedText, setExtractedText] = useState("");
+    const [password, setPassword] = useState("");
+
+    // UI state feedback
     const [loading, setLoading] = useState(false);
-    const [stegoVideoUrl, setStegoVideoUrl] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [success, setSuccess] = useState<string | null>(null);
+    const [outputVideo, setOutputVideo] = useState<string | null>(null);
+    const [outputFilename, setOutputFilename] = useState("stego_video.avi");
+    const [extractedMessage, setExtractedMessage] = useState<string | null>(null);
 
-    // Clean up created object URLs to prevent memory leaks
-    useEffect(() => {
-        return () => {
-            if (filePreviewUrl) URL.revokeObjectURL(filePreviewUrl);
-            if (stegoVideoUrl) URL.revokeObjectURL(stegoVideoUrl);
-        };
-    }, [filePreviewUrl, stegoVideoUrl]);
+    const downloadBase64Video = (base64Data: string, filename: string) => {
+        try {
+            const base64String = base64Data.includes("base64,")
+                ? base64Data.split("base64,")[1]
+                : base64Data;
 
-    const handleTabChange = (newTab: "hide" | "extract") => {
-        setTab(newTab);
-        setError(null);
-        setExtractedText("");
+            const byteCharacters = atob(base64String);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: "video/x-msvideo" });
+
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = filename || "stego_video.avi";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+        } catch (err) {
+            setError("Failed to convert video file for download.");
+        }
     };
 
-    const handleFileSelect = (selectedFile: File) => {
-        if (filePreviewUrl) URL.revokeObjectURL(filePreviewUrl);
-        if (stegoVideoUrl) URL.revokeObjectURL(stegoVideoUrl);
-
-        setFile(selectedFile);
-        setFilePreviewUrl(URL.createObjectURL(selectedFile));
-        setStegoVideoUrl(null);
+    const handleTabChange = (tab: "hide" | "extract") => {
+        setActiveTab(tab);
+        setFile(null);
+        setSecretText("");
+        setPassword("");
         setError(null);
+        setSuccess(null);
+        setOutputVideo(null);
+        setExtractedMessage(null);
     };
 
-    const handleSubmit = async () => {
-        if (!file) return;
+    const handleHideSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!file) return setError("Please select a video carrier file.");
+        if (!secretText) return setError("Please enter a secret message to embed.");
+
         setLoading(true);
         setError(null);
+        setSuccess(null);
 
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append("video", file);
+        formData.append("secretText", secretText);
+        if (password) formData.append("password", password);
 
         try {
-            if (tab === "hide") {
-                formData.append("secret_text", secretText);
-                const res = await fetch("http://localhost:8000/api/stego/video/hide", {
-                    method: "POST",
-                    body: formData,
-                });
+            const res = await fetch("http://127.0.0.1:8000/api/stego/video/hide", {
+                method: "POST",
+                body: formData,
+            });
+            const data = await res.json();
 
-                if (!res.ok) {
-                    throw new Error("Failed to encode hidden text into video.");
-                }
-
-                const blob = await res.blob();
-                if (stegoVideoUrl) URL.revokeObjectURL(stegoVideoUrl);
-
-                // Store Blob URL in state instead of auto-downloading
-                const url = URL.createObjectURL(blob);
-                setStegoVideoUrl(url);
-            } else {
-                const res = await fetch("http://localhost:8000/api/stego/video/extract", {
-                    method: "POST",
-                    body: formData,
-                });
-
-                if (!res.ok) {
-                    throw new Error("Failed to extract hidden text from video.");
-                }
-
-                const data = await res.json();
-                setExtractedText(data.secret_text || data.extracted_text || "No hidden payload found.");
+            if (!res.ok || data.success === false) {
+                throw new Error(data.error?.message || data.detail || "Embedding failed.");
             }
-        } catch (err: unknown) {
-            if (err instanceof Error) {
-                setError(err.message);
-            } else {
-                setError("An unexpected error occurred during processing.");
+
+            setOutputVideo(data.data.video);
+            setOutputFilename(data.data.filename || "stego_video.avi");
+            setSuccess("Payload hidden in video successfully!");
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleExtractSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!file) return setError("Please select a stego video file.");
+
+        if (file.size === 0) {
+            return setError("Uploaded file is empty (0 bytes received). Please check your selected file.");
+        }
+
+        setLoading(true);
+        setError(null);
+        setSuccess(null);
+        setExtractedMessage(null);
+
+        const formData = new FormData();
+        formData.append("video", file);
+        if (password) formData.append("password", password);
+
+        try {
+            const res = await fetch("http://127.0.0.1:8000/api/stego/video/extract", {
+                method: "POST",
+                body: formData,
+            });
+            const data = await res.json();
+
+            if (!res.ok || data.success === false) {
+                throw new Error(data.error?.message || data.detail || "Extraction failed.");
             }
+
+            const finalSecret = data.data?.secretText || data.data?.secret_text || data.secret_text;
+
+            if (!finalSecret) {
+                throw new Error("Could not find hidden text or correct password was not provided.");
+            }
+
+            setExtractedMessage(finalSecret);
+            setSuccess("Secret payload extracted successfully!");
+        } catch (err: any) {
+            setError(err.message);
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="max-w-4xl mx-auto p-6">
-            {/* Tab Switcher */}
-            <div className="flex space-x-4 border-b border-phos-line mb-6">
-                <button
-                    onClick={() => handleTabChange("hide")}
-                    className={`pb-2 px-4 font-medium transition-colors ${tab === "hide"
-                            ? "border-b-2 border-phos-hot text-phos-hot"
-                            : "text-phos-dim hover:text-phos-white"
-                        }`}
-                >
-                    🔒 Hide Data
-                </button>
-                <button
-                    onClick={() => handleTabChange("extract")}
-                    className={`pb-2 px-4 font-medium transition-colors ${tab === "extract"
-                            ? "border-b-2 border-phos-hot text-phos-hot"
-                            : "text-phos-dim hover:text-phos-white"
-                        }`}
-                >
-                    🔑 Extract Data
-                </button>
-            </div>
+        <div className="min-h-screen bg-slate-950 text-gray-200 font-sans flex flex-col relative overflow-hidden">
+            {/* Background Matrix/Data aesthetic (Optional fade) */}
+            <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] z-0"></div>
 
-            {error && (
-                <div className="bg-red-950/50 border border-red-500/50 text-red-300 p-4 rounded-xl mb-6 text-sm">
-                    {error}
+            {/* Main Content (Header removed to prevent duplication from layout.tsx) */}
+            <main className="flex-1 relative z-10 flex flex-col items-center justify-start pt-12 px-4 pb-20 overflow-y-auto">
+                <h1 className="text-2xl font-bold text-white mb-6">Video Steganography</h1>
+
+                {/* Tab Buttons */}
+                <div className="flex space-x-4 mb-8">
+                    <button
+                        onClick={() => handleTabChange("hide")}
+                        className={`px-6 py-2 text-sm font-semibold rounded-md transition-all ${activeTab === "hide"
+                                ? "bg-[#00e676] text-black shadow-[0_0_10px_rgba(0,230,118,0.4)]"
+                                : "bg-[#011f14] text-[#00e676] border border-[#003d24] hover:bg-[#002b1b]"
+                            }`}
+                    >
+                        Hide Data
+                    </button>
+                    <button
+                        onClick={() => handleTabChange("extract")}
+                        className={`px-6 py-2 text-sm font-semibold rounded-md transition-all ${activeTab === "extract"
+                                ? "bg-[#00e676] text-black shadow-[0_0_10px_rgba(0,230,118,0.4)]"
+                                : "bg-[#011f14] text-[#00e676] border border-[#003d24] hover:bg-[#002b1b]"
+                            }`}
+                    >
+                        Extract Data
+                    </button>
                 </div>
-            )}
 
-            {/* Drag & Drop File Input */}
-            <div
-                onClick={() => fileInputRef.current?.click()}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => {
-                    e.preventDefault();
-                    if (e.dataTransfer.files?.[0]) handleFileSelect(e.dataTransfer.files[0]);
-                }}
-                className="border-2 border-dashed border-phos/30 rounded-xl p-8 text-center cursor-pointer hover:border-phos-hot transition mb-6"
-            >
-                <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="video/avi,video/mp4"
-                    className="hidden"
-                    onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
-                />
-                <p className="text-phos-dim font-medium">
-                    {file ? file.name : "Click to upload or drag .avi / .mp4 video file"}
-                </p>
-            </div>
+                {/* Main Form Container */}
+                <div className="bg-[#01140a] border border-[#003d24] rounded-xl p-6 w-full max-w-2xl shadow-2xl">
+                    {error && (
+                        <div className="mb-5 p-3 bg-red-950/40 border border-red-800/80 rounded-md text-red-400 text-sm">
+                            {error}
+                        </div>
+                    )}
+                    {success && (
+                        <div className="mb-5 p-3 bg-emerald-950/40 border border-[#00e676]/50 rounded-md text-[#00e676] text-sm">
+                            {success}
+                        </div>
+                    )}
 
-            {/* Source Video Preview */}
-            {filePreviewUrl && (
-                <div className="mb-6 bg-phos-panel border border-phos-line p-4 rounded-xl space-y-2">
-                    <p className="text-xs text-phos-dim font-medium">Original Video Preview:</p>
-                    <video controls src={filePreviewUrl} className="w-full max-h-64 rounded-lg bg-black" />
+                    {activeTab === "hide" ? (
+                        <form onSubmit={handleHideSubmit} className="space-y-6">
+
+                            {/* Upload Area */}
+                            <div>
+                                <label className="block text-xs font-bold text-[#00e676] mb-2 tracking-wide uppercase">
+                                    Upload Carrier Video (MP4/AVI)
+                                </label>
+                                <label
+                                    htmlFor="video-upload"
+                                    className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-[#003d24] rounded-lg cursor-pointer bg-[#011f14] hover:bg-[#002b1b] transition-all"
+                                >
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-8 h-8 mb-3 text-[#00e676]">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                                    </svg>
+                                    <span className="text-sm font-medium text-[#00e676]">
+                                        {file ? file.name : "Click or drag & drop video file"}
+                                    </span>
+                                </label>
+                                <input
+                                    id="video-upload"
+                                    type="file"
+                                    accept="video/mp4,video/avi"
+                                    onChange={(e) => setFile(e.target.files?.[0] || null)}
+                                    className="hidden"
+                                />
+                            </div>
+
+                            {/* Secret Text Area */}
+                            <div>
+                                <label className="block text-xs font-bold text-[#00e676] mb-2 tracking-wide uppercase">
+                                    Secret Text
+                                </label>
+                                <textarea
+                                    rows={3}
+                                    value={secretText}
+                                    onChange={(e) => setSecretText(e.target.value)}
+                                    placeholder="Enter secret text to encode..."
+                                    className="w-full bg-[#011f14] border border-[#003d24] rounded-md p-3 text-sm text-[#00e676] focus:outline-none focus:border-[#00e676] placeholder-[#004d2e] resize-none"
+                                />
+                            </div>
+
+                            {/* Passphrase Input */}
+                            <div>
+                                <label className="flex items-center text-xs font-bold text-[#00e676] mb-2 tracking-wide uppercase">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-3.5 h-3.5 mr-1.5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                                    Passphrase (Optional)
+                                </label>
+                                <input
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="Optional AES passphrase..."
+                                    className="w-full bg-[#011f14] border border-[#003d24] rounded-md p-3 text-sm text-[#00e676] focus:outline-none focus:border-[#00e676] placeholder-[#004d2e]"
+                                />
+                            </div>
+
+                            {/* Submit Button */}
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full flex items-center justify-center py-3 bg-[#004d2e] hover:bg-[#00663a] text-[#00e676] hover:text-white font-bold text-sm rounded-md transition-all"
+                            >
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-4 h-4 mr-2"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                {loading ? "Embedding..." : "Encode Secret Video"}
+                            </button>
+
+                        </form>
+                    ) : (
+                        <form onSubmit={handleExtractSubmit} className="space-y-6">
+
+                            {/* Upload Area */}
+                            <div>
+                                <label className="block text-xs font-bold text-[#00e676] mb-2 tracking-wide uppercase">
+                                    Upload Stego Video (MP4/AVI)
+                                </label>
+                                <label
+                                    htmlFor="stego-upload"
+                                    className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-[#003d24] rounded-lg cursor-pointer bg-[#011f14] hover:bg-[#002b1b] transition-all"
+                                >
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-8 h-8 mb-3 text-[#00e676]">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                                    </svg>
+                                    <span className="text-sm font-medium text-[#00e676]">
+                                        {file ? file.name : "Click or drag & drop stego video file"}
+                                    </span>
+                                </label>
+                                <input
+                                    id="stego-upload"
+                                    type="file"
+                                    accept="video/mp4,video/avi"
+                                    onChange={(e) => setFile(e.target.files?.[0] || null)}
+                                    className="hidden"
+                                />
+                            </div>
+
+                            {/* Passphrase Input */}
+                            <div>
+                                <label className="flex items-center text-xs font-bold text-[#00e676] mb-2 tracking-wide uppercase">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-3.5 h-3.5 mr-1.5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                    Passphrase (Required if encrypted)
+                                </label>
+                                <input
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="Enter decryption passphrase..."
+                                    className="w-full bg-[#011f14] border border-[#003d24] rounded-md p-3 text-sm text-[#00e676] focus:outline-none focus:border-[#00e676] placeholder-[#004d2e]"
+                                />
+                            </div>
+
+                            {/* Submit Button */}
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full flex items-center justify-center py-3 bg-[#004d2e] hover:bg-[#00663a] text-[#00e676] hover:text-white font-bold text-sm rounded-md transition-all"
+                            >
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-4 h-4 mr-2"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path></svg>
+                                {loading ? "Extracting..." : "Extract Data from Video"}
+                            </button>
+                        </form>
+                    )}
+
+                    {/* Output Areas */}
+                    {outputVideo && activeTab === "hide" && (
+                        <div className="mt-6 border-t border-[#003d24] pt-6 text-center">
+                            <button
+                                onClick={() => downloadBase64Video(outputVideo, outputFilename)}
+                                className="inline-flex items-center justify-center px-6 py-2.5 bg-[#00e676] text-black font-bold text-sm rounded-md hover:bg-[#00c853] transition-all shadow-[0_0_10px_rgba(0,230,118,0.3)]"
+                            >
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-4 h-4 mr-2"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                Download Stego Video ({outputFilename})
+                            </button>
+                        </div>
+                    )}
+
+                    {extractedMessage && activeTab === "extract" && (
+                        <div className="mt-6 border-t border-[#003d24] pt-6">
+                            <label className="block text-xs font-bold text-[#00e676] mb-2 tracking-wide uppercase">
+                                Extracted Payload
+                            </label>
+                            <div className="bg-[#011f14] border border-[#00e676]/50 rounded-md p-4 text-sm text-[#00e676] font-mono whitespace-pre-wrap break-all shadow-[inset_0_0_10px_rgba(0,230,118,0.1)]">
+                                {extractedMessage}
+                            </div>
+                        </div>
+                    )}
                 </div>
-            )}
-
-            {tab === "hide" ? (
-                <div className="space-y-4 mb-6">
-                    <textarea
-                        value={secretText}
-                        onChange={(e) => setSecretText(e.target.value)}
-                        placeholder="Enter secret message to embed..."
-                        rows={4}
-                        className="w-full bg-phos-panel border border-phos-line rounded-xl p-4 text-white focus:outline-none focus:border-phos-hot"
-                    />
-                </div>
-            ) : (
-                extractedText && (
-                    <div className="bg-phos-panel border border-phos/30 rounded-xl p-4 text-phos-hot mb-6">
-                        <p className="font-semibold text-sm mb-1">Extracted Payload:</p>
-                        <p className="font-mono text-phos-white break-words">{extractedText}</p>
-                    </div>
-                )
-            )}
-
-            <button
-                onClick={handleSubmit}
-                disabled={loading || !file || (tab === "hide" && !secretText)}
-                className="w-full py-3 bg-phos text-phos-deep font-semibold rounded-xl hover:bg-phos-hot disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed mb-6"
-            >
-                {loading
-                    ? "Processing..."
-                    : tab === "hide"
-                        ? "Hide Text into Video"
-                        : "Extract Text from Video"}
-            </button>
-
-            {/* Output Stego Video & Manual Download Action */}
-            {tab === "hide" && stegoVideoUrl && (
-                <div className="p-4 bg-phos-panel border border-emerald-500/40 rounded-xl space-y-4">
-                    <p className="text-sm font-semibold text-emerald-400">
-                        Encoding Complete! Preview or download your output video below:
-                    </p>
-                    <video controls src={stegoVideoUrl} className="w-full max-h-64 rounded-lg bg-black" />
-                    <div>
-                        <a
-                            href={stegoVideoUrl}
-                            download={`stego_${file?.name || "video.mp4"}`}
-                            className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors"
-                        >
-                            Download Stego Video
-                        </a>
-                    </div>
-                </div>
-            )}
+            </main>
         </div>
     );
 }

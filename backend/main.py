@@ -18,25 +18,31 @@ from cryptography.hazmat.primitives import hashes
 # Modular Stegananalysis Router Inclusion
 from app.steganalysis.router import router as steganalysis_router
 
+# Video Steganography Router Inclusion (with fallback for folder naming)
+try:
+    from app.steganography.video import router as video_router
+except ImportError:
+    from app.stegnography.video import router as video_router
+
 # ==========================================
 # Database & Auth Imports
 # ==========================================
 from app.db.database import engine, Base
 from app.api import auth
 
-# Create the database tables if they don't exist
+# Create database tables if they do not exist
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="CipherVault Toolkit API Engine",
-    description="Backend steganography and steganalysis suite for images and audio.",
+    description="Backend steganography and steganalysis suite for images, audio, and video.",
     version="1.0.0"
 )
 
 # CORS Configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "*"], # Next.js frontend + wildcard
+    allow_origins=["http://localhost:3000", "*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -50,11 +56,14 @@ def health_check():
 # ==========================================
 # Router Inclusions
 # ==========================================
-# Include the Authentication router
+# Include Authentication router
 app.include_router(auth.router)
 
-# Register steganalysis router directly (without duplicate /api prefix)
+# Include Steganalysis router
 app.include_router(steganalysis_router)
+
+# Include Video Steganography router
+app.include_router(video_router)
 
 DELIMITER = "###END###"
 ALPHA = 2.0  # DWT coefficient scaling factor for robust embedding
