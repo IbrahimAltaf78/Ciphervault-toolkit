@@ -256,7 +256,7 @@ export default function ImageStegoUI({ initialAlgorithm = 'lsb' }: ImageStegoUIP
                 <button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-phos hover:bg-phos text-white font-medium py-2.5 rounded-lg transition disabled:opacity-50"
+                    className="w-full bg-phos hover:bg-phos text-phos-deep font-semibold py-2.5 rounded-lg transition disabled:opacity-50"
                 >
                     {loading ? 'Processing...' : mode === 'hide' ? 'Encode Secret Image' : 'Extract Hidden Text'}
                 </button>

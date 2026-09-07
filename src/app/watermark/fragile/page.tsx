@@ -172,7 +172,7 @@ export default function FragileWatermarkPage() {
             <button
                 onClick={handleSubmit}
                 disabled={loading || !file}
-                className="w-full py-3 bg-phos text-phos-deep font-bold rounded-xl hover:bg-phos-hot disabled:opacity-40 disabled:cursor-not-allowed transition"
+                className="w-full py-3 bg-phos text-phos-deep font-semibold rounded-xl hover:bg-phos-hot disabled:opacity-40 disabled:cursor-not-allowed transition"
             >
                 {loading
                     ? "Processing..."

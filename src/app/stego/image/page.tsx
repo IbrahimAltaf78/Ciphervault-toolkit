@@ -141,7 +141,7 @@ function BitPlaneViewer({ imageUrl }: { imageUrl: string }) {
                             key={bit}
                             onClick={() => setSelectedBit(bit)}
                             className={`px-2 py-0.5 text-xs rounded transition-colors ${selectedBit === bit
-                                ? 'bg-phos text-phos-deep font-bold'
+                                ? 'bg-phos text-phos-deep font-semibold'
                                 : 'bg-phos-panel text-phos-dim hover:text-phos-white'
                                 }`}
                         >
@@ -157,7 +157,7 @@ function BitPlaneViewer({ imageUrl }: { imageUrl: string }) {
                             key={ch}
                             onClick={() => setSelectedChannel(ch)}
                             className={`px-2 py-0.5 text-xs rounded uppercase font-medium transition-colors ${selectedChannel === ch
-                                ? 'bg-phos text-phos-deep font-bold'
+                                ? 'bg-phos text-phos-deep font-semibold'
                                 : 'bg-phos-panel text-phos-dim hover:text-phos-white'
                                 }`}
                         >

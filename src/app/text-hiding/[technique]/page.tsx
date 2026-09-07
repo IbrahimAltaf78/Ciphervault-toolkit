@@ -148,7 +148,7 @@ export default function TextHidingToolPage() {
       <button
         onClick={handleProcess}
         disabled={loading}
-        className="w-full py-3 bg-phos text-phos-deep font-bold rounded-xl hover:bg-phos-hot disabled:opacity-40 transition"
+        className="w-full py-3 bg-phos text-phos-deep font-semibold rounded-xl hover:bg-phos-hot disabled:opacity-40 transition"
       >
         {loading ? "Processing..." : mode === "hide" ? "Generate Stego Text" : "Extract Secret Text"}
       </button>
@@ -170,7 +170,7 @@ export default function TextHidingToolPage() {
           />
           <button
             onClick={() => navigator.clipboard.writeText(stegoText)}
-            className="px-4 py-2 bg-phos-line text-phos-white hover:bg-phos-line rounded-lg text-sm font-medium transition"
+            className="px-4 py-2 bg-phos-line text-phos-white hover:bg-phos-dim/30 rounded-lg text-sm font-medium transition"
           >
             Copy Output
           </button>

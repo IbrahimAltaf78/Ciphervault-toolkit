@@ -82,7 +82,7 @@ export default function EncodingToolPage() {
       <button
         onClick={handleProcess}
         disabled={loading || !input.trim()}
-        className="w-full py-3 bg-phos text-phos-deep font-bold rounded-xl hover:bg-phos-hot disabled:opacity-40 transition"
+        className="w-full py-3 bg-phos text-phos-deep font-semibold rounded-xl hover:bg-phos-hot disabled:opacity-40 transition"
       >
         {loading ? "Processing..." : `${mode === "encode" ? "Encode" : "Decode"} Payload`}
       </button>
@@ -104,7 +104,7 @@ export default function EncodingToolPage() {
           />
           <button
             onClick={() => navigator.clipboard.writeText(output)}
-            className="px-4 py-2 bg-phos-line text-phos-white hover:bg-phos-line rounded-lg text-sm font-medium transition"
+            className="px-4 py-2 bg-phos-line text-phos-white hover:bg-phos-dim/30 rounded-lg text-sm font-medium transition"
           >
             Copy Output
           </button>
