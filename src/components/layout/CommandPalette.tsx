@@ -32,7 +32,7 @@ export function CommandPalette() {
         event.preventDefault();
         setIsOpen((open) => !open);
       }
-      if (event.key === "Escape") setIsOpen(false);
+      if (event.key === "Escape") close();
     }
 
     window.addEventListener("keydown", onKeyDown);
@@ -49,10 +49,14 @@ export function CommandPalette() {
     };
   }, [isOpen]);
 
-  function choose(command: Command) {
+  function close() {
     setIsOpen(false);
     setQuery("");
     setActive(0);
+  }
+
+  function choose(command: Command) {
+    close();
     router.push(command.href);
   }
 
@@ -69,16 +73,18 @@ export function CommandPalette() {
     }
   }
 
-  if (!isOpen) {
-    return (
-      // Dressed as a search field rather than a button: people look for a
-      // search box, and a box says 'type here' where an icon only says
-      // 'something happens'. It does not take focus itself — clicking opens the
-      // real input in the overlay, so there is one field, not two.
+  let lastGroup = "";
+
+  return (
+    <>
+      {/* The trigger stays mounted while the overlay is up. Swapping one for
+          the other pulled the field out of the navbar and collapsed the bar
+          behind the overlay, which the eye catches on the way back. */}
       <button
         type="button"
-        onClick={() => setIsOpen(true)}
+        onClick={() => setIsOpen((open) => !open)}
         aria-label="Search tools"
+        aria-expanded={isOpen}
         aria-keyshortcuts="Control+K"
         className="group flex w-full items-center gap-2.5 rounded-md border border-phos-line bg-phos-deep/60 px-3 py-2 text-left transition-colors hover:border-phos sm:w-72"
       >
@@ -93,98 +99,103 @@ export function CommandPalette() {
           Ctrl K
         </kbd>
       </button>
-    );
-  }
 
-  let lastGroup = "";
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-phos-void/80 p-4 pt-[12vh] backdrop-blur-sm"
-      onClick={() => setIsOpen(false)}
-      role="presentation"
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Jump to a tool"
-        onClick={(event) => event.stopPropagation()}
-        className="phos-card phos-rise w-full max-w-lg overflow-hidden"
-      >
-        <div className="flex items-center gap-3 border-b border-phos-line px-4">
-          <Search aria-hidden className="size-4 shrink-0 text-phos" />
-          <input
-            autoFocus
-            value={query}
-            onChange={(event) => {
-              setQuery(event.target.value);
-              setActive(0);
-            }}
-            onKeyDown={onListKeyDown}
-            placeholder="Jump to a tool..."
-            aria-label="Search tools"
-            aria-controls="command-results"
-            className="w-full bg-transparent py-3.5 font-mono text-sm text-phos-white outline-none placeholder:text-phos-dim"
-          />
-          <kbd className="shrink-0 rounded border border-phos-line px-1.5 py-0.5 font-mono text-[10px] text-phos-dim">
-            ESC
-          </kbd>
-        </div>
-
-        <ul
-          id="command-results"
-          ref={listRef}
-          role="listbox"
-          className="max-h-[52vh] overflow-y-auto p-2"
+      {!isOpen ? null : (
+        <div
+          /* Clicking the backdrop dismisses, the same as Escape — a dialog you can
+             only leave by keyboard traps anyone reaching for the mouse. Bound to
+             pointerdown rather than click so a press that starts on the backdrop
+             closes even if the pointer drifts onto the panel before release. */
+          className="fixed inset-0 z-50 flex items-start justify-center bg-phos-void/80 p-4 pt-[12vh] backdrop-blur-sm"
+          onPointerDown={(event) => {
+            if (event.target === event.currentTarget) close();
+          }}
+          role="presentation"
         >
-          {results.length === 0 && (
-            <li className="px-3 py-6 text-center text-sm text-phos-dim">
-              Nothing matches “{query}”.
-            </li>
-          )}
-
-          {results.map((command, index) => {
-            // Group headings appear only when the group changes, so a filtered
-            // list does not repeat one heading per row.
-            const heading = command.group !== lastGroup ? command.group : null;
-            lastGroup = command.group;
-
-            return (
-              <li key={command.href}>
-                {heading && (
-                  <p className="px-3 pb-1 pt-3 font-mono text-[10px] uppercase tracking-widest text-phos-dim">
-                    {heading}
-                  </p>
-                )}
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={index === active}
-                  onMouseEnter={() => setActive(index)}
-                  onClick={() => choose(command)}
-                  className={`flex w-full items-center gap-3 rounded px-3 py-2 text-left text-sm transition-colors ${
-                    index === active
-                      ? "bg-phos/12 text-phos-hot"
-                      : "text-phos-dim hover:text-phos-white"
-                  }`}
-                >
-                  <span className="flex-1 truncate">{command.label}</span>
-                  {index === active && (
-                    <CornerDownLeft aria-hidden className="phos-pop size-3.5 shrink-0" />
-                  )}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-
-        <div className="flex items-center gap-4 border-t border-phos-line px-4 py-2 font-mono text-[10px] uppercase tracking-widest text-phos-dim">
-          <span>↑↓ move</span>
-          <span>↵ open</span>
-          <span className="ml-auto">{results.length} tools</span>
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Jump to a tool"
+            onClick={(event) => event.stopPropagation()}
+            className="phos-card phos-rise w-full max-w-lg overflow-hidden"
+          >
+            <div className="flex items-center gap-3 border-b border-phos-line px-4">
+              <Search aria-hidden className="size-4 shrink-0 text-phos" />
+              <input
+                autoFocus
+                value={query}
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                  setActive(0);
+                }}
+                onKeyDown={onListKeyDown}
+                placeholder="Jump to a tool..."
+                aria-label="Search tools"
+                aria-controls="command-results"
+                className="w-full bg-transparent py-3.5 font-mono text-sm text-phos-white outline-none placeholder:text-phos-dim"
+              />
+              <kbd className="shrink-0 rounded border border-phos-line px-1.5 py-0.5 font-mono text-[10px] text-phos-dim">
+                ESC
+              </kbd>
+            </div>
+    
+            <ul
+              id="command-results"
+              ref={listRef}
+              role="listbox"
+              className="max-h-[52vh] overflow-y-auto p-2"
+            >
+              {results.length === 0 && (
+                <li className="px-3 py-6 text-center text-sm text-phos-dim">
+                  Nothing matches “{query}”.
+                </li>
+              )}
+    
+              {results.map((command, index) => {
+                // Group headings appear only when the group changes, so a filtered
+                // list does not repeat one heading per row.
+                const heading = command.group !== lastGroup ? command.group : null;
+                lastGroup = command.group;
+    
+                return (
+                  <li key={command.href}>
+                    {heading && (
+                      <p className="px-3 pb-1 pt-3 font-mono text-[10px] uppercase tracking-widest text-phos-dim">
+                        {heading}
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={index === active}
+                      onMouseEnter={() => setActive(index)}
+                      onClick={() => choose(command)}
+                      className={`flex w-full items-center gap-3 rounded px-3 py-2 text-left text-sm transition-colors ${
+                        index === active
+                          ? "bg-phos/12 text-phos-hot"
+                          : "text-phos-dim hover:text-phos-white"
+                      }`}
+                    >
+                      <span className="flex-1 truncate">{command.label}</span>
+                      {index === active && (
+                        <CornerDownLeft aria-hidden className="phos-pop size-3.5 shrink-0" />
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+    
+            <div className="flex items-center gap-4 border-t border-phos-line px-4 py-2 font-mono text-[10px] uppercase tracking-widest text-phos-dim">
+              <span>↑↓ move</span>
+              <span>↵ open</span>
+              <span>esc or click away</span>
+              <span className="ml-auto">{results.length} tools</span>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 }
 
