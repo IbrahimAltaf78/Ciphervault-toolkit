@@ -29,7 +29,7 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="crt phos-corners px-5 py-16 sm:px-8">
+    <div className="crt phos-corners phos-boot phos-sweep px-5 py-16 sm:px-8">
       <div className="relative z-[1] mx-auto max-w-lg space-y-6 text-center">
         <span className="mx-auto flex size-10 items-center justify-center rounded-md border border-red-800 bg-red-950/50 text-red-400">
           <AlertTriangle aria-hidden className="size-5" />

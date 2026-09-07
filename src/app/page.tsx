@@ -11,6 +11,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { WireCube } from "@/components/layout/WireCube";
+import { DecodeText } from "@/components/home/DecodeText";
 
 interface Module {
   title: string;
@@ -76,14 +77,14 @@ const MODULES: Module[] = [
 
 export default function HomePage() {
   return (
-    <div className="crt phos-corners px-5 py-10 sm:px-8 sm:py-14 lg:px-12">
+    <div className="crt phos-corners phos-boot phos-sweep px-5 py-10 sm:px-8 sm:py-14 lg:px-12">
       {/* The binary field now comes from the layout, behind every page. */}
       <WireCube className="pointer-events-none absolute -right-16 top-24 z-0 hidden h-[34rem] w-[34rem] text-phos opacity-45 lg:block" />
 
       <div className="relative z-[1] mx-auto max-w-5xl space-y-12">
         {/* Hero */}
         <header className="space-y-5 text-center">
-          <p className="phos-pill mx-auto">
+          <p className="phos-pill phos-rise phos-delay-1 mx-auto">
             <Terminal aria-hidden className="size-3" />
             CipherVault Toolkit v1.0
           </p>
@@ -94,14 +95,16 @@ export default function HomePage() {
               is the whole product, so the two halves are set against each other
               typographically as well: the first line recedes, the second one
               burns. */}
-          <h1 className="text-balance text-5xl font-black leading-[1.02] tracking-tight sm:text-6xl lg:text-7xl">
+          <h1 className="phos-rise phos-delay-2 text-balance text-5xl font-black leading-[1.02] tracking-tight sm:text-6xl lg:text-7xl">
             <span className="block text-phos-dim">Hide anything.</span>
-            <span className="phos-glow-strong block text-phos-hot">
-              Reveal everything.
-            </span>
+            <DecodeText
+              text="Reveal everything."
+              className="phos-glow-strong block text-phos-hot"
+              delay={520}
+            />
           </h1>
 
-          <p className="mx-auto max-w-2xl text-pretty leading-relaxed text-phos-dim">
+          <p className="phos-rise phos-delay-3 mx-auto max-w-2xl text-pretty leading-relaxed text-phos-dim">
             Encryption, steganography, text hiding, encoding, covert channels
             and watermarking — six paradigms, one workspace. Every tool works in
             both directions, and nothing you run through it is ever stored.
@@ -109,7 +112,7 @@ export default function HomePage() {
         </header>
 
         {/* Modules */}
-        <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="phos-rise phos-delay-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {MODULES.map((module) => (
             <li key={module.href}>
               <Link

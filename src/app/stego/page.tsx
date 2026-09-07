@@ -76,9 +76,9 @@ const TOOLS: Tool[] = [
 
 export default function StegoHubPage() {
   return (
-    <div className="crt phos-corners px-5 py-10 sm:px-8 sm:py-12 lg:px-12">
+    <div className="crt phos-corners phos-boot phos-sweep px-5 py-10 sm:px-8 sm:py-12 lg:px-12">
       <div className="relative z-[1] mx-auto max-w-5xl space-y-10">
-        <header className="space-y-4">
+        <header className="phos-rise phos-delay-1 space-y-4">
           <p className="phos-pill">Module 01 · Steganography</p>
 
           <h1 className="phos-glow-strong text-balance text-3xl font-black tracking-tight text-phos-hot sm:text-4xl">
@@ -92,7 +92,7 @@ export default function StegoHubPage() {
           </p>
         </header>
 
-        <ul className="grid gap-5 sm:grid-cols-2">
+        <ul className="phos-rise phos-delay-2 grid gap-5 sm:grid-cols-2">
           {TOOLS.map((tool) => (
             <li key={tool.href}>
               <Link
@@ -132,7 +132,7 @@ export default function StegoHubPage() {
 
         {/* The inverse operation, one click away — someone hiding a payload
             usually wants to know whether it is detectable. */}
-        <aside className="phos-card flex flex-wrap items-center justify-between gap-4 p-5">
+        <aside className="phos-card phos-rise phos-delay-3 flex flex-wrap items-center justify-between gap-4 p-5">
           <div className="space-y-1">
             <h2 className="flex items-center gap-2 font-bold tracking-tight text-phos-white">
               <ScanSearch aria-hidden className="size-4 text-phos" />
