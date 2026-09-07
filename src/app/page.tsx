@@ -11,7 +11,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { WireCube } from "@/components/layout/WireCube";
-import { LiveDemo } from "@/components/home/LiveDemo";
 
 interface Module {
   title: string;
@@ -108,8 +107,6 @@ export default function HomePage() {
             both directions, and nothing you run through it is ever stored.
           </p>
         </header>
-
-        <LiveDemo />
 
         {/* Modules */}
         <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
