@@ -57,7 +57,7 @@ export default function Home() {
       description:
         "Hide encrypted text messages and secret payloads inside images, audio files, and digital media.",
       icon: <EyeOff className="h-6 w-6" />,
-      href: "/stego",
+      href: "/stego/image",
       badge: "Core",
     },
     {
