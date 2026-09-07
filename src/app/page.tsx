@@ -112,9 +112,15 @@ export default function HomePage() {
         </header>
 
         {/* Modules */}
-        <ul className="phos-rise phos-delay-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {MODULES.map((module) => (
-            <li key={module.href}>
+        <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {MODULES.map((module, index) => (
+            // Each card arrives just after the one before it, so the grid
+            // fills in rather than appearing all at once.
+            <li
+              key={module.href}
+              className="phos-rise"
+              style={{ animationDelay: `${420 + index * 70}ms` }}
+            >
               <Link
                 href={module.href}
                 className="phos-card group flex h-full flex-col p-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-phos-hot focus-visible:ring-offset-2 focus-visible:ring-offset-phos-deep"

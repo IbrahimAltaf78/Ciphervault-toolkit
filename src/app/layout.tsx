@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { BinaryRain } from "@/components/layout/BinaryRain";
+import { CommandPalette } from "@/components/layout/CommandPalette";
 import "./globals.css";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
@@ -68,6 +69,10 @@ export default function RootLayout({
           </main>
           <Footer />
         </div>
+
+        {/* Sits outside the page flow: it is an overlay, and its trigger is
+            pinned to the viewport rather than to any one screen. */}
+        <CommandPalette />
       </body>
     </html>
   );
