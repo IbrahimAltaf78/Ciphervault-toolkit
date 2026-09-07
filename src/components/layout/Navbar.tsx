@@ -1,27 +1,28 @@
 import Link from "next/link";
+import { CommandPalette } from "@/components/layout/CommandPalette";
 
 /**
- * Top bar.
+ * Top bar: the wordmark, and the way into every tool.
  *
- * The wordmark alone. The four destination links were removed: every page
- * already reaches the next one — the landing page lists all six modules as
- * cards, each hub lists its own tools, and the status strip carries the two
- * shortcuts worth keeping — so the bar was repeating navigation that existed
- * a scroll away.
- *
- * No client hooks are needed now that nothing depends on the current route,
- * so this renders on the server.
+ * The search field sits here rather than floating in a corner. Search is the
+ * primary way to move around an app with thirty-five destinations and no menu,
+ * and the top bar is the first place anyone looks for it — a control parked at
+ * the bottom of the viewport is found by accident or not at all.
  */
 export function Navbar() {
   return (
     <header className="sticky top-0 z-30 bg-phos-void/80 backdrop-blur-md">
-      <nav className="mx-auto flex max-w-7xl items-center px-5 py-4 sm:px-8">
+      <nav className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-5 py-4 sm:px-8">
         <Link
           href="/"
-          className="phos-glow font-mono text-base font-bold tracking-tight text-phos-hot transition-colors hover:text-phos-white sm:text-lg"
+          className="phos-glow shrink-0 font-mono text-base font-bold tracking-tight text-phos-hot transition-colors hover:text-phos-white sm:text-lg"
         >
           CipherVault<span className="text-phos-dim"> Solutions</span>
         </Link>
+
+        <div className="ml-auto w-full sm:w-auto">
+          <CommandPalette />
+        </div>
       </nav>
     </header>
   );
