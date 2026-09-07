@@ -1,0 +1,18 @@
+{
+  // The editor's built-in CSS checker predates Tailwind v4 and does not know
+  // its at-rules, so it flags every @theme block as "Unknown at rule". They are
+  // valid — the build compiles them — and five false errors in the Problems
+  // panel train people to ignore the panel, which is worse than the noise.
+  "css.lint.unknownAtRules": "ignore",
+  "scss.lint.unknownAtRules": "ignore",
+  "less.lint.unknownAtRules": "ignore",
+
+  // Tailwind IntelliSense reads classes out of these, not just className.
+  "tailwindCSS.experimental.classRegex": [
+    ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
+    ["cx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
+  ],
+
+  "editor.quickSuggestions": { "strings": "on" },
+  "files.eol": "\n"
+}

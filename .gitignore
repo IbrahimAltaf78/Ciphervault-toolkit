@@ -22,7 +22,11 @@ build/
 *.log
 
 # IDE & OS files
-.vscode/
+# Editor state stays local, but the shared settings do not: they carry the
+# fix for the false Tailwind v4 at-rule errors, and every machine would
+# otherwise have to rediscover that those five errors are fake.
+.vscode/*
+!.vscode/settings.json
 .idea/
 .DS_Store
 Thumbs.db
