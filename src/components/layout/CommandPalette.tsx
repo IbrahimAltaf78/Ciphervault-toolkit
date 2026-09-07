@@ -102,24 +102,27 @@ export function CommandPalette() {
 
       {!isOpen ? null : (
         <div
-          /* Clicking the backdrop dismisses, the same as Escape — a dialog you can
-             only leave by keyboard traps anyone reaching for the mouse. Bound to
-             pointerdown rather than click so a press that starts on the backdrop
-             closes even if the pointer drifts onto the panel before release. */
+          /* A click anywhere dismisses, the same as Escape — a dialog you can
+             only leave by keyboard traps anyone already reaching for the mouse.
+             The two controls that need their own clicks stop the event below.
+
+             Bound to pointerdown rather than click, so a press that starts here
+             still closes even if the pointer drifts before release — the case
+             where a click event never fires and the dialog appears stuck. */
           className="fixed inset-0 z-50 flex items-start justify-center bg-phos-void/80 p-4 pt-[12vh] backdrop-blur-sm"
-          onPointerDown={(event) => {
-            if (event.target === event.currentTarget) close();
-          }}
+          onPointerDown={close}
           role="presentation"
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-label="Jump to a tool"
-            onClick={(event) => event.stopPropagation()}
-            className="phos-card phos-rise w-full max-w-lg overflow-hidden"
+                className="phos-card phos-rise w-full max-w-lg overflow-hidden"
           >
-            <div className="flex items-center gap-3 border-b border-phos-line px-4">
+            <div
+          className="flex items-center gap-3 border-b border-phos-line px-4"
+          onPointerDown={(event) => event.stopPropagation()}
+        >
               <Search aria-hidden className="size-4 shrink-0 text-phos" />
               <input
                 autoFocus
@@ -143,6 +146,9 @@ export function CommandPalette() {
               id="command-results"
               ref={listRef}
               role="listbox"
+              /* The rows keep their own clicks, or a row would dismiss the
+                 dialog before it could navigate. */
+              onPointerDown={(event) => event.stopPropagation()}
               className="max-h-[52vh] overflow-y-auto p-2"
             >
               {results.length === 0 && (
@@ -189,7 +195,7 @@ export function CommandPalette() {
             <div className="flex items-center gap-4 border-t border-phos-line px-4 py-2 font-mono text-[10px] uppercase tracking-widest text-phos-dim">
               <span>↑↓ move</span>
               <span>↵ open</span>
-              <span>esc or click away</span>
+              <span>esc closes</span>
               <span className="ml-auto">{results.length} tools</span>
             </div>
           </div>
