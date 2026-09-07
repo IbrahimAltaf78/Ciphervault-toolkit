@@ -1,570 +1,352 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import { Image as ImageIcon, Lock, Key, Upload, Download, RefreshCw, ShieldCheck, HardDrive, KeyRound, Eye, Layers } from 'lucide-react';
-
-// Web Crypto API Helper Functions for AES-GCM
-async function deriveKey(passphrase: string, salt: Uint8Array): Promise<CryptoKey> {
-    const enc = new TextEncoder();
-    const keyMaterial = await crypto.subtle.importKey(
-        'raw',
-        enc.encode(passphrase),
-        { name: 'PBKDF2' },
-        false,
-        ['deriveKey']
-    );
-    return crypto.subtle.deriveKey(
-        {
-            name: 'PBKDF2',
-            salt: salt.buffer as ArrayBuffer,
-            iterations: 100000,
-            hash: 'SHA-256',
-        },
-        keyMaterial,
-        { name: 'AES-GCM', length: 256 },
-        false,
-        ['encrypt', 'decrypt']
-    );
-}
-
-async function encryptPayload(text: string, passphrase: string): Promise<string> {
-    const enc = new TextEncoder();
-    const salt = crypto.getRandomValues(new Uint8Array(16));
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const key = await deriveKey(passphrase, salt);
-
-    const encryptedContent = await crypto.subtle.encrypt(
-        { name: 'AES-GCM', iv: iv.buffer as ArrayBuffer },
-        key,
-        enc.encode(text)
-    );
-
-    const combined = new Uint8Array(salt.length + iv.length + encryptedContent.byteLength);
-    combined.set(salt, 0);
-    combined.set(iv, salt.length);
-    combined.set(new Uint8Array(encryptedContent), salt.length + iv.length);
-
-    return btoa(String.fromCharCode(...combined));
-}
-
-async function decryptPayload(base64Payload: string, passphrase: string): Promise<string> {
-    const combined = Uint8Array.from(atob(base64Payload), (c) => c.charCodeAt(0));
-
-    if (combined.length < 28) {
-        throw new Error('Payload is too short to contain encrypted data.');
-    }
-
-    const salt = combined.slice(0, 16);
-    const iv = combined.slice(16, 28);
-    const ciphertext = combined.slice(28);
-
-    const key = await deriveKey(passphrase, salt);
-
-    try {
-        const decryptedContent = await crypto.subtle.decrypt(
-            { name: 'AES-GCM', iv: iv.buffer as ArrayBuffer },
-            key,
-            ciphertext.buffer as ArrayBuffer
-        );
-        return new TextDecoder().decode(decryptedContent);
-    } catch {
-        throw new Error('Incorrect passphrase or corrupted payload.');
-    }
-}
-
-// Interactive Bit-Plane Viewer Component
-function BitPlaneViewer({ imageUrl }: { imageUrl: string }) {
-    const [selectedBit, setSelectedBit] = useState<number>(0);
-    const [selectedChannel, setSelectedChannel] = useState<'all' | 'r' | 'g' | 'b'>('all');
-    const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-    useEffect(() => {
-        if (!imageUrl || !canvasRef.current) return;
-
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.src = imageUrl;
-
-        img.onload = () => {
-            const canvas = canvasRef.current;
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) return;
-
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
-
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const data = imageData.data;
-
-            for (let i = 0; i < data.length; i += 4) {
-                const rBit = (data[i] >> selectedBit) & 1;
-                const gBit = (data[i + 1] >> selectedBit) & 1;
-                const bBit = (data[i + 2] >> selectedBit) & 1;
-
-                let valR = rBit ? 255 : 0;
-                let valG = gBit ? 255 : 0;
-                let valB = bBit ? 255 : 0;
-
-                if (selectedChannel === 'r') {
-                    valG = 0;
-                    valB = 0;
-                } else if (selectedChannel === 'g') {
-                    valR = 0;
-                    valB = 0;
-                } else if (selectedChannel === 'b') {
-                    valR = 0;
-                    valG = 0;
-                }
-
-                data[i] = valR;
-                data[i + 1] = valG;
-                data[i + 2] = valB;
-            }
-
-            ctx.putImageData(imageData, 0, 0);
-        };
-    }, [imageUrl, selectedBit, selectedChannel]);
-
-    return (
-        <div className="bg-slate-950 border border-slate-800 rounded-lg p-4 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
-                <span className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
-                    <Layers className="w-4 h-4 text-cyan-400" /> Visual Bit-Plane Inspector
-                </span>
-
-                <div className="flex items-center gap-1">
-                    <span className="text-xs text-slate-400 mr-1">Bit:</span>
-                    {[0, 1, 2, 3, 4, 5, 6, 7].map((bit) => (
-                        <button
-                            key={bit}
-                            onClick={() => setSelectedBit(bit)}
-                            className={`px-2 py-0.5 text-xs rounded transition-colors ${selectedBit === bit
-                                ? 'bg-cyan-500 text-slate-950 font-bold'
-                                : 'bg-slate-900 text-slate-400 hover:text-slate-200'
-                                }`}
-                        >
-                            {bit}
-                        </button>
-                    ))}
-                </div>
-
-                <div className="flex items-center gap-1">
-                    <span className="text-xs text-slate-400 mr-1">Channel:</span>
-                    {(['all', 'r', 'g', 'b'] as const).map((ch) => (
-                        <button
-                            key={ch}
-                            onClick={() => setSelectedChannel(ch)}
-                            className={`px-2 py-0.5 text-xs rounded uppercase font-medium transition-colors ${selectedChannel === ch
-                                ? 'bg-cyan-500 text-slate-950 font-bold'
-                                : 'bg-slate-900 text-slate-400 hover:text-slate-200'
-                                }`}
-                        >
-                            {ch}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            <div className="flex justify-center overflow-auto max-h-80 bg-slate-900/50 p-2 rounded">
-                <canvas ref={canvasRef} className="max-w-full h-auto object-contain rounded" />
-            </div>
-            <p className="text-[11px] text-slate-500 text-center">
-                Bit 0 is the Least Significant Bit (LSB). Random noise patterns in Bit 0 usually indicate embedded hidden payloads.
-            </p>
-        </div>
-    );
-}
+import { useState, ChangeEvent, FormEvent, DragEvent, useRef } from "react";
+import { EyeOff, Upload, Lock, Shield, Eye, Download, AlertCircle, RefreshCw } from "lucide-react";
 
 export default function ImageStegoPage() {
-    const [mode, setMode] = useState<'hide' | 'extract'>('hide');
-    const [file, setFile] = useState<File | null>(null);
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const [secretText, setSecretText] = useState<string>('');
-    const [passphrase, setPassphrase] = useState<string>('');
-    const [extractedText, setExtractedText] = useState<string>('');
-    const [loading, setLoading] = useState<boolean>(false);
-    const [stegoImageUrl, setStegoImageUrl] = useState<string | null>(null);
-    const [error, setError] = useState<string | null>(null);
-    const [isDragging, setIsDragging] = useState<boolean>(false);
-    const [maxCapacityBytes, setMaxCapacityBytes] = useState<number>(0);
-    const [showInspector, setShowInspector] = useState<boolean>(false);
+    const [activeTab, setActiveTab] = useState<"hide" | "extract">("hide");
 
-    // Clean up memory when imagePreview or stegoImageUrl changes
-    useEffect(() => {
-        return () => {
-            if (imagePreview) URL.revokeObjectURL(imagePreview);
-            if (stegoImageUrl) URL.revokeObjectURL(stegoImageUrl);
-        };
-    }, [imagePreview, stegoImageUrl]);
+    // Input states
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [secretText, setSecretText] = useState("");
+    const [password, setPassword] = useState("");
+    const [isDragging, setIsDragging] = useState(false);
 
-    const switchMode = (newMode: 'hide' | 'extract') => {
-        setMode(newMode);
-        setFile(null);
-        setImagePreview(null);
-        setSecretText('');
-        setPassphrase('');
-        setExtractedText('');
-        setStegoImageUrl(null);
-        setError(null);
-        setMaxCapacityBytes(0);
-        setShowInspector(false);
+    // Response states
+    const [loading, setLoading] = useState(false);
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
+    const [stegoImageResult, setStegoImageResult] = useState<string | null>(null);
+    const [downloadFilename, setDownloadFilename] = useState("stego_image.png");
+    const [extractedResult, setExtractedResult] = useState<string | null>(null);
+
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+    // Clear state when switching tabs
+    const handleTabChange = (tab: "hide" | "extract") => {
+        setActiveTab(tab);
+        setSelectedFile(null);
+        setPreviewUrl(null);
+        setSecretText("");
+        setPassword("");
+        setErrorMsg(null);
+        setStegoImageResult(null);
+        setExtractedResult(null);
+        setIsDragging(false);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
     };
 
-    useEffect(() => {
-        const preventGlobalDrop = (e: DragEvent) => e.preventDefault();
-        window.addEventListener('dragover', preventGlobalDrop);
-        window.addEventListener('drop', preventGlobalDrop);
-        return () => {
-            window.removeEventListener('dragover', preventGlobalDrop);
-            window.removeEventListener('drop', preventGlobalDrop);
-        };
-    }, []);
+    const processFile = (file: File) => {
+        setErrorMsg(null);
+        setSelectedFile(file);
+        setPreviewUrl(URL.createObjectURL(file));
+        setStegoImageResult(null);
+        setExtractedResult(null);
+    };
 
-    const processSelectedFile = (selectedFile: File) => {
-        if (!selectedFile.type.match(/^image\/(png|bmp)$/i)) {
-            setError('Please upload a lossless image format (.png or .bmp).');
+    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            processFile(e.target.files[0]);
+        }
+    };
+
+    // Drag and drop event handlers
+    const handleDragOver = (e: DragEvent<HTMLLabelElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: DragEvent<HTMLLabelElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e: DragEvent<HTMLLabelElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            processFile(e.dataTransfer.files[0]);
+        }
+    };
+
+    const handleHideSubmit = async (e: FormEvent) => {
+        e.preventDefault();
+        if (!selectedFile) {
+            setErrorMsg("Please select an image file first.");
             return;
         }
-
-        setFile(selectedFile);
-        const url = URL.createObjectURL(selectedFile);
-        setImagePreview(url);
-        setExtractedText('');
-        setStegoImageUrl(null);
-        setError(null);
-
-        // Load image to calculate capacity & prevent memory leak by revoking URL
-        const img = new Image();
-        img.src = url;
-        img.onload = () => {
-            const totalBytes = Math.floor((img.width * img.height * 3) / 8) - 32;
-            setMaxCapacityBytes(Math.max(0, totalBytes));
-        };
-    };
-
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            processSelectedFile(e.target.files[0]);
-        }
-    };
-
-    const handleHide = async () => {
-        if (!file || !secretText) {
-            setError('Please select an image and enter a secret message.');
+        if (!secretText.trim()) {
+            setErrorMsg("Please enter text to hide.");
             return;
         }
 
         setLoading(true);
-        setError(null);
+        setErrorMsg(null);
 
         try {
-            let payloadToEmbed = secretText;
-            if (passphrase.trim()) {
-                const encryptedB64 = await encryptPayload(secretText, passphrase);
-                payloadToEmbed = `ENC:${encryptedB64}`;
-            }
-
-            const payloadBytes = new TextEncoder().encode(payloadToEmbed).length;
-            if (payloadBytes > maxCapacityBytes && maxCapacityBytes > 0) {
-                throw new Error(`Encrypted payload exceeds image capacity (${payloadBytes} / ${maxCapacityBytes} bytes).`);
-            }
-
             const formData = new FormData();
-            formData.append('file', file);
-            formData.append('text', payloadToEmbed);
+            formData.append("image", selectedFile);
+            formData.append("secretText", secretText);
+            if (password.trim()) {
+                formData.append("password", password.trim());
+            }
 
-            const response = await fetch('http://localhost:8000/api/stego/image/hide', {
-                method: 'POST',
+            const res = await fetch("http://127.0.0.1:8000/api/stego/image/hide", {
+                method: "POST",
                 body: formData,
             });
 
-            if (!response.ok) {
-                const errorData = await response.text();
-                throw new Error(errorData || 'Failed to encode image.');
+            const data = await res.json();
+
+            if (!res.ok || data.success === false) {
+                throw new Error(data?.error?.message || data?.detail || "Failed to embed text into image.");
             }
 
-            const blob = await response.blob();
-            const url = URL.createObjectURL(blob);
-            setStegoImageUrl(url);
-        } catch (err: unknown) {
-            if (err instanceof Error) {
-                setError(err.message);
-            } else {
-                setError('An unexpected error occurred while encoding image.');
+            setStegoImageResult(data.data.image);
+            if (data.data.filename) {
+                setDownloadFilename(data.data.filename);
             }
+        } catch (err: any) {
+            setErrorMsg(typeof err === "string" ? err : err.message || JSON.stringify(err));
         } finally {
             setLoading(false);
         }
     };
 
-    const handleExtract = async () => {
-        if (!file) {
-            setError('Please select a stego PNG image first.');
+    const handleExtractSubmit = async (e: FormEvent) => {
+        e.preventDefault();
+        if (!selectedFile) {
+            setErrorMsg("Please select the stego image file (e.g. stego_lsb_...) to extract data from.");
             return;
         }
 
         setLoading(true);
-        setError(null);
-
-        const formData = new FormData();
-        formData.append('file', file);
+        setErrorMsg(null);
 
         try {
-            const response = await fetch('http://localhost:8000/api/stego/image/extract', {
-                method: 'POST',
+            const formData = new FormData();
+            formData.append("image", selectedFile);
+            if (password.trim()) {
+                formData.append("password", password.trim());
+            }
+
+            const res = await fetch("http://127.0.0.1:8000/api/stego/image/extract", {
+                method: "POST",
                 body: formData,
             });
 
-            if (!response.ok) {
-                const errorData = await response.text();
-                throw new Error(errorData || 'Failed to extract data.');
+            const data = await res.json();
+
+            if (!res.ok || data.success === false) {
+                throw new Error(data?.error?.message || data?.detail || "Failed to extract text from image.");
             }
 
-            const data: { extracted_text?: string; message?: string } = await response.json();
-            const rawPayload = data.extracted_text || data.message || '';
-
-            if (rawPayload.startsWith('ENC:')) {
-                if (!passphrase.trim()) {
-                    throw new Error('This message is encrypted. Please enter the passphrase to decrypt it.');
-                }
-                const encryptedB64 = rawPayload.replace(/^ENC:/, '');
-                const decrypted = await decryptPayload(encryptedB64, passphrase);
-                setExtractedText(decrypted);
-            } else {
-                setExtractedText(rawPayload || 'No hidden message found.');
-            }
-        } catch (err: unknown) {
-            if (err instanceof Error) {
-                setError(err.message);
-            } else {
-                setError('An unexpected error occurred while extracting text.');
-            }
+            setExtractedResult(data.data.secretText);
+        } catch (err: any) {
+            setErrorMsg(typeof err === "string" ? err : err.message || JSON.stringify(err));
         } finally {
             setLoading(false);
         }
     };
-
-    const payloadLength = passphrase.trim()
-        ? new TextEncoder().encode(`ENC:${secretText}`).length + 28
-        : new TextEncoder().encode(secretText).length;
-
-    const capacityPercentage = maxCapacityBytes > 0 ? Math.min(100, (payloadLength / maxCapacityBytes) * 100) : 0;
 
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-10">
-            <div className="max-w-4xl mx-auto space-y-8">
-                {/* Header */}
-                <div>
-                    <h1 className="text-3xl font-bold flex items-center gap-3">
-                        <ImageIcon className="text-cyan-400" /> Image Steganography
+        <main className="min-h-screen bg-slate-950 text-slate-100 py-10 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-3xl mx-auto space-y-6">
+                {/* Page Header */}
+                <div className="text-center space-y-2">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold">
+                        <EyeOff className="h-4 w-4" />
+                        <span>LSB & DWT Steganography</span>
+                    </div>
+                    <h1 className="text-3xl font-extrabold tracking-tight text-slate-100">
+                        Image Steganography
                     </h1>
-                    <p className="text-slate-400 mt-1">
+                    <p className="text-sm text-slate-400">
                         Hide and reveal secret text inside PNG bit planes with optional AES-GCM encryption.
                     </p>
                 </div>
 
-                {/* Tab Controls */}
-                <div className="flex border-b border-slate-800 gap-4">
+                {/* Tab Switcher */}
+                <div className="flex border-b border-slate-800">
                     <button
-                        onClick={() => switchMode('hide')}
-                        className={`pb-3 font-medium transition-colors flex items-center gap-2 border-b-2 ${mode === 'hide'
-                            ? 'border-cyan-400 text-cyan-400'
-                            : 'border-transparent text-slate-400 hover:text-slate-200'
+                        onClick={() => handleTabChange("hide")}
+                        className={`flex items-center gap-2 py-3 px-6 text-sm font-semibold border-b-2 transition-colors ${activeTab === "hide"
+                                ? "border-cyan-500 text-cyan-400"
+                                : "border-transparent text-slate-400 hover:text-slate-200"
                             }`}
                     >
-                        <Lock className="w-4 h-4" /> Hide Data
+                        <Lock className="h-4 w-4" />
+                        Hide Data
                     </button>
                     <button
-                        onClick={() => switchMode('extract')}
-                        className={`pb-3 font-medium transition-colors flex items-center gap-2 border-b-2 ${mode === 'extract'
-                            ? 'border-cyan-400 text-cyan-400'
-                            : 'border-transparent text-slate-400 hover:text-slate-200'
+                        onClick={() => handleTabChange("extract")}
+                        className={`flex items-center gap-2 py-3 px-6 text-sm font-semibold border-b-2 transition-colors ${activeTab === "extract"
+                                ? "border-cyan-500 text-cyan-400"
+                                : "border-transparent text-slate-400 hover:text-slate-200"
                             }`}
                     >
-                        <Key className="w-4 h-4" /> Extract Data
+                        <Eye className="h-4 w-4" />
+                        Extract Data
                     </button>
                 </div>
 
-                {error && (
-                    <div className="bg-red-950/50 border border-red-500/50 text-red-300 p-4 rounded-lg text-sm">
-                        {error}
+                {/* Error Container */}
+                {errorMsg && (
+                    <div className="rounded-lg bg-red-950/50 border border-red-500/50 p-4 text-sm text-red-200 flex items-start gap-3">
+                        <AlertCircle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
+                        <div className="break-all">{errorMsg}</div>
                     </div>
                 )}
 
-                {/* Main Card */}
-                <div className="bg-slate-900 border border-slate-800 p-6 rounded-xl space-y-6">
-                    {/* File Upload Section */}
-                    <div className="space-y-2">
-                        <label className="text-sm text-slate-400 font-medium">Upload Image (PNG/BMP)</label>
-                        <div
-                            onDragEnter={(e) => { e.preventDefault(); setIsDragging(true); }}
-                            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                            onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
-                            onDrop={(e) => {
-                                e.preventDefault();
-                                setIsDragging(false);
-                                if (e.dataTransfer.files?.length) processSelectedFile(e.dataTransfer.files[0]);
-                            }}
-                            className={`relative border-2 border-dashed rounded-lg p-6 text-center transition cursor-pointer ${isDragging
-                                ? 'border-cyan-500 bg-cyan-500/10'
-                                : 'border-slate-700 bg-slate-950/50 hover:border-cyan-500/50'
+                {/* Form Area */}
+                <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-6 backdrop-blur-sm space-y-6">
+                    {/* Image File Upload Area with Drag and Drop */}
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                            {activeTab === "hide" ? "Upload Carrier Image (PNG/BMP)" : "Upload Stego Image (PNG/BMP)"}
+                        </label>
+                        <label
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                            onDrop={handleDrop}
+                            className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-6 cursor-pointer transition-colors ${isDragging
+                                    ? "border-cyan-400 bg-cyan-950/20"
+                                    : "border-slate-700 hover:border-cyan-500/50 bg-slate-950/40"
                                 }`}
                         >
+                            <Upload className={`h-8 w-8 mb-2 ${isDragging ? "text-cyan-400" : "text-slate-400"}`} />
+                            <span className="text-sm font-medium text-slate-300">
+                                {selectedFile
+                                    ? selectedFile.name
+                                    : isDragging
+                                        ? "Drop image here..."
+                                        : `Click or drag & drop ${activeTab === "hide" ? "carrier" : "stego"} image file`}
+                            </span>
                             <input
-                                key={mode}
+                                ref={fileInputRef}
                                 type="file"
-                                accept="image/png, image/bmp"
+                                accept="image/png, image/bmp, image/jpeg"
                                 onChange={handleFileChange}
-                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                className="hidden"
                             />
-                            <div className="pointer-events-none flex flex-col items-center justify-center">
-                                <Upload className="w-6 h-6 text-slate-400 mb-1" />
-                                <span className="text-xs text-slate-400">
-                                    {file ? file.name : 'Click to upload or drag .png file'}
-                                </span>
-                            </div>
-                        </div>
+                        </label>
                     </div>
 
-                    {imagePreview && (
-                        <div className="p-4 bg-slate-950 border border-slate-800 rounded-lg space-y-4">
-                            <div className="flex items-center justify-between">
-                                <p className="text-xs font-medium text-slate-400 flex items-center gap-2">
-                                    <ImageIcon className="w-4 h-4 text-cyan-400" /> Carrier Image Preview
-                                </p>
-                                <button
-                                    onClick={() => setShowInspector(!showInspector)}
-                                    className="text-xs bg-slate-900 hover:bg-slate-800 border border-slate-700 text-cyan-400 px-3 py-1 rounded flex items-center gap-1.5 transition-colors"
-                                >
-                                    <Eye className="w-3.5 h-3.5" />
-                                    {showInspector ? 'Hide Bit Inspector' : 'Inspect Bit Planes'}
-                                </button>
+                    {/* Image Preview */}
+                    {previewUrl && (
+                        <div className="space-y-2">
+                            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                                {activeTab === "hide" ? "Carrier Image Preview" : "Stego Image Preview"}
+                            </span>
+                            <div className="flex justify-center bg-slate-950 rounded-lg border border-slate-800 p-4 max-h-64 overflow-hidden">
+                                <img src={previewUrl} alt="Preview" className="object-contain max-h-56 rounded" />
                             </div>
-
-                            <div className="flex justify-center bg-slate-900/40 p-2 rounded">
-                                <img src={imagePreview} alt="Carrier Preview" className="max-h-64 rounded object-contain" />
-                            </div>
-
-                            {showInspector && <BitPlaneViewer imageUrl={imagePreview} />}
                         </div>
                     )}
 
-                    {/* HIDE MODE */}
-                    {mode === 'hide' && (
-                        <div className="space-y-4">
-                            <div className="space-y-1">
-                                <div className="flex justify-between items-center text-sm font-medium mb-1">
-                                    <label className="text-slate-400">Secret Text to Hide</label>
-                                    {file && maxCapacityBytes > 0 && (
-                                        <span className={`text-xs flex items-center gap-1 ${payloadLength > maxCapacityBytes ? 'text-red-400 font-semibold' : 'text-slate-400'}`}>
-                                            <HardDrive className="w-3.5 h-3.5" />
-                                            {payloadLength} / {maxCapacityBytes} bytes ({capacityPercentage.toFixed(1)}%)
-                                        </span>
-                                    )}
-                                </div>
-
+                    {/* Tab: HIDE DATA */}
+                    {activeTab === "hide" && (
+                        <form onSubmit={handleHideSubmit} className="space-y-5">
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                                    Secret Text to Hide
+                                </label>
                                 <textarea
                                     rows={4}
                                     value={secretText}
                                     onChange={(e) => setSecretText(e.target.value)}
-                                    placeholder="Enter secret message to encode inside pixel bit planes..."
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:outline-none focus:border-cyan-500 text-slate-100"
+                                    placeholder="Enter message to embed into image..."
+                                    className="w-full rounded-lg bg-slate-950 border border-slate-800 p-3 text-sm text-slate-100 focus:outline-none focus:border-cyan-500"
                                 />
-
-                                {file && maxCapacityBytes > 0 && (
-                                    <div className="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden border border-slate-800 mt-2">
-                                        <div
-                                            className={`h-full transition-all duration-300 ${payloadLength > maxCapacityBytes ? 'bg-red-500' : capacityPercentage > 85 ? 'bg-amber-400' : 'bg-cyan-500'}`}
-                                            style={{ width: `${Math.min(100, capacityPercentage)}%` }}
-                                        />
-                                    </div>
-                                )}
                             </div>
 
-                            <div className="space-y-1">
-                                <label className="text-sm text-slate-400 font-medium flex items-center gap-2">
-                                    <KeyRound className="w-4 h-4 text-amber-400" /> Encryption Passphrase (Optional)
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                    <Shield className="h-3.5 w-3.5 text-cyan-400" />
+                                    Encryption Passphrase (Optional)
                                 </label>
                                 <input
                                     type="password"
-                                    value={passphrase}
-                                    onChange={(e) => setPassphrase(e.target.value)}
-                                    placeholder="Enter a passphrase to encrypt your secret payload..."
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm focus:outline-none focus:border-cyan-500 text-slate-100"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="Optional password for AES-256-GCM..."
+                                    className="w-full rounded-lg bg-slate-950 border border-slate-800 p-3 text-sm text-slate-100 focus:outline-none focus:border-cyan-500"
                                 />
                             </div>
 
                             <button
-                                onClick={handleHide}
-                                disabled={loading || !file || !secretText || payloadLength > maxCapacityBytes}
-                                className="w-full bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-800 disabled:text-slate-600 font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors"
+                                type="submit"
+                                disabled={loading || !selectedFile}
+                                className="w-full py-3 px-4 rounded-lg bg-cyan-500 hover:bg-cyan-400 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-bold transition-colors flex items-center justify-center gap-2"
                             >
-                                {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : 'Hide Text into Image'}
+                                {loading ? <RefreshCw className="h-5 w-5 animate-spin" /> : <Lock className="h-5 w-5" />}
+                                {loading ? "Processing..." : "Hide Text into Image"}
                             </button>
-
-                            {stegoImageUrl && (
-                                <div className="p-4 bg-slate-950 border border-emerald-500/40 rounded-lg space-y-4 mt-4">
-                                    <p className="text-sm font-semibold text-emerald-400 flex items-center gap-2">
-                                        <ShieldCheck className="w-5 h-5" /> Encoding Complete! Stego Image Output:
-                                    </p>
-                                    <div className="flex justify-center bg-slate-900/40 p-2 rounded">
-                                        <img src={stegoImageUrl} alt="Stego Output" className="max-h-64 rounded object-contain" />
-                                    </div>
-                                    <a
-                                        href={stegoImageUrl}
-                                        download={`stego_${file?.name || 'image.png'}`}
-                                        className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                                    >
-                                        <Download className="w-4 h-4" /> Download Stego Image
-                                    </a>
-                                </div>
-                            )}
-                        </div>
+                        </form>
                     )}
 
-                    {/* EXTRACT MODE */}
-                    {mode === 'extract' && (
-                        <div className="space-y-4">
-                            <div className="space-y-1">
-                                <label className="text-sm text-slate-400 font-medium flex items-center gap-2">
-                                    <KeyRound className="w-4 h-4 text-amber-400" /> Decryption Passphrase
+                    {/* Tab: EXTRACT DATA */}
+                    {activeTab === "extract" && (
+                        <form onSubmit={handleExtractSubmit} className="space-y-5">
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                    <Shield className="h-3.5 w-3.5 text-cyan-400" />
+                                    Decryption Passphrase (If encrypted)
                                 </label>
                                 <input
                                     type="password"
-                                    value={passphrase}
-                                    onChange={(e) => setPassphrase(e.target.value)}
-                                    placeholder="Enter passphrase if the hidden data was encrypted..."
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-sm focus:outline-none focus:border-cyan-500 text-slate-100"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="Enter passphrase if payload was encrypted..."
+                                    className="w-full rounded-lg bg-slate-950 border border-slate-800 p-3 text-sm text-slate-100 focus:outline-none focus:border-cyan-500"
                                 />
                             </div>
 
                             <button
-                                onClick={handleExtract}
-                                disabled={loading || !file}
-                                className="w-full bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-800 disabled:text-slate-600 font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors"
+                                type="submit"
+                                disabled={loading || !selectedFile}
+                                className="w-full py-3 px-4 rounded-lg bg-cyan-500 hover:bg-cyan-400 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-bold transition-colors flex items-center justify-center gap-2"
                             >
-                                {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : 'Extract Hidden Text'}
+                                {loading ? <RefreshCw className="h-5 w-5 animate-spin" /> : <Eye className="h-5 w-5" />}
+                                {loading ? "Extracting..." : "Extract Text from Image"}
                             </button>
-
-                            {extractedText && (
-                                <div className="space-y-2 mt-4">
-                                    <label className="text-sm font-medium text-cyan-400 flex items-center gap-2">
-                                        <ShieldCheck className="w-4 h-4" /> Extracted Secret Payload:
-                                    </label>
-                                    <textarea
-                                        readOnly
-                                        value={extractedText}
-                                        rows={4}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 font-mono text-sm text-slate-200 focus:outline-none"
-                                    />
-                                </div>
-                            )}
-                        </div>
+                        </form>
                     )}
                 </div>
+
+                {/* Results Display */}
+                {stegoImageResult && activeTab === "hide" && (
+                    <div className="bg-slate-900/80 border border-cyan-500/30 rounded-xl p-6 space-y-4">
+                        <h3 className="text-lg font-bold text-cyan-400">Stego Image Generated</h3>
+                        <div className="flex justify-center bg-slate-950 p-4 rounded-lg border border-slate-800">
+                            <img src={stegoImageResult} alt="Stego Result" className="max-h-64 object-contain rounded" />
+                        </div>
+                        <a
+                            href={stegoImageResult}
+                            download={downloadFilename}
+                            className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-400 font-semibold border border-cyan-500/20 transition-colors"
+                        >
+                            <Download className="h-4 w-4" />
+                            Download Stego Image
+                        </a>
+                    </div>
+                )}
+
+                {extractedResult !== null && activeTab === "extract" && (
+                    <div className="bg-slate-900/80 border border-cyan-500/30 rounded-xl p-6 space-y-3">
+                        <h3 className="text-lg font-bold text-cyan-400">Extracted Payload</h3>
+                        <div className="p-4 rounded-lg bg-slate-950 border border-slate-800 text-slate-100 font-mono text-sm whitespace-pre-wrap break-all">
+                            {extractedResult || "(No text found)"}
+                        </div>
+                    </div>
+                )}
             </div>
-        </div>
+        </main>
     );
 }

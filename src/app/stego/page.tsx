@@ -28,7 +28,7 @@ export default function Home() {
             description:
                 "Hide encrypted text payloads inside digital images and WAV audio files using LSB and DWT techniques.",
             icon: <EyeOff className="h-6 w-6" />,
-            href: "/stego",
+            href: "/stego/image",
             badge: "Core Feature",
             color: "from-cyan-500/20 to-blue-500/20 text-cyan-400 border-cyan-500/30",
         },
@@ -81,7 +81,6 @@ export default function Home() {
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[350px] bg-gradient-to-tr from-cyan-500/10 via-indigo-500/10 to-purple-500/0 blur-3xl pointer-events-none rounded-full" />
 
             <div className="max-w-7xl mx-auto space-y-12 relative z-10">
-
                 {/* Header Section */}
                 <div className="text-center space-y-4 max-w-3xl mx-auto">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold uppercase tracking-wider">
@@ -134,7 +133,6 @@ export default function Home() {
                         </Link>
                     ))}
                 </div>
-
             </div>
         </main>
     );

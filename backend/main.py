@@ -184,6 +184,7 @@ def extract_dwt(image_bytes: bytes) -> str:
 # Image Steganography Routes
 # ==========================================
 
+@app.post("/api/stego/image/hide")
 @app.post("/api/stego/image/lsb/hide")
 async def hide_lsb_image(
     image: UploadFile = File(...),
@@ -227,6 +228,7 @@ async def hide_lsb_image(
         return {"success": False, "error": {"message": str(e)}}
 
 
+@app.post("/api/stego/image/extract")
 @app.post("/api/stego/image/lsb/extract")
 async def extract_lsb_image(
     image: UploadFile = File(...),
