@@ -78,7 +78,7 @@ const MODULES: Module[] = [
 
 export default function HomePage() {
   return (
-    <div className="crt phos-corners phos-boot phos-sweep px-5 py-10 sm:px-8 sm:py-14 lg:px-12">
+    <div className="crt phos-boot phos-sweep px-5 py-10 sm:px-8 sm:py-14 lg:px-12">
       {/* The binary field now comes from the layout, behind every page. */}
       <WireCube className="pointer-events-none absolute -right-16 top-24 z-0 hidden h-[34rem] w-[34rem] text-phos opacity-45 lg:block" />
 

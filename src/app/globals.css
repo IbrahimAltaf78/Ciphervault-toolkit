@@ -590,29 +590,6 @@ h1, h2 { text-shadow: 0 0 12px rgba(34, 197, 94, 0.35); }
 /* Content rides above the field. */
 .phos-above { position: relative; z-index: 1; }
 
-/* --- Corner brackets ------------------------------------------------------
-   Four L-shaped marks at the screen corners, the way a targeting overlay or an
-   instrument display frames its viewport. Drawn with one element and a pair of
-   gradients rather than four spans. */
-.phos-corners::before,
-.phos-corners::after {
-  content: "";
-  position: absolute;
-  width: 22px;
-  height: 22px;
-  z-index: 3;
-  pointer-events: none;
-  border-color: var(--color-phos);
-  opacity: 0.7;
-}
-.phos-corners::before {
-  top: 14px; left: 14px;
-  border-top: 1.5px solid; border-left: 1.5px solid;
-}
-.phos-corners::after {
-  bottom: 14px; right: 14px;
-  border-bottom: 1.5px solid; border-right: 1.5px solid;
-}
 
 /* --- Status strip ---------------------------------------------------------
    A readout line, in the manner of a terminal status bar. */

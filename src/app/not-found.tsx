@@ -13,7 +13,7 @@ import { ArrowLeft, FileQuestion } from "lucide-react";
  */
 export default function NotFound() {
   return (
-    <div className="crt phos-corners phos-boot phos-sweep px-5 py-16 sm:px-8">
+    <div className="crt phos-boot phos-sweep px-5 py-16 sm:px-8">
       <div className="relative z-[1] mx-auto max-w-lg space-y-6 text-center">
         <span className="phos-tile mx-auto">
           <FileQuestion aria-hidden className="size-5" />
