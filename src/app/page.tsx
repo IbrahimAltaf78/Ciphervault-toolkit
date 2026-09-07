@@ -88,15 +88,20 @@ export default function HomePage() {
             CipherVault Toolkit v1.0
           </p>
 
+          {/* The project's own positioning, from README.md and the PRD.
+              The previous headline called this a digital forensics suite and
+              named only steganography — which described one module out of six
+              and left out cryptography, the largest of them. */}
           <h1 className="phos-glow-strong text-balance text-4xl font-black leading-[1.08] tracking-tight text-phos-hot sm:text-5xl lg:text-6xl">
-            Digital Forensics &amp;
+            Universal Data Hiding
             <br />
-            Steganography Suite
+            &amp; Cryptography Toolkit
           </h1>
 
           <p className="mx-auto max-w-2xl text-pretty leading-relaxed text-phos-dim">
-            Advanced detection, encryption and covert communication tools,
-            engineered for security research and forensic analysis.
+            Six paradigms in one workspace — encryption, steganography, text
+            hiding, encoding, covert channels and watermarking. Every tool runs
+            both ways, and nothing you process is stored.
           </p>
         </header>
 
