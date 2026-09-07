@@ -161,8 +161,8 @@ export default function ImageStegoUI({ initialAlgorithm = 'lsb' }: ImageStegoUIP
     };
 
     return (
-        <div className="max-w-2xl mx-auto p-6 bg-slate-900 text-white rounded-xl shadow-lg border border-slate-800">
-            <h2 className="text-2xl font-bold mb-6 text-center text-indigo-400">
+        <div className="max-w-2xl mx-auto p-6 bg-phos-panel text-white rounded-xl shadow-lg border border-phos-line">
+            <h2 className="text-2xl font-bold mb-6 text-center text-phos-hot">
                 Image Steganography ({algorithm.toUpperCase()})
             </h2>
 
@@ -170,7 +170,7 @@ export default function ImageStegoUI({ initialAlgorithm = 'lsb' }: ImageStegoUIP
                 <button
                     type="button"
                     onClick={() => handleModeSwitch('hide')}
-                    className={`px-4 py-2 rounded-lg font-medium transition ${mode === 'hide' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'
+                    className={`px-4 py-2 rounded-lg font-medium transition ${mode === 'hide' ? 'bg-phos text-white' : 'bg-phos-line text-phos-dim'
                         }`}
                 >
                     Hide Data
@@ -178,7 +178,7 @@ export default function ImageStegoUI({ initialAlgorithm = 'lsb' }: ImageStegoUIP
                 <button
                     type="button"
                     onClick={() => handleModeSwitch('extract')}
-                    className={`px-4 py-2 rounded-lg font-medium transition ${mode === 'extract' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'
+                    className={`px-4 py-2 rounded-lg font-medium transition ${mode === 'extract' ? 'bg-phos text-white' : 'bg-phos-line text-phos-dim'
                         }`}
                 >
                     Extract Data
@@ -187,11 +187,11 @@ export default function ImageStegoUI({ initialAlgorithm = 'lsb' }: ImageStegoUIP
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                    <label className="block text-sm font-medium mb-1 text-slate-300">Algorithm</label>
+                    <label className="block text-sm font-medium mb-1 text-phos-dim">Algorithm</label>
                     <select
                         value={algorithm}
                         onChange={(e) => setAlgorithm(e.target.value as 'lsb' | 'dwt')}
-                        className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white"
+                        className="w-full bg-phos-line border border-phos-line rounded-lg p-2.5 text-white"
                     >
                         <option value="lsb">LSB (Least Significant Bit)</option>
                         <option value="dwt">DWT (Discrete Wavelet Transform)</option>
@@ -199,7 +199,7 @@ export default function ImageStegoUI({ initialAlgorithm = 'lsb' }: ImageStegoUIP
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium mb-1 text-slate-300">
+                    <label className="block text-sm font-medium mb-1 text-phos-dim">
                         {mode === 'hide' ? 'Upload Cover Image (PNG/BMP)' : 'Upload Stego Image (PNG/BMP)'}
                     </label>
 
@@ -209,8 +209,8 @@ export default function ImageStegoUI({ initialAlgorithm = 'lsb' }: ImageStegoUIP
                         onDragLeave={handleDragLeave}
                         onDrop={handleDrop}
                         className={`relative border-2 border-dashed rounded-lg p-6 text-center transition cursor-pointer ${isDragging
-                            ? 'border-indigo-500 bg-indigo-500/10'
-                            : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
+                            ? 'border-phos bg-phos/10'
+                            : 'border-phos-line bg-phos-line/50 hover:border-phos-dim'
                             }`}
                     >
                         <input
@@ -223,18 +223,18 @@ export default function ImageStegoUI({ initialAlgorithm = 'lsb' }: ImageStegoUIP
                         {previewUrl ? (
                             <div className="space-y-2 pointer-events-none">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={previewUrl} alt="Preview" className="max-h-40 mx-auto rounded border border-slate-700 object-contain" />
-                                <p className="text-xs text-slate-400">{file?.name}</p>
+                                <img src={previewUrl} alt="Preview" className="max-h-40 mx-auto rounded border border-phos-line object-contain" />
+                                <p className="text-xs text-phos-dim">{file?.name}</p>
                             </div>
                         ) : (
                             <div className="space-y-1 pointer-events-none">
-                                <p className="text-sm font-medium text-slate-300">
+                                <p className="text-sm font-medium text-phos-dim">
                                     {mode === 'hide'
                                         ? 'Drag & drop cover image here, or '
                                         : 'Drag & drop downloaded stego image here, or '}
-                                    <span className="text-indigo-400 underline">browse</span>
+                                    <span className="text-phos-hot underline">browse</span>
                                 </p>
-                                <p className="text-xs text-slate-500">Supports PNG or BMP (JPEG auto-rejected)</p>
+                                <p className="text-xs text-phos-dim">Supports PNG or BMP (JPEG auto-rejected)</p>
                             </div>
                         )}
                     </div>
@@ -242,13 +242,13 @@ export default function ImageStegoUI({ initialAlgorithm = 'lsb' }: ImageStegoUIP
 
                 {mode === 'hide' && (
                     <div>
-                        <label className="block text-sm font-medium mb-1 text-slate-300">Secret Text</label>
+                        <label className="block text-sm font-medium mb-1 text-phos-dim">Secret Text</label>
                         <textarea
                             rows={3}
                             value={secretText}
                             onChange={(e) => setSecretText(e.target.value)}
                             placeholder="Enter text to conceal..."
-                            className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white"
+                            className="w-full bg-phos-line border border-phos-line rounded-lg p-2.5 text-white"
                         />
                     </div>
                 )}
@@ -256,7 +256,7 @@ export default function ImageStegoUI({ initialAlgorithm = 'lsb' }: ImageStegoUIP
                 <button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 rounded-lg transition disabled:opacity-50"
+                    className="w-full bg-phos hover:bg-phos text-white font-medium py-2.5 rounded-lg transition disabled:opacity-50"
                 >
                     {loading ? 'Processing...' : mode === 'hide' ? 'Encode Secret Image' : 'Extract Hidden Text'}
                 </button>
@@ -272,7 +272,7 @@ export default function ImageStegoUI({ initialAlgorithm = 'lsb' }: ImageStegoUIP
                 <div className="mt-6 text-center">
                     <h3 className="text-lg font-semibold text-emerald-400 mb-2">Stego Image Generated</h3>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={resultImage} alt="Stego Result" className="max-h-64 mx-auto rounded-lg border border-slate-700 mb-4 object-contain" />
+                    <img src={resultImage} alt="Stego Result" className="max-h-64 mx-auto rounded-lg border border-phos-line mb-4 object-contain" />
                     <a
                         href={resultImage}
                         download="stego_image.png"
@@ -284,8 +284,8 @@ export default function ImageStegoUI({ initialAlgorithm = 'lsb' }: ImageStegoUIP
             )}
 
             {mode === 'extract' && extractedText && (
-                <div className="mt-6 p-4 bg-slate-800 border border-slate-700 rounded-lg">
-                    <h3 className="text-sm font-medium text-slate-400 mb-1">Extracted Secret Message:</h3>
+                <div className="mt-6 p-4 bg-phos-line border border-phos-line rounded-lg">
+                    <h3 className="text-sm font-medium text-phos-dim mb-1">Extracted Secret Message:</h3>
                     <p className="text-emerald-400 text-lg font-mono break-all">{extractedText}</p>
                 </div>
             )}

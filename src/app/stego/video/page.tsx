@@ -90,12 +90,12 @@ export default function VideoStegoPage() {
     return (
         <div className="max-w-4xl mx-auto p-6">
             {/* Tab Switcher */}
-            <div className="flex space-x-4 border-b border-slate-700 mb-6">
+            <div className="flex space-x-4 border-b border-phos-line mb-6">
                 <button
                     onClick={() => handleTabChange("hide")}
                     className={`pb-2 px-4 font-medium transition-colors ${tab === "hide"
-                            ? "border-b-2 border-cyan-400 text-cyan-400"
-                            : "text-slate-400 hover:text-slate-200"
+                            ? "border-b-2 border-phos-hot text-phos-hot"
+                            : "text-phos-dim hover:text-phos-white"
                         }`}
                 >
                     🔒 Hide Data
@@ -103,8 +103,8 @@ export default function VideoStegoPage() {
                 <button
                     onClick={() => handleTabChange("extract")}
                     className={`pb-2 px-4 font-medium transition-colors ${tab === "extract"
-                            ? "border-b-2 border-cyan-400 text-cyan-400"
-                            : "text-slate-400 hover:text-slate-200"
+                            ? "border-b-2 border-phos-hot text-phos-hot"
+                            : "text-phos-dim hover:text-phos-white"
                         }`}
                 >
                     🔑 Extract Data
@@ -125,7 +125,7 @@ export default function VideoStegoPage() {
                     e.preventDefault();
                     if (e.dataTransfer.files?.[0]) handleFileSelect(e.dataTransfer.files[0]);
                 }}
-                className="border-2 border-dashed border-cyan-500/30 rounded-xl p-8 text-center cursor-pointer hover:border-cyan-400 transition mb-6"
+                className="border-2 border-dashed border-phos/30 rounded-xl p-8 text-center cursor-pointer hover:border-phos-hot transition mb-6"
             >
                 <input
                     ref={fileInputRef}
@@ -134,15 +134,15 @@ export default function VideoStegoPage() {
                     className="hidden"
                     onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
                 />
-                <p className="text-slate-300 font-medium">
+                <p className="text-phos-dim font-medium">
                     {file ? file.name : "Click to upload or drag .avi / .mp4 video file"}
                 </p>
             </div>
 
             {/* Source Video Preview */}
             {filePreviewUrl && (
-                <div className="mb-6 bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-2">
-                    <p className="text-xs text-slate-400 font-medium">Original Video Preview:</p>
+                <div className="mb-6 bg-phos-panel border border-phos-line p-4 rounded-xl space-y-2">
+                    <p className="text-xs text-phos-dim font-medium">Original Video Preview:</p>
                     <video controls src={filePreviewUrl} className="w-full max-h-64 rounded-lg bg-black" />
                 </div>
             )}
@@ -154,14 +154,14 @@ export default function VideoStegoPage() {
                         onChange={(e) => setSecretText(e.target.value)}
                         placeholder="Enter secret message to embed..."
                         rows={4}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-white focus:outline-none focus:border-cyan-400"
+                        className="w-full bg-phos-panel border border-phos-line rounded-xl p-4 text-white focus:outline-none focus:border-phos-hot"
                     />
                 </div>
             ) : (
                 extractedText && (
-                    <div className="bg-slate-900 border border-cyan-500/30 rounded-xl p-4 text-cyan-300 mb-6">
+                    <div className="bg-phos-panel border border-phos/30 rounded-xl p-4 text-phos-hot mb-6">
                         <p className="font-semibold text-sm mb-1">Extracted Payload:</p>
-                        <p className="font-mono text-slate-100 break-words">{extractedText}</p>
+                        <p className="font-mono text-phos-white break-words">{extractedText}</p>
                     </div>
                 )
             )}
@@ -169,7 +169,7 @@ export default function VideoStegoPage() {
             <button
                 onClick={handleSubmit}
                 disabled={loading || !file || (tab === "hide" && !secretText)}
-                className="w-full py-3 bg-cyan-500 text-black font-semibold rounded-xl hover:bg-cyan-400 disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed mb-6"
+                className="w-full py-3 bg-phos text-black font-semibold rounded-xl hover:bg-phos-hot disabled:opacity-50 transition-colors cursor-pointer disabled:cursor-not-allowed mb-6"
             >
                 {loading
                     ? "Processing..."
@@ -180,7 +180,7 @@ export default function VideoStegoPage() {
 
             {/* Output Stego Video & Manual Download Action */}
             {tab === "hide" && stegoVideoUrl && (
-                <div className="p-4 bg-slate-900 border border-emerald-500/40 rounded-xl space-y-4">
+                <div className="p-4 bg-phos-panel border border-emerald-500/40 rounded-xl space-y-4">
                     <p className="text-sm font-semibold text-emerald-400">
                         Encoding Complete! Preview or download your output video below:
                     </p>

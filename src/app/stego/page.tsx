@@ -30,7 +30,7 @@ export default function Home() {
             icon: <EyeOff className="h-6 w-6" />,
             href: "/stego",
             badge: "Core Feature",
-            color: "from-cyan-500/20 to-blue-500/20 text-cyan-400 border-cyan-500/30",
+            color: "from-phos/20 to-phos/20 text-phos-hot border-phos/30",
         },
         {
             title: "Stegananalysis",
@@ -39,7 +39,7 @@ export default function Home() {
             icon: <FileSearch className="h-6 w-6" />,
             href: "/steganalysis",
             badge: "Forensics",
-            color: "from-emerald-500/20 to-teal-500/20 text-emerald-400 border-emerald-500/30",
+            color: "from-emerald-500/20 to-phos/20 text-emerald-400 border-emerald-500/30",
         },
         {
             title: "Cryptography Toolkit",
@@ -47,7 +47,7 @@ export default function Home() {
                 "AES-256-GCM symmetric encryption, RSA key pair generation, and SHA-256 secure hashing utilities.",
             icon: <Lock className="h-6 w-6" />,
             href: "/cryptography",
-            color: "from-indigo-500/20 to-purple-500/20 text-indigo-400 border-indigo-500/30",
+            color: "from-phos/20 to-phos/20 text-phos-hot border-phos/30",
         },
         {
             title: "Text Hiding",
@@ -63,7 +63,7 @@ export default function Home() {
                 "Embed robust ownership markers and verify digital signatures to protect media copyright.",
             icon: <Stamp className="h-6 w-6" />,
             href: "/watermark",
-            color: "from-sky-500/20 to-blue-500/20 text-sky-400 border-sky-500/30",
+            color: "from-phos/20 to-phos/20 text-phos-hot border-phos/30",
         },
         {
             title: "Encoding & Decoding",
@@ -71,29 +71,29 @@ export default function Home() {
                 "Base64, Hexadecimal, Binary, and custom format conversions for forensic payload inspection.",
             icon: <Cpu className="h-6 w-6" />,
             href: "/encoding",
-            color: "from-violet-500/20 to-fuchsia-500/20 text-violet-400 border-violet-500/30",
+            color: "from-phos/20 to-phos/20 text-phos-hot border-phos/30",
         },
     ];
 
     return (
-        <main className="min-h-screen bg-slate-950 text-slate-100 relative overflow-hidden py-12 px-4 sm:px-6 lg:px-8">
+        <main className="min-h-screen bg-phos-deep text-phos-white relative overflow-hidden py-12 px-4 sm:px-6 lg:px-8">
             {/* Background Glows */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[350px] bg-gradient-to-tr from-cyan-500/10 via-indigo-500/10 to-purple-500/0 blur-3xl pointer-events-none rounded-full" />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[350px] bg-gradient-to-tr from-phos/10 via-phos/10 to-phos/0 blur-3xl pointer-events-none rounded-full" />
 
             <div className="max-w-7xl mx-auto space-y-12 relative z-10">
 
                 {/* Header Section */}
                 <div className="text-center space-y-4 max-w-3xl mx-auto">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold uppercase tracking-wider">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-phos/10 border border-phos/20 text-phos-hot text-xs font-semibold uppercase tracking-wider">
                         <Sparkles className="h-3.5 w-3.5" />
                         <span>CipherVault Toolkit v1.0</span>
                     </div>
 
-                    <h1 className="text-4xl sm:text-6xl font-black tracking-tight bg-gradient-to-r from-slate-100 via-slate-200 to-slate-400 bg-clip-text text-transparent drop-shadow-sm">
+                    <h1 className="text-4xl sm:text-6xl font-black tracking-tight bg-gradient-to-r from-phos-white via-phos-white to-phos-dim bg-clip-text text-transparent drop-shadow-sm">
                         Digital Forensics & Steganography Suite
                     </h1>
 
-                    <p className="text-base sm:text-lg text-slate-400 leading-relaxed">
+                    <p className="text-base sm:text-lg text-phos-dim leading-relaxed">
                         Advanced detection, encryption, and covert communication tools engineered for security research and forensic analysis.
                     </p>
                 </div>
@@ -104,7 +104,7 @@ export default function Home() {
                         <Link
                             key={mod.title}
                             href={mod.href}
-                            className="group relative flex flex-col justify-between rounded-2xl border border-slate-800/80 bg-slate-900/40 p-6 backdrop-blur-md transition-all duration-300 hover:border-slate-700 hover:bg-slate-900/80 hover:shadow-2xl hover:shadow-cyan-500/5 hover:-translate-y-1"
+                            className="group relative flex flex-col justify-between rounded-2xl border border-phos-line/80 bg-phos-panel/40 p-6 backdrop-blur-md transition-all duration-300 hover:border-phos-line hover:bg-phos-panel/80 hover:shadow-2xl hover:shadow-phos/5 hover:-translate-y-1"
                         >
                             <div>
                                 <div className="flex items-center justify-between mb-5">
@@ -112,22 +112,22 @@ export default function Home() {
                                         {mod.icon}
                                     </div>
                                     {mod.badge && (
-                                        <span className="rounded-full bg-cyan-500/10 px-2.5 py-0.5 text-xs font-medium text-cyan-400 border border-cyan-500/20">
+                                        <span className="rounded-full bg-phos/10 px-2.5 py-0.5 text-xs font-medium text-phos-hot border border-phos/20">
                                             {mod.badge}
                                         </span>
                                     )}
                                 </div>
 
-                                <h2 className="text-xl font-bold text-slate-100 group-hover:text-cyan-300 transition-colors mb-2 flex items-center gap-1.5">
+                                <h2 className="text-xl font-bold text-phos-white group-hover:text-phos-hot transition-colors mb-2 flex items-center gap-1.5">
                                     {mod.title}
                                 </h2>
 
-                                <p className="text-sm text-slate-400 leading-relaxed mb-6">
+                                <p className="text-sm text-phos-dim leading-relaxed mb-6">
                                     {mod.description}
                                 </p>
                             </div>
 
-                            <div className="flex items-center text-xs font-bold text-cyan-400 group-hover:text-cyan-300 transition-colors pt-2 border-t border-slate-800/50">
+                            <div className="flex items-center text-xs font-bold text-phos-hot group-hover:text-phos-hot transition-colors pt-2 border-t border-phos-line/50">
                                 <span>Launch Module</span>
                                 <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
                             </div>

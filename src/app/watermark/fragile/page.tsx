@@ -104,17 +104,17 @@ export default function FragileWatermarkPage() {
     return (
         <div className="max-w-4xl mx-auto p-6 space-y-6">
             <h1 className="text-3xl font-bold text-white">Fragile Watermarking & Verification</h1>
-            <p className="text-slate-400 text-sm">
+            <p className="text-phos-dim text-sm">
                 Embed cryptographically sensitive block-hashes into images to detect any pixel tampering.
             </p>
 
             {/* Mode Switcher Tabs */}
-            <div className="flex gap-4 border-b border-slate-800 pb-3">
+            <div className="flex gap-4 border-b border-phos-line pb-3">
                 <button
                     onClick={() => handleTabSwitch("embed")}
                     className={`font-semibold pb-1 transition ${mode === "embed"
-                            ? "text-cyan-400 border-b-2 border-cyan-400"
-                            : "text-slate-400 hover:text-slate-200"
+                            ? "text-phos-hot border-b-2 border-phos-hot"
+                            : "text-phos-dim hover:text-phos-white"
                         }`}
                 >
                     1. Embed Fragile Mark
@@ -122,8 +122,8 @@ export default function FragileWatermarkPage() {
                 <button
                     onClick={() => handleTabSwitch("verify")}
                     className={`font-semibold pb-1 transition ${mode === "verify"
-                            ? "text-cyan-400 border-b-2 border-cyan-400"
-                            : "text-slate-400 hover:text-slate-200"
+                            ? "text-phos-hot border-b-2 border-phos-hot"
+                            : "text-phos-dim hover:text-phos-white"
                         }`}
                 >
                     2. Verify Integrity
@@ -135,11 +135,11 @@ export default function FragileWatermarkPage() {
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition cursor-pointer bg-slate-950/50 ${isDragging
-                        ? "border-cyan-400 bg-cyan-950/20"
+                className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition cursor-pointer bg-phos-deep/50 ${isDragging
+                        ? "border-phos-hot bg-phos-deep/20"
                         : file
-                            ? "border-emerald-500/50 bg-slate-900/60"
-                            : "border-slate-800 hover:border-slate-700"
+                            ? "border-emerald-500/50 bg-phos-panel/60"
+                            : "border-phos-line hover:border-phos-line"
                     }`}
             >
                 <input
@@ -154,16 +154,16 @@ export default function FragileWatermarkPage() {
                         <div className="text-emerald-400 font-semibold text-lg">
                             ✓ Selected File: {file.name}
                         </div>
-                        <p className="text-slate-500 text-xs">
+                        <p className="text-phos-dim text-xs">
                             {(file.size / 1024 / 1024).toFixed(2)} MB • Click or drag to replace
                         </p>
                     </div>
                 ) : (
                     <div className="space-y-2">
-                        <div className="text-slate-300 font-medium text-base">
+                        <div className="text-phos-dim font-medium text-base">
                             Drag and drop your image here
                         </div>
-                        <p className="text-slate-500 text-xs">or click to browse from your device</p>
+                        <p className="text-phos-dim text-xs">or click to browse from your device</p>
                     </div>
                 )}
             </div>
@@ -172,7 +172,7 @@ export default function FragileWatermarkPage() {
             <button
                 onClick={handleSubmit}
                 disabled={loading || !file}
-                className="w-full py-3 bg-cyan-500 text-slate-950 font-bold rounded-xl hover:bg-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                className="w-full py-3 bg-phos text-phos-deep font-bold rounded-xl hover:bg-phos-hot disabled:opacity-40 disabled:cursor-not-allowed transition"
             >
                 {loading
                     ? "Processing..."
@@ -190,9 +190,9 @@ export default function FragileWatermarkPage() {
 
             {/* Embed Success Section */}
             {embedResultUrl && mode === "embed" && (
-                <div className="p-6 bg-slate-900 border border-slate-800 rounded-2xl space-y-4">
+                <div className="p-6 bg-phos-panel border border-phos-line rounded-2xl space-y-4">
                     <h2 className="text-lg font-semibold text-white">Fragile Marked Output</h2>
-                    <div className="flex justify-center bg-slate-950 p-4 rounded-xl">
+                    <div className="flex justify-center bg-phos-deep p-4 rounded-xl">
                         <img
                             src={embedResultUrl}
                             alt="Fragile Watermarked Image"
@@ -202,7 +202,7 @@ export default function FragileWatermarkPage() {
                     <a
                         href={embedResultUrl}
                         download={`fragile_${file?.name.split(".")[0] || "image"}.png`}
-                        className="inline-block w-full text-center py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl transition"
+                        className="inline-block w-full text-center py-3 bg-emerald-500 hover:bg-emerald-400 text-phos-deep font-bold rounded-xl transition"
                     >
                         Download Watermarked PNG
                     </a>
@@ -229,7 +229,7 @@ export default function FragileWatermarkPage() {
                     {report.tamper_map_url && (
                         <div className="pt-2 space-y-2">
                             <p className="text-xs font-semibold text-red-400">Tampered Region Overlay (Red):</p>
-                            <div className="flex justify-center bg-slate-950 p-4 rounded-xl border border-red-900/50">
+                            <div className="flex justify-center bg-phos-deep p-4 rounded-xl border border-red-900/50">
                                 <img
                                     src={report.tamper_map_url}
                                     alt="Tamper Map"

@@ -48,7 +48,7 @@ export default function SteganalysisDashboard() {
         const styles = {
             HIGH: 'bg-red-500/20 text-red-400 border-red-500/50',
             MEDIUM: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50',
-            LOW: 'bg-blue-500/20 text-blue-400 border-blue-500/50',
+            LOW: 'bg-phos/20 text-phos-hot border-phos/50',
         };
         return (
             <span className={`px-2 py-0.5 text-xs font-semibold rounded border ${styles[severity]}`}>
@@ -62,12 +62,12 @@ export default function SteganalysisDashboard() {
             <h1 className="text-2xl font-bold">Steganalysis Image Inspector</h1>
 
             {/* Upload Controls */}
-            <div className="flex items-center gap-4 p-4 border border-slate-700 rounded-lg bg-slate-900">
+            <div className="flex items-center gap-4 p-4 border border-phos-line rounded-lg bg-phos-panel">
                 <input
                     type="file"
                     accept="image/*"
                     onChange={handleFileChange}
-                    className="text-sm text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer"
+                    className="text-sm text-phos-dim file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-phos file:text-white hover:file:bg-phos cursor-pointer"
                 />
                 <button
                     onClick={analyzeImage}
@@ -89,35 +89,35 @@ export default function SteganalysisDashboard() {
                             : 'bg-emerald-950/40 border-emerald-700'
                         }`}>
                         <div>
-                            <p className="text-sm uppercase tracking-wider text-slate-400">Suspicion Status</p>
+                            <p className="text-sm uppercase tracking-wider text-phos-dim">Suspicion Status</p>
                             <h2 className="text-xl font-bold">
                                 {report.is_suspicious ? 'Payload Detected / Suspicious' : 'Clean / Normal Image'}
                             </h2>
-                            <p className="text-xs text-slate-400 mt-1">File: {report.filename}</p>
+                            <p className="text-xs text-phos-dim mt-1">File: {report.filename}</p>
                         </div>
                         <div className="text-right">
-                            <p className="text-sm text-slate-400">Probability Score</p>
+                            <p className="text-sm text-phos-dim">Probability Score</p>
                             <p className="text-3xl font-extrabold">{(report.probability_score * 100).toFixed(0)}%</p>
                         </div>
                     </div>
 
                     {/* Anomaly Breakdown */}
-                    <div className="p-6 border border-slate-800 bg-slate-900 rounded-lg space-y-4">
-                        <h3 className="text-lg font-semibold border-b border-slate-800 pb-2">
+                    <div className="p-6 border border-phos-line bg-phos-panel rounded-lg space-y-4">
+                        <h3 className="text-lg font-semibold border-b border-phos-line pb-2">
                             Detected Anomalies ({report.anomalies.length})
                         </h3>
                         {report.anomalies.length === 0 ? (
-                            <p className="text-slate-400 text-sm">No statistical or metadata anomalies detected.</p>
+                            <p className="text-phos-dim text-sm">No statistical or metadata anomalies detected.</p>
                         ) : (
                             <div className="space-y-3">
                                 {report.anomalies.map((item, idx) => (
-                                    <div key={idx} className="p-3 bg-slate-800/60 rounded border border-slate-700/50 flex items-start justify-between gap-4">
+                                    <div key={idx} className="p-3 bg-phos-line/60 rounded border border-phos-line/50 flex items-start justify-between gap-4">
                                         <div>
                                             <div className="flex items-center gap-2 mb-1">
-                                                <span className="font-medium text-sm text-slate-200">{item.category}</span>
+                                                <span className="font-medium text-sm text-phos-white">{item.category}</span>
                                                 {getSeverityBadge(item.severity)}
                                             </div>
-                                            <p className="text-xs text-slate-400">{item.description}</p>
+                                            <p className="text-xs text-phos-dim">{item.description}</p>
                                         </div>
                                     </div>
                                 ))}
@@ -126,9 +126,9 @@ export default function SteganalysisDashboard() {
                     </div>
 
                     {/* Extracted Metadata */}
-                    <div className="p-6 border border-slate-800 bg-slate-900 rounded-lg space-y-2">
-                        <h3 className="text-lg font-semibold border-b border-slate-800 pb-2">Technical Metadata</h3>
-                        <pre className="text-xs text-slate-300 overflow-x-auto bg-slate-950 p-3 rounded">
+                    <div className="p-6 border border-phos-line bg-phos-panel rounded-lg space-y-2">
+                        <h3 className="text-lg font-semibold border-b border-phos-line pb-2">Technical Metadata</h3>
+                        <pre className="text-xs text-phos-dim overflow-x-auto bg-phos-deep p-3 rounded">
                             {JSON.stringify(report.metadata, null, 2)}
                         </pre>
                     </div>

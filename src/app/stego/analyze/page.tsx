@@ -177,25 +177,25 @@ export default function SteganalysisPage() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-10">
+        <div className="min-h-screen bg-phos-deep text-phos-white p-6 md:p-10">
             <div className="max-w-4xl mx-auto space-y-8">
                 {/* Header */}
                 <div>
                     <h1 className="text-3xl font-bold flex items-center gap-3">
-                        <Activity className="text-cyan-400" /> Stegananalysis & Metrics Engine
+                        <Activity className="text-phos-hot" /> Stegananalysis & Metrics Engine
                     </h1>
-                    <p className="text-slate-400 mt-1">
+                    <p className="text-phos-dim mt-1">
                         Compare original cover media against suspected stego files to evaluate MSE, SNR/PSNR, and statistical LSB anomalies.
                     </p>
                 </div>
 
                 {/* Media Type Selection */}
-                <div className="flex border-b border-slate-800 gap-4">
+                <div className="flex border-b border-phos-line gap-4">
                     <button
                         onClick={() => { setMediaType('image'); setResults(null); }}
                         className={`pb-3 font-medium transition-colors flex items-center gap-2 border-b-2 ${mediaType === 'image'
-                                ? 'border-cyan-400 text-cyan-400'
-                                : 'border-transparent text-slate-400 hover:text-slate-200'
+                                ? 'border-phos-hot text-phos-hot'
+                                : 'border-transparent text-phos-dim hover:text-phos-white'
                             }`}
                     >
                         <ImageIcon className="w-4 h-4" /> Image Analysis (PNG/BMP)
@@ -203,8 +203,8 @@ export default function SteganalysisPage() {
                     <button
                         onClick={() => { setMediaType('audio'); setResults(null); }}
                         className={`pb-3 font-medium transition-colors flex items-center gap-2 border-b-2 ${mediaType === 'audio'
-                                ? 'border-cyan-400 text-cyan-400'
-                                : 'border-transparent text-slate-400 hover:text-slate-200'
+                                ? 'border-phos-hot text-phos-hot'
+                                : 'border-transparent text-phos-dim hover:text-phos-white'
                             }`}
                     >
                         <FileAudio className="w-4 h-4" /> Audio Analysis (WAV)
@@ -218,14 +218,14 @@ export default function SteganalysisPage() {
                 )}
 
                 {/* Main Card */}
-                <div className="bg-slate-900 border border-slate-800 p-6 rounded-xl space-y-6">
+                <div className="bg-phos-panel border border-phos-line p-6 rounded-xl space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Carrier Upload */}
                         <div className="space-y-2">
-                            <label className="text-sm text-slate-400 font-medium">1. Original Carrier File</label>
-                            <label className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-slate-700 hover:border-cyan-500/50 bg-slate-950/50 rounded-lg cursor-pointer transition">
-                                <Upload className="w-5 h-5 text-slate-400 mb-1" />
-                                <span className="text-xs text-slate-400 text-center truncate max-w-full">
+                            <label className="text-sm text-phos-dim font-medium">1. Original Carrier File</label>
+                            <label className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-phos-line hover:border-phos/50 bg-phos-deep/50 rounded-lg cursor-pointer transition">
+                                <Upload className="w-5 h-5 text-phos-dim mb-1" />
+                                <span className="text-xs text-phos-dim text-center truncate max-w-full">
                                     {carrierFile ? carrierFile.name : 'Select clean file'}
                                 </span>
                                 <input
@@ -239,10 +239,10 @@ export default function SteganalysisPage() {
 
                         {/* Stego Upload */}
                         <div className="space-y-2">
-                            <label className="text-sm text-slate-400 font-medium">2. Suspected Stego File</label>
-                            <label className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-slate-700 hover:border-cyan-500/50 bg-slate-950/50 rounded-lg cursor-pointer transition">
-                                <Upload className="w-5 h-5 text-slate-400 mb-1" />
-                                <span className="text-xs text-slate-400 text-center truncate max-w-full">
+                            <label className="text-sm text-phos-dim font-medium">2. Suspected Stego File</label>
+                            <label className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-phos-line hover:border-phos/50 bg-phos-deep/50 rounded-lg cursor-pointer transition">
+                                <Upload className="w-5 h-5 text-phos-dim mb-1" />
+                                <span className="text-xs text-phos-dim text-center truncate max-w-full">
                                     {stegoFile ? stegoFile.name : 'Select stego file'}
                                 </span>
                                 <input
@@ -258,17 +258,17 @@ export default function SteganalysisPage() {
                     <button
                         onClick={handleRunAnalysis}
                         disabled={analyzing || !carrierFile || !stegoFile}
-                        className="w-full bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-800 disabled:text-slate-600 font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors"
+                        className="w-full bg-phos hover:bg-phos disabled:bg-phos-line disabled:text-phos-dim font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors"
                     >
                         {analyzing ? <RefreshCw className="w-4 h-4 animate-spin" /> : 'Run Stegananalysis Metrics'}
                     </button>
 
                     {results && (
-                        <div className="bg-slate-950 border border-slate-800 rounded-lg p-5 space-y-6">
+                        <div className="bg-phos-deep border border-phos-line rounded-lg p-5 space-y-6">
                             {/* Verdict Header */}
-                            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                            <div className="flex items-center justify-between border-b border-phos-line pb-4">
                                 <div>
-                                    <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">Analysis Verdict</span>
+                                    <span className="text-xs text-phos-dim font-medium uppercase tracking-wider">Analysis Verdict</span>
                                     <h3 className="text-xl font-bold flex items-center gap-2 mt-0.5">
                                         {results.verdict === 'Clean' && <CheckCircle2 className="w-5 h-5 text-emerald-400" />}
                                         {results.verdict === 'Suspicious' && <AlertTriangle className="w-5 h-5 text-amber-400" />}
@@ -283,30 +283,30 @@ export default function SteganalysisPage() {
                                 </div>
 
                                 <div className="text-right">
-                                    <span className="text-xs text-slate-400 font-medium uppercase tracking-wider">Anomaly Score</span>
-                                    <p className="text-xl font-bold text-cyan-400">{results.anomalyScore}%</p>
+                                    <span className="text-xs text-phos-dim font-medium uppercase tracking-wider">Anomaly Score</span>
+                                    <p className="text-xl font-bold text-phos-hot">{results.anomalyScore}%</p>
                                 </div>
                             </div>
 
                             {/* Stat Grid */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="bg-slate-900 border border-slate-800 p-4 rounded-lg">
-                                    <p className="text-xs text-slate-400 font-medium">Mean Squared Error (MSE)</p>
-                                    <p className="text-2xl font-semibold text-slate-100 mt-1 font-mono">{results.mse}</p>
-                                    <p className="text-[11px] text-slate-500 mt-1">Lower values indicate higher signal fidelity.</p>
+                                <div className="bg-phos-panel border border-phos-line p-4 rounded-lg">
+                                    <p className="text-xs text-phos-dim font-medium">Mean Squared Error (MSE)</p>
+                                    <p className="text-2xl font-semibold text-phos-white mt-1 font-mono">{results.mse}</p>
+                                    <p className="text-[11px] text-phos-dim mt-1">Lower values indicate higher signal fidelity.</p>
                                 </div>
 
-                                <div className="bg-slate-900 border border-slate-800 p-4 rounded-lg">
-                                    <p className="text-xs text-slate-400 font-medium">{results.metricLabel}</p>
-                                    <p className="text-2xl font-semibold text-slate-100 mt-1 font-mono">
+                                <div className="bg-phos-panel border border-phos-line p-4 rounded-lg">
+                                    <p className="text-xs text-phos-dim font-medium">{results.metricLabel}</p>
+                                    <p className="text-2xl font-semibold text-phos-white mt-1 font-mono">
                                         {results.psnrOrSnr === 999 ? '∞' : `${results.psnrOrSnr} dB`}
                                     </p>
-                                    <p className="text-[11px] text-slate-500 mt-1">Values {'>'} 40 dB are visually/audibly imperceptible.</p>
+                                    <p className="text-[11px] text-phos-dim mt-1">Values {'>'} 40 dB are visually/audibly imperceptible.</p>
                                 </div>
                             </div>
 
-                            <div className="text-xs text-slate-400 bg-slate-900/50 p-3 rounded border border-slate-800/80 flex items-start gap-2">
-                                <BarChart3 className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                            <div className="text-xs text-phos-dim bg-phos-panel/50 p-3 rounded border border-phos-line/80 flex items-start gap-2">
+                                <BarChart3 className="w-4 h-4 text-phos-hot shrink-0 mt-0.5" />
                                 <span>{results.details}</span>
                             </div>
                         </div>

@@ -110,17 +110,17 @@ export default function InvisibleWatermarkPage() {
     return (
         <div className="max-w-4xl mx-auto p-6 space-y-6">
             <h1 className="text-3xl font-bold text-white">Invisible Watermarking (LSB)</h1>
-            <p className="text-slate-400 text-sm">
+            <p className="text-phos-dim text-sm">
                 Hide or extract secret text inside image pixel data with zero visible distortion.
             </p>
 
             {/* Mode Selector Tabs */}
-            <div className="flex gap-4 border-b border-slate-800 pb-3">
+            <div className="flex gap-4 border-b border-phos-line pb-3">
                 <button
                     onClick={() => handleTabSwitch("embed")}
                     className={`font-semibold pb-1 transition ${mode === "embed"
-                            ? "text-cyan-400 border-b-2 border-cyan-400"
-                            : "text-slate-400 hover:text-slate-200"
+                            ? "text-phos-hot border-b-2 border-phos-hot"
+                            : "text-phos-dim hover:text-phos-white"
                         }`}
                 >
                     Embed Watermark
@@ -128,8 +128,8 @@ export default function InvisibleWatermarkPage() {
                 <button
                     onClick={() => handleTabSwitch("extract")}
                     className={`font-semibold pb-1 transition ${mode === "extract"
-                            ? "text-cyan-400 border-b-2 border-cyan-400"
-                            : "text-slate-400 hover:text-slate-200"
+                            ? "text-phos-hot border-b-2 border-phos-hot"
+                            : "text-phos-dim hover:text-phos-white"
                         }`}
                 >
                     Extract Watermark
@@ -141,11 +141,11 @@ export default function InvisibleWatermarkPage() {
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition cursor-pointer bg-slate-950/50 ${isDragging
-                        ? "border-cyan-400 bg-cyan-950/20"
+                className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition cursor-pointer bg-phos-deep/50 ${isDragging
+                        ? "border-phos-hot bg-phos-deep/20"
                         : file
-                            ? "border-emerald-500/50 bg-slate-900/60"
-                            : "border-slate-800 hover:border-slate-700"
+                            ? "border-emerald-500/50 bg-phos-panel/60"
+                            : "border-phos-line hover:border-phos-line"
                     }`}
             >
                 <input
@@ -160,16 +160,16 @@ export default function InvisibleWatermarkPage() {
                         <div className="text-emerald-400 font-semibold text-lg">
                             ✓ Selected File: {file.name}
                         </div>
-                        <p className="text-slate-500 text-xs">
+                        <p className="text-phos-dim text-xs">
                             {(file.size / 1024 / 1024).toFixed(2)} MB • Click or drag to replace
                         </p>
                     </div>
                 ) : (
                     <div className="space-y-2">
-                        <div className="text-slate-300 font-medium text-base">
+                        <div className="text-phos-dim font-medium text-base">
                             Drag and drop your image here
                         </div>
-                        <p className="text-slate-500 text-xs">or click to browse from your device</p>
+                        <p className="text-phos-dim text-xs">or click to browse from your device</p>
                     </div>
                 )}
             </div>
@@ -177,13 +177,13 @@ export default function InvisibleWatermarkPage() {
             {/* Secret Payload Input (Embed mode only) */}
             {mode === "embed" && (
                 <div className="space-y-2">
-                    <label className="text-slate-300 text-sm font-medium">Secret Payload</label>
+                    <label className="text-phos-dim text-sm font-medium">Secret Payload</label>
                     <input
                         type="text"
                         value={secretData}
                         onChange={(e) => setSecretData(e.target.value)}
                         placeholder="Secret message to hide..."
-                        className="w-full bg-slate-900 border border-slate-800 focus:border-cyan-500 rounded-xl p-3 text-white outline-none transition"
+                        className="w-full bg-phos-panel border border-phos-line focus:border-phos rounded-xl p-3 text-white outline-none transition"
                     />
                 </div>
             )}
@@ -192,7 +192,7 @@ export default function InvisibleWatermarkPage() {
             <button
                 onClick={handleSubmit}
                 disabled={loading || !file || (mode === "embed" && !secretData.trim())}
-                className="w-full py-3 bg-cyan-500 text-slate-950 font-bold rounded-xl hover:bg-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                className="w-full py-3 bg-phos text-phos-deep font-bold rounded-xl hover:bg-phos-hot disabled:opacity-40 disabled:cursor-not-allowed transition"
             >
                 {loading
                     ? "Processing..."
@@ -210,9 +210,9 @@ export default function InvisibleWatermarkPage() {
 
             {/* Embed Result */}
             {resultUrl && mode === "embed" && (
-                <div className="p-6 bg-slate-900 border border-slate-800 rounded-2xl space-y-4">
+                <div className="p-6 bg-phos-panel border border-phos-line rounded-2xl space-y-4">
                     <h2 className="text-lg font-semibold text-white">Stego Image Generated</h2>
-                    <div className="flex justify-center bg-slate-950 p-4 rounded-xl">
+                    <div className="flex justify-center bg-phos-deep p-4 rounded-xl">
                         <img
                             src={resultUrl}
                             alt="Watermarked Stego Output"
@@ -222,7 +222,7 @@ export default function InvisibleWatermarkPage() {
                     <a
                         href={resultUrl}
                         download={`stego_${file?.name.split(".")[0] || "image"}.png`}
-                        className="inline-block w-full text-center py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl transition"
+                        className="inline-block w-full text-center py-3 bg-emerald-500 hover:bg-emerald-400 text-phos-deep font-bold rounded-xl transition"
                     >
                         Download Watermarked Image (.png)
                     </a>
@@ -231,9 +231,9 @@ export default function InvisibleWatermarkPage() {
 
             {/* Extract Result */}
             {extractedMessage && mode === "extract" && (
-                <div className="p-6 bg-slate-900 border border-slate-800 rounded-2xl space-y-2">
-                    <h2 className="text-slate-400 text-sm font-medium">Extracted Result</h2>
-                    <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl text-cyan-300 font-mono text-base break-all">
+                <div className="p-6 bg-phos-panel border border-phos-line rounded-2xl space-y-2">
+                    <h2 className="text-phos-dim text-sm font-medium">Extracted Result</h2>
+                    <div className="p-4 bg-phos-deep border border-phos-line rounded-xl text-phos-hot font-mono text-base break-all">
                         {extractedMessage}
                     </div>
                 </div>
