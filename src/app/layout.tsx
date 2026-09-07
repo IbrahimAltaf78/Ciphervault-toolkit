@@ -22,27 +22,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${jetbrainsMono.variable} flex min-h-dvh flex-col antialiased`}
+        className={`${inter.variable} ${jetbrainsMono.variable} flex min-h-dvh flex-col bg-phos-void antialiased`}
       >
-        {/* Ambient survey grid + aurora bloom, painted behind all content. */}
-        <div aria-hidden className="cv-backdrop">
-          <div className="cv-grid" />
-          <div
-            className="cv-aurora size-[38rem] bg-crypto"
-            style={{ top: "-14rem", left: "-10rem" }}
-          />
-          <div
-            className="cv-aurora size-[32rem] bg-encoding"
-            style={{ top: "-8rem", right: "-8rem", animationDelay: "-6s" }}
-          />
-          <div
-            className="cv-aurora size-[26rem] bg-texthide"
-            style={{ top: "22rem", left: "38%", animationDelay: "-12s" }}
-          />
-        </div>
-
+        {/* The multi-hue aurora backdrop belonged to the six-accent palette.
+            The phosphor theme is monochrome and each screen supplies its own
+            light, so the page sits on a plain void instead. */}
         <Navbar />
-        <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-12">
+        <main className="mx-auto w-full max-w-7xl flex-1 px-3 py-4 sm:px-5 sm:py-6">
           {children}
         </main>
         <Footer />

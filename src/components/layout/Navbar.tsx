@@ -1,82 +1,103 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Binary,
-  Image as ImageIcon,
-  KeyRound,
-  ScanSearch,
-  ShieldCheck,
-  Type,
-} from "lucide-react";
-import { PARADIGM_ACCENT } from "@/lib/paradigm-theme";
-import type { Paradigm } from "@/types";
+import { Menu, X } from "lucide-react";
 
 /**
- * Routes wired so far. Remaining paradigms join as they ship.
+ * Top navigation, in the phosphor treatment.
  *
- * The media tools live under /stego after the route migration — the old
- * /steganography paths are gone, so nothing should ever link to them again.
+ * Trimmed to four destinations plus the call to action. The previous bar
+ * carried a link per module, which is a table of contents rather than a
+ * navigation — the landing page already lists every module as a card, so the
+ * bar only needs to reach the places a card does not.
  */
-const NAV_LINKS = [
-  { href: "/cryptography", label: "Cryptography", icon: KeyRound, paradigm: "cryptography" },
-  { href: "/encoding", label: "Encoding", icon: Binary, paradigm: "encoding" },
-  { href: "/text-hiding", label: "Text Hiding", icon: Type, paradigm: "text-hiding" },
-  { href: "/stego", label: "Steganography", icon: ImageIcon, paradigm: "steganography" },
-  { href: "/steganalysis", label: "Steganalysis", icon: ScanSearch, paradigm: "steganalysis" },
-] as const satisfies ReadonlyArray<{
-  href: string;
-  label: string;
-  icon: typeof KeyRound;
-  paradigm: Paradigm;
-}>;
+const LINKS = [
+  { href: "/", label: "Suite Overview" },
+  { href: "/stego", label: "Modules" },
+  { href: "/steganalysis", label: "Forensics" },
+  { href: "/cryptography", label: "Cryptography" },
+] as const;
 
 export function Navbar() {
   const pathname = usePathname();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const closeMenu = () => setIsMenuOpen(false);
+
+  const isCurrent = (href: string) =>
+    href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
-    <header className="sticky top-0 z-20 border-b border-edge/80 bg-background/70 backdrop-blur-xl">
-      <nav className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-8 gap-y-3 px-6 py-4">
-        <Link href="/" className="group flex items-center gap-2.5">
-          <span className="flex size-8 items-center justify-center rounded-lg border border-crypto/40 bg-crypto/15 text-crypto shadow-[0_0_22px_-6px_#8b5cf6]">
-            <ShieldCheck aria-hidden className="size-4" />
-          </span>
-          <span className="text-base font-semibold tracking-tight">
-            Cipher<span className="text-crypto">Vault</span>
-          </span>
+    <header className="sticky top-0 z-30 bg-phos-void/85 backdrop-blur-md">
+      <nav className="mx-auto flex max-w-7xl items-center gap-4 px-5 py-4 sm:px-8">
+        <Link
+          href="/"
+          className="phos-glow shrink-0 font-mono text-base font-bold tracking-tight text-phos-hot sm:text-lg"
+        >
+          CipherVault<span className="text-phos-dim"> Solutions</span>
         </Link>
 
-        <ul className="flex flex-wrap items-center gap-1">
-          {NAV_LINKS.map((link) => {
-            // Nested tools such as /encoding/hex keep their parent lit.
-            const isActive =
-              pathname === link.href || pathname.startsWith(`${link.href}/`);
-            return (
+        <ul className="ml-auto hidden items-center gap-7 md:flex">
+          {LINKS.map((link) => (
+            <li key={link.href}>
+              <Link
+                href={link.href}
+                aria-current={isCurrent(link.href) ? "page" : undefined}
+                className={`text-sm transition-colors ${
+                  isCurrent(link.href)
+                    ? "phos-glow text-phos-hot"
+                    : "text-phos-dim hover:text-phos-hot"
+                }`}
+              >
+                {link.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+
+        <Link href="/encoding" className="phos-btn ml-auto text-sm md:ml-0">
+          Get Started
+        </Link>
+
+        <button
+          type="button"
+          onClick={() => setIsMenuOpen((open) => !open)}
+          aria-expanded={isMenuOpen}
+          aria-controls="mobile-nav"
+          aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+          className="phos-btn px-2.5 md:hidden"
+        >
+          {isMenuOpen ? (
+            <X aria-hidden className="size-4" />
+          ) : (
+            <Menu aria-hidden className="size-4" />
+          )}
+        </button>
+      </nav>
+
+      {isMenuOpen && (
+        <div id="mobile-nav" className="border-t border-phos-line md:hidden">
+          <ul className="mx-auto flex max-w-7xl flex-col px-5 py-2 sm:px-8">
+            {LINKS.map((link) => (
               <li key={link.href}>
                 <Link
                   href={link.href}
-                  aria-current={isActive ? "page" : undefined}
-                  style={{ "--cv-accent": PARADIGM_ACCENT[link.paradigm] } as React.CSSProperties}
-                  className={`flex items-center gap-2 rounded-lg px-3 py-1.5 transition-colors duration-200 ${
-                    isActive
-                      ? "accent-soft accent-text"
-                      : "text-muted hover:bg-edge/50 hover:text-foreground"
+                  onClick={closeMenu}
+                  aria-current={isCurrent(link.href) ? "page" : undefined}
+                  className={`block py-2.5 text-sm transition-colors ${
+                    isCurrent(link.href)
+                      ? "phos-glow text-phos-hot"
+                      : "text-phos-dim hover:text-phos-hot"
                   }`}
                 >
-                  <link.icon aria-hidden className="size-3.5" />
                   {link.label}
                 </Link>
               </li>
-            );
-          })}
-        </ul>
-
-        <span className="cv-badge ml-auto hidden border-emerald-800 bg-emerald-950/60 text-emerald-400 sm:inline-flex">
-          <span className="cv-pulse size-1.5 rounded-full bg-emerald-400" />
-          Local · Stateless
-        </span>
-      </nav>
+            ))}
+          </ul>
+        </div>
+      )}
     </header>
   );
 }
