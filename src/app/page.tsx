@@ -88,20 +88,23 @@ export default function HomePage() {
             CipherVault Toolkit v1.0
           </p>
 
-          {/* The project's own positioning, from README.md and the PRD.
-              The previous headline called this a digital forensics suite and
-              named only steganography — which described one module out of six
-              and left out cryptography, the largest of them. */}
-          <h1 className="phos-glow-strong text-balance text-4xl font-black leading-[1.08] tracking-tight text-phos-hot sm:text-5xl lg:text-6xl">
-            Universal Data Hiding
-            <br />
-            &amp; Cryptography Toolkit
+          {/* The headline says what the toolkit is for, not what category it
+              belongs to. Every module here runs in two directions — hide and
+              extract, encrypt and decrypt, encode and decode — and that duality
+              is the whole product, so the two halves are set against each other
+              typographically as well: the first line recedes, the second one
+              burns. */}
+          <h1 className="text-balance text-5xl font-black leading-[1.02] tracking-tight sm:text-6xl lg:text-7xl">
+            <span className="block text-phos-dim">Hide anything.</span>
+            <span className="phos-glow-strong block text-phos-hot">
+              Reveal everything.
+            </span>
           </h1>
 
           <p className="mx-auto max-w-2xl text-pretty leading-relaxed text-phos-dim">
-            Six paradigms in one workspace — encryption, steganography, text
-            hiding, encoding, covert channels and watermarking. Every tool runs
-            both ways, and nothing you process is stored.
+            Encryption, steganography, text hiding, encoding, covert channels
+            and watermarking — six paradigms, one workspace. Every tool works in
+            both directions, and nothing you run through it is ever stored.
           </p>
         </header>
 
