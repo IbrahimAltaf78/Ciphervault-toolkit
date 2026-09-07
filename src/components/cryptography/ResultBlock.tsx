@@ -87,12 +87,12 @@ export function ResultBlock({
       >
         {result ? (
           result.ok ? (
-            result.value || <span className="text-slate-600">Empty result.</span>
+            result.value || <span className="text-phos-dim">Empty result.</span>
           ) : (
             result.error
           )
         ) : (
-          <span className="text-slate-600">{hint}</span>
+          <span className="text-phos-dim">{hint}</span>
         )}
       </output>
 

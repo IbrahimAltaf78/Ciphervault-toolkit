@@ -94,7 +94,7 @@ export function Dropzone({ onFileAccepted, onClear, selected, isAnalyzing }: Dro
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
         className={`rounded-xl border-2 border-dashed p-10 text-center transition-colors ${
-          isDragging ? "accent-border accent-soft" : "border-slate-700 bg-background/40"
+          isDragging ? "accent-border accent-soft" : "border-phos-line bg-background/40"
         }`}
       >
         <Upload
