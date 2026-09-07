@@ -16,7 +16,7 @@ export function CryptoNav({ current }: { current: CryptoToolId }) {
             className={`rounded-lg border px-3 py-1.5 font-mono text-xs uppercase tracking-widest transition-colors ${
               isCurrent
                 ? "accent-soft accent-border accent-text"
-                : "border-edge text-muted hover:border-slate-600 hover:text-foreground"
+                : "border-edge text-muted hover:border-phos-dim hover:text-foreground"
             }`}
           >
             {tool.label}
