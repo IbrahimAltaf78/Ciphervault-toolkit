@@ -10,7 +10,6 @@ import {
   Type,
   type LucideIcon,
 } from "lucide-react";
-import { BinaryRain } from "@/components/layout/BinaryRain";
 import { WireCube } from "@/components/layout/WireCube";
 
 interface Module {
@@ -77,9 +76,8 @@ const MODULES: Module[] = [
 
 export default function HomePage() {
   return (
-    <div className="crt px-5 py-10 sm:px-8 sm:py-14 lg:px-12">
-      {/* Background layers, behind everything. */}
-      <BinaryRain />
+    <div className="crt phos-corners px-5 py-10 sm:px-8 sm:py-14 lg:px-12">
+      {/* The binary field now comes from the layout, behind every page. */}
       <WireCube className="pointer-events-none absolute -right-16 top-24 z-0 hidden h-[34rem] w-[34rem] text-phos opacity-45 lg:block" />
 
       <div className="relative z-[1] mx-auto max-w-5xl space-y-12">
