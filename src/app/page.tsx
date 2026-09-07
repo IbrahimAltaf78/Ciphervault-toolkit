@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { WireCube } from "@/components/layout/WireCube";
 import { DecodeText } from "@/components/home/DecodeText";
+import { Assurances } from "@/components/home/Assurances";
 
 interface Module {
   title: string;
@@ -95,7 +96,7 @@ export default function HomePage() {
               is the whole product, so the two halves are set against each other
               typographically as well: the first line recedes, the second one
               burns. */}
-          <h1 className="phos-rise phos-delay-2 text-balance text-5xl font-black leading-[1.02] tracking-tight sm:text-6xl lg:text-7xl">
+          <h1 className="phos-rise phos-delay-2 text-balance text-4xl font-extrabold leading-[1.06] tracking-tight sm:text-5xl lg:text-6xl">
             <span className="block text-phos-dim">Hide anything.</span>
             <DecodeText
               text="Reveal everything."
@@ -132,7 +133,7 @@ export default function HomePage() {
                   {module.badge && <span className="phos-pill">{module.badge}</span>}
                 </div>
 
-                <h2 className="phos-glow mt-5 text-lg font-bold tracking-tight text-phos-white">
+                <h2 className="mt-5 text-base font-semibold tracking-tight text-phos-white">
                   {module.title}
                 </h2>
 
@@ -152,6 +153,8 @@ export default function HomePage() {
             </li>
           ))}
         </ul>
+
+        <Assurances />
       </div>
     </div>
   );

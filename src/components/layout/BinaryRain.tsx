@@ -36,7 +36,7 @@ export function BinaryRain({ columns = 26, depth = 70 }: BinaryRainProps) {
       digits,
       left: `${(index / columns) * 100 + random() * 2}%`,
       // Varied opacity and speed stop the field reading as a regular grid.
-      opacity: 0.06 + random() * 0.22,
+      opacity: 0.05 + random() * 0.13,
       duration: `${16 + random() * 26}s`,
       delay: `-${random() * 20}s`,
     };
