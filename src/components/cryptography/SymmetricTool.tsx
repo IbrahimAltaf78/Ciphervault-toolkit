@@ -83,6 +83,8 @@ export function SymmetricTool({ id }: { id: SymmetricId }) {
 
   function changeMode(next: ToolMode) {
     setMode(next);
+    setInput("");
+    setPassword("");
     setResult(null);
   }
 
@@ -120,11 +122,10 @@ export function SymmetricTool({ id }: { id: SymmetricId }) {
                     key={length}
                     type="button"
                     onClick={() => setAesLength(length)}
-                    className={`flex-1 rounded-lg border px-3 py-2 font-mono text-xs transition-colors ${
-                      aesLength === length
-                        ? "accent-soft accent-border accent-text"
-                        : "border-edge text-muted hover:text-foreground"
-                    }`}
+                    className={`flex-1 rounded-lg border px-3 py-2 font-mono text-xs transition-colors ${aesLength === length
+                      ? "accent-soft accent-border accent-text"
+                      : "border-edge text-muted hover:text-foreground"
+                      }`}
                   >
                     {length}
                   </button>
@@ -140,11 +141,10 @@ export function SymmetricTool({ id }: { id: SymmetricId }) {
                     key={option}
                     type="button"
                     onClick={() => setAesMode(option)}
-                    className={`flex-1 rounded-lg border px-3 py-2 font-mono text-xs transition-colors ${
-                      aesMode === option
-                        ? "accent-soft accent-border accent-text"
-                        : "border-edge text-muted hover:text-foreground"
-                    }`}
+                    className={`flex-1 rounded-lg border px-3 py-2 font-mono text-xs transition-colors ${aesMode === option
+                      ? "accent-soft accent-border accent-text"
+                      : "border-edge text-muted hover:text-foreground"
+                      }`}
                   >
                     {option}
                   </button>
@@ -206,9 +206,8 @@ export function SymmetricTool({ id }: { id: SymmetricId }) {
           result={result}
           isRunning={isRunning}
           onReset={reset}
-          hint={`Enter a message and a password, then press ${
-            isEncrypting ? tool.forwardLabel : tool.reverseLabel
-          }.`}
+          hint={`Enter a message and a password, then press ${isEncrypting ? tool.forwardLabel : tool.reverseLabel
+            }.`}
           filename={`ciphervault-${id}-${isEncrypting ? "ciphertext" : "plaintext"}`}
         />
       </ToolPanel>
