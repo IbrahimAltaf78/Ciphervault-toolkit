@@ -93,6 +93,12 @@ export function AsymmetricTool({ id }: { id: AsymmetricId }) {
     setResult(null);
   }
 
+  function changeMode(next: ToolMode) {
+    setMode(next);
+    setInput("");
+    setResult(null);
+  }
+
   const byteCount = new TextEncoder().encode(input).length;
   const capacity = id === "rsa" ? maxPayloadBytes(modulus) : null;
   const isOverCapacity = isEncrypting && capacity !== null && byteCount > capacity;
@@ -107,10 +113,7 @@ export function AsymmetricTool({ id }: { id: AsymmetricId }) {
         paradigm="cryptography"
         icon={KeyRound}
         mode={mode}
-        onModeChange={(next) => {
-          setMode(next);
-          setResult(null);
-        }}
+        onModeChange={changeMode}
         forwardLabel={tool.forwardLabel}
         reverseLabel={tool.reverseLabel}
         explainer={CRYPTO_EXPLAINERS[id]}
@@ -128,33 +131,31 @@ export function AsymmetricTool({ id }: { id: AsymmetricId }) {
             <div className="flex gap-2">
               {id === "rsa"
                 ? RSA_SIZES.map((size) => (
-                    <button
-                      key={size}
-                      type="button"
-                      onClick={() => setModulus(size)}
-                      className={`rounded-lg border px-3 py-1.5 font-mono text-xs transition-colors ${
-                        modulus === size
-                          ? "accent-soft accent-border accent-text"
-                          : "border-edge text-muted hover:text-foreground"
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => setModulus(size)}
+                    className={`rounded-lg border px-3 py-1.5 font-mono text-xs transition-colors ${modulus === size
+                        ? "accent-soft accent-border accent-text"
+                        : "border-edge text-muted hover:text-foreground"
                       }`}
-                    >
-                      {size}
-                    </button>
-                  ))
+                  >
+                    {size}
+                  </button>
+                ))
                 : ECC_CURVES.map((option) => (
-                    <button
-                      key={option}
-                      type="button"
-                      onClick={() => setCurve(option)}
-                      className={`rounded-lg border px-3 py-1.5 font-mono text-xs transition-colors ${
-                        curve === option
-                          ? "accent-soft accent-border accent-text"
-                          : "border-edge text-muted hover:text-foreground"
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => setCurve(option)}
+                    className={`rounded-lg border px-3 py-1.5 font-mono text-xs transition-colors ${curve === option
+                        ? "accent-soft accent-border accent-text"
+                        : "border-edge text-muted hover:text-foreground"
                       }`}
-                    >
-                      {option}
-                    </button>
-                  ))}
+                  >
+                    {option}
+                  </button>
+                ))}
             </div>
           </div>
         </KeyPairPanel>
@@ -172,9 +173,8 @@ export function AsymmetricTool({ id }: { id: AsymmetricId }) {
             </label>
             {isEncrypting && capacity !== null && (
               <span
-                className={`cv-label normal-case tracking-normal ${
-                  isOverCapacity ? "text-red-400" : ""
-                }`}
+                className={`cv-label normal-case tracking-normal ${isOverCapacity ? "text-red-400" : ""
+                  }`}
               >
                 {byteCount} / {capacity} bytes
               </span>
@@ -212,9 +212,8 @@ export function AsymmetricTool({ id }: { id: AsymmetricId }) {
           result={result}
           isRunning={isRunning}
           onReset={reset}
-          hint={`Generate or paste a key, enter a message, then press ${
-            isEncrypting ? tool.forwardLabel : tool.reverseLabel
-          }.`}
+          hint={`Generate or paste a key, enter a message, then press ${isEncrypting ? tool.forwardLabel : tool.reverseLabel
+            }.`}
           filename={`ciphervault-${id}-${isEncrypting ? "ciphertext" : "plaintext"}`}
         />
       </ToolPanel>
