@@ -3,12 +3,16 @@
 import React, { useState } from "react";
 
 export default function VideoStegoPage() {
-    const [activeTab, setActiveTab] = useState<"hide" | "extract">("extract");
+    // 1. Changed default active tab to "hide"
+    const [activeTab, setActiveTab] = useState<"hide" | "extract">("hide");
 
     // Form states
     const [file, setFile] = useState<File | null>(null);
     const [secretText, setSecretText] = useState("");
     const [password, setPassword] = useState("");
+
+    // Drag-and-drop state
+    const [isDragging, setIsDragging] = useState(false);
 
     // UI state feedback
     const [loading, setLoading] = useState(false);
@@ -17,6 +21,31 @@ export default function VideoStegoPage() {
     const [outputVideo, setOutputVideo] = useState<string | null>(null);
     const [outputFilename, setOutputFilename] = useState("stego_video.avi");
     const [extractedMessage, setExtractedMessage] = useState<string | null>(null);
+
+    // Drag and Drop Event Handlers
+    const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            const droppedFile = e.dataTransfer.files[0];
+            setFile(droppedFile);
+            e.dataTransfer.clearData();
+        }
+    };
 
     const downloadBase64Video = (base64Data: string, filename: string) => {
         try {
@@ -53,6 +82,7 @@ export default function VideoStegoPage() {
         setSuccess(null);
         setOutputVideo(null);
         setExtractedMessage(null);
+        setIsDragging(false);
     };
 
     const handleHideSubmit = async (e: React.FormEvent) => {
@@ -135,10 +165,10 @@ export default function VideoStegoPage() {
 
     return (
         <div className="min-h-screen bg-slate-950 text-gray-200 font-sans flex flex-col relative overflow-hidden">
-            {/* Background Matrix/Data aesthetic (Optional fade) */}
+            {/* Background Pattern */}
             <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] z-0"></div>
 
-            {/* Main Content (Header removed to prevent duplication from layout.tsx) */}
+            {/* Main Content */}
             <main className="flex-1 relative z-10 flex flex-col items-center justify-start pt-12 px-4 pb-20 overflow-y-auto">
                 <h1 className="text-2xl font-bold text-white mb-6">Video Steganography</h1>
 
@@ -187,13 +217,19 @@ export default function VideoStegoPage() {
                                 </label>
                                 <label
                                     htmlFor="video-upload"
-                                    className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-[#003d24] rounded-lg cursor-pointer bg-[#011f14] hover:bg-[#002b1b] transition-all"
+                                    onDragOver={handleDragOver}
+                                    onDragLeave={handleDragLeave}
+                                    onDrop={handleDrop}
+                                    className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition-all ${isDragging
+                                            ? "border-[#00e676] bg-[#002b1b] scale-[1.01]"
+                                            : "border-[#003d24] bg-[#011f14] hover:bg-[#002b1b]"
+                                        }`}
                                 >
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-8 h-8 mb-3 text-[#00e676]">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
                                     </svg>
                                     <span className="text-sm font-medium text-[#00e676]">
-                                        {file ? file.name : "Click or drag & drop video file"}
+                                        {file ? file.name : isDragging ? "Drop video here..." : "Click or drag & drop video file"}
                                     </span>
                                 </label>
                                 <input
@@ -255,13 +291,19 @@ export default function VideoStegoPage() {
                                 </label>
                                 <label
                                     htmlFor="stego-upload"
-                                    className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-[#003d24] rounded-lg cursor-pointer bg-[#011f14] hover:bg-[#002b1b] transition-all"
+                                    onDragOver={handleDragOver}
+                                    onDragLeave={handleDragLeave}
+                                    onDrop={handleDrop}
+                                    className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition-all ${isDragging
+                                            ? "border-[#00e676] bg-[#002b1b] scale-[1.01]"
+                                            : "border-[#003d24] bg-[#011f14] hover:bg-[#002b1b]"
+                                        }`}
                                 >
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-8 h-8 mb-3 text-[#00e676]">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
                                     </svg>
                                     <span className="text-sm font-medium text-[#00e676]">
-                                        {file ? file.name : "Click or drag & drop stego video file"}
+                                        {file ? file.name : isDragging ? "Drop video here..." : "Click or drag & drop stego video file"}
                                     </span>
                                 </label>
                                 <input
