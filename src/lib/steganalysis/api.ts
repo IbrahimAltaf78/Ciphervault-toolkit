@@ -1,11 +1,8 @@
 /**
  * Client for the steganalysis endpoint.
  *
- * Follows the response envelope the rest of the backend already uses:
- * { success, data, error: { message } }. The detection engine is a separate
- * service, so failing to reach it is an expected state rather than an
- * exception — the dashboard reports the engine as offline instead of rendering
- * a broken page.
+ * Follows the response envelope the rest of the backend uses:
+ * { success, data, error: { message } }.
  */
 import type { AnalysisReport } from "./types";
 import { checkFile } from "./validation";
