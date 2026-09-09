@@ -1,6 +1,7 @@
 import io
 import wave
 import base64
+import urllib.parse
 import os
 import math
 import hashlib
@@ -12,7 +13,7 @@ from scipy.fftpack import dct, idct
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Depends , Request
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 
@@ -1025,13 +1026,10 @@ async def extract_wav_audio(
         return {"success": True, "data": {"secretText": extracted_raw, "isEncrypted": False}}
     except Exception as e:
         return {"success": False, "error": {"message": str(e)}}
-    
-    
-   
-   
-   
-   # ==========================================
-# Encoding Process Endpoint Handler
+
+
+# ==========================================
+# Unified Encoding Process Endpoint Handler
 # ==========================================
 
 @app.post("/api/encoding/process")
@@ -1051,21 +1049,75 @@ async def process_encoding_request(request: Request):
             or ""
         )
         action = str(
-            body.get("action")
+            body.get("mode")
+            or body.get("action")
             or body.get("operation")
-            or body.get("mode")
-            or body.get("type")
             or ""
         ).lower()
 
-        if "decode" in action:
-            clean_input = raw_input.split(",")[-1].strip()
-            missing_padding = len(clean_input) % 4
-            if missing_padding:
-                clean_input += '=' * (4 - missing_padding)
-            output = base64.b64decode(clean_input).decode('utf-8', errors='ignore')
+        enc_type = str(
+            body.get("encoding_type")
+            or body.get("type")
+            or body.get("codec")
+            or "base64"
+        ).lower()
+
+        is_decode = "decode" in action
+
+        if is_decode:
+            if enc_type == "base64":
+                clean_input = raw_input.split(",")[-1].strip()
+                missing_padding = len(clean_input) % 4
+                if missing_padding:
+                    clean_input += '=' * (4 - missing_padding)
+                output = base64.b64decode(clean_input).decode('utf-8', errors='ignore')
+
+            elif enc_type == "base32":
+                clean_input = raw_input.strip().upper()
+                missing_padding = len(clean_input) % 8
+                if missing_padding:
+                    clean_input += '=' * (8 - missing_padding)
+                output = base64.b32decode(clean_input).decode('utf-8', errors='ignore')
+
+            elif enc_type in ("hex", "hexadecimal"):
+                clean_input = raw_input.strip().replace("0x", "").replace(" ", "")
+                output = bytes.fromhex(clean_input).decode('utf-8', errors='ignore')
+
+            elif enc_type == "binary":
+                tokens = raw_input.strip().split()
+                output = bytes([int(b, 2) for b in tokens if b]).decode('utf-8', errors='ignore')
+
+            elif enc_type == "url":
+                output = urllib.parse.unquote(raw_input)
+
+            elif enc_type == "ascii":
+                tokens = raw_input.strip().replace(",", " ").split()
+                output = "".join(chr(int(c)) for c in tokens if c.isdigit())
+
+            else:
+                output = raw_input
+
         else:
-            output = base64.b64encode(raw_input.encode('utf-8')).decode('utf-8')
+            if enc_type == "base64":
+                output = base64.b64encode(raw_input.encode('utf-8')).decode('utf-8')
+
+            elif enc_type == "base32":
+                output = base64.b32encode(raw_input.encode('utf-8')).decode('utf-8')
+
+            elif enc_type in ("hex", "hexadecimal"):
+                output = raw_input.encode('utf-8').hex()
+
+            elif enc_type == "binary":
+                output = " ".join(format(b, "08b") for b in raw_input.encode('utf-8'))
+
+            elif enc_type == "url":
+                output = urllib.parse.quote(raw_input)
+
+            elif enc_type == "ascii":
+                output = " ".join(str(ord(c)) for c in raw_input)
+
+            else:
+                output = raw_input
 
         return {
             "success": True,
