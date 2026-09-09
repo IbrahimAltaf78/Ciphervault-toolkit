@@ -13,6 +13,15 @@ export default function EncodingToolPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Resets both input and output fields on tab change
+  const handleModeChange = (newMode: "encode" | "decode") => {
+    if (newMode === mode) return;
+    setMode(newMode);
+    setInput("");
+    setOutput("");
+    setError(null);
+  };
+
   const handleProcess = async () => {
     if (!input.trim()) return;
     setError(null);
@@ -55,14 +64,14 @@ export default function EncodingToolPage() {
 
         <div className="flex bg-phos-panel border border-phos-line rounded-xl p-1">
           <button
-            onClick={() => { setMode("encode"); setOutput(""); }}
+            onClick={() => handleModeChange("encode")}
             className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition ${mode === "encode" ? "bg-phos text-phos-deep" : "text-phos-dim hover:text-white"
               }`}
           >
             Encode
           </button>
           <button
-            onClick={() => { setMode("decode"); setOutput(""); }}
+            onClick={() => handleModeChange("decode")}
             className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition ${mode === "decode" ? "bg-phos text-phos-deep" : "text-phos-dim hover:text-white"
               }`}
           >
@@ -75,7 +84,11 @@ export default function EncodingToolPage() {
         rows={5}
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        placeholder={`Enter content to ${mode}...`}
+        placeholder={
+          mode === "encode"
+            ? "Enter plain text to encode..."
+            : `Enter ${codecType} encoded text to decode...`
+        }
         className="w-full bg-phos-panel border border-phos-line focus:border-phos-hot rounded-xl p-3 text-white outline-none transition"
       />
 

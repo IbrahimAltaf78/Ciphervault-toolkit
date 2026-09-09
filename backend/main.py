@@ -10,9 +10,12 @@ from PIL import Image, ImageDraw, ImageFont
 from scipy.stats import chi2
 from scipy.fftpack import dct, idct
 from datetime import datetime
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Depends
+from typing import Optional
+from pydantic import BaseModel
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Depends , Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
+
 
 # Cryptography modules for AES-256-GCM
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -39,7 +42,7 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="CipherVault Toolkit API Engine",
-    description="Backend steganography and steganalysis suite for images, audio, and video.",
+    description="Backend steganography, encoding, and steganalysis suite for images, audio, and video.",
     version="1.0.0"
 )
 
@@ -67,6 +70,16 @@ app.include_router(video_router)
 DELIMITER = "###END###"
 ALPHA = 2.0  # DWT coefficient scaling factor for robust embedding
 DCT_STRENGTH = 25.0  # DCT coefficient scaling factor for robust watermarking
+
+
+# ==========================================
+# Pydantic Models
+# ==========================================
+
+class Base64Payload(BaseModel):
+    text: Optional[str] = None
+    payload: Optional[str] = None
+    data: Optional[str] = None
 
 
 # ==========================================
@@ -264,6 +277,49 @@ def extract_dwt(image_bytes: bytes) -> str:
         bits.append(str(abs(q_val) % 2))
 
     return bits_to_text("".join(bits))
+
+
+# ==========================================
+# Base64 Converter Routes
+# ==========================================
+
+@app.post("/api/encoding/base64/encode")
+@app.post("/api/encoding/base64")
+@app.post("/api/crypto/base64/encode")
+@app.post("/api/base64/encode")
+async def handle_base64_encode(
+    body: Optional[Base64Payload] = None,
+    text: Optional[str] = Form(None),
+    payload: Optional[str] = Form(None)
+):
+    try:
+        raw_input = (body.text if body and body.text else None) or \
+                    (body.payload if body and body.payload else None) or \
+                    (body.data if body and body.data else None) or \
+                    text or payload or ""
+        encoded = base64.b64encode(raw_input.encode('utf-8')).decode('utf-8')
+        return {"success": True, "result": encoded, "data": {"encoded": encoded, "result": encoded}}
+    except Exception as e:
+        return {"success": False, "error": {"message": str(e)}}
+
+
+@app.post("/api/encoding/base64/decode")
+@app.post("/api/crypto/base64/decode")
+@app.post("/api/base64/decode")
+async def handle_base64_decode(
+    body: Optional[Base64Payload] = None,
+    text: Optional[str] = Form(None),
+    payload: Optional[str] = Form(None)
+):
+    try:
+        raw_input = (body.text if body and body.text else None) or \
+                    (body.payload if body and body.payload else None) or \
+                    (body.data if body and body.data else None) or \
+                    text or payload or ""
+        decoded = base64.b64decode(raw_input.encode('utf-8')).decode('utf-8')
+        return {"success": True, "result": decoded, "data": {"decoded": decoded, "result": decoded}}
+    except Exception as e:
+        return {"success": False, "error": {"message": str(e)}}
 
 
 # ==========================================
@@ -967,5 +1023,61 @@ async def extract_wav_audio(
             return {"success": True, "data": {"secretText": decrypted_text, "isEncrypted": True}}
 
         return {"success": True, "data": {"secretText": extracted_raw, "isEncrypted": False}}
+    except Exception as e:
+        return {"success": False, "error": {"message": str(e)}}
+    
+    
+   
+   
+   
+   # ==========================================
+# Encoding Process Endpoint Handler
+# ==========================================
+
+@app.post("/api/encoding/process")
+@app.api_route("/api/encoding/process", methods=["GET", "POST", "OPTIONS"])
+async def process_encoding_request(request: Request):
+    try:
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+
+        raw_input = str(
+            body.get("text")
+            or body.get("payload")
+            or body.get("input")
+            or body.get("data")
+            or ""
+        )
+        action = str(
+            body.get("action")
+            or body.get("operation")
+            or body.get("mode")
+            or body.get("type")
+            or ""
+        ).lower()
+
+        if "decode" in action:
+            clean_input = raw_input.split(",")[-1].strip()
+            missing_padding = len(clean_input) % 4
+            if missing_padding:
+                clean_input += '=' * (4 - missing_padding)
+            output = base64.b64decode(clean_input).decode('utf-8', errors='ignore')
+        else:
+            output = base64.b64encode(raw_input.encode('utf-8')).decode('utf-8')
+
+        return {
+            "success": True,
+            "result": output,
+            "output": output,
+            "data": {
+                "result": output,
+                "output": output,
+                "encoded": output,
+                "decoded": output,
+                "payload": output
+            }
+        }
     except Exception as e:
         return {"success": False, "error": {"message": str(e)}}
