@@ -27,10 +27,8 @@ from cryptography.hazmat.primitives import hashes
 from app.steganalysis.router import router as steganalysis_router
 
 # Video Steganography Router Inclusion (with fallback for folder naming)
-try:
-    from app.steganography.video import router as video_router
-except ImportError:
-    from app.stegnography.video import router as video_router
+
+from app.steganography.video import router as video_router
 
 # ==========================================
 # Database & Auth Imports
