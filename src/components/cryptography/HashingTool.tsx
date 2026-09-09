@@ -59,6 +59,25 @@ export function HashingTool({ id }: { id: HashingId }) {
     void recompute(input, next);
   }
 
+  function changeMode(next: ToolMode) {
+    setMode(next);
+
+    if (next === "reverse" && result?.ok) {
+      // SMART ROUTING: User switched to Verify. 
+      // Keep their message and result intact, but copy the hash to the Expected field
+      // so the UI immediately shows a "Digests match" success state.
+      setExpected(result.value);
+    } else if (next === "forward") {
+      // Going back to Hash: just clear the expected digest.
+      setExpected("");
+    } else {
+      // Fallback
+      setInput("");
+      setExpected("");
+      setResult(null);
+    }
+  }
+
   const digest = result?.ok ? result.value : "";
   const isVerifying = mode === "reverse";
   const matches = isVerifying && digest && expected ? compareDigest(digest, expected) : null;
@@ -73,7 +92,7 @@ export function HashingTool({ id }: { id: HashingId }) {
         paradigm="cryptography"
         icon={Fingerprint}
         mode={mode}
-        onModeChange={setMode}
+        onModeChange={changeMode}
         forwardLabel={tool.forwardLabel}
         reverseLabel={tool.reverseLabel}
         explainer={CRYPTO_EXPLAINERS[id]}
@@ -91,11 +110,10 @@ export function HashingTool({ id }: { id: HashingId }) {
                 key={option}
                 type="button"
                 onClick={() => changeAlgorithm(option)}
-                className={`rounded-lg border px-3 py-2 font-mono text-xs transition-colors ${
-                  algorithm === option
+                className={`rounded-lg border px-3 py-2 font-mono text-xs transition-colors ${algorithm === option
                     ? "accent-soft accent-border accent-text"
                     : "border-edge text-muted hover:text-foreground"
-                }`}
+                  }`}
               >
                 {option}
               </button>
