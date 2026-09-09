@@ -33,6 +33,24 @@ export function HybridTool() {
 
   const isEncrypting = mode === "forward";
 
+  function changeMode(next: ToolMode) {
+    setMode(next);
+
+    if (next === "reverse") {
+      // SMART ROUTING: Moving to Decrypt mode.
+      // If an envelope was generated, automatically load it into the input field.
+      if (result?.ok) {
+        setInput(result.value);
+      } else {
+        setInput("");
+      }
+    } else {
+      // Returning to Encrypt mode: reset input to start fresh.
+      setInput("");
+    }
+    setResult(null);
+  }
+
   async function generate() {
     setIsGenerating(true);
     setResult(null);
@@ -77,10 +95,7 @@ export function HybridTool() {
         paradigm="cryptography"
         icon={Layers}
         mode={mode}
-        onModeChange={(next) => {
-          setMode(next);
-          setResult(null);
-        }}
+        onModeChange={changeMode}
         forwardLabel={tool.forwardLabel}
         reverseLabel={tool.reverseLabel}
         explainer={CRYPTO_EXPLAINERS.hybrid}
@@ -115,11 +130,10 @@ export function HybridTool() {
                   key={size}
                   type="button"
                   onClick={() => setModulus(size)}
-                  className={`rounded-lg border px-3 py-1.5 font-mono text-xs transition-colors ${
-                    modulus === size
+                  className={`rounded-lg border px-3 py-1.5 font-mono text-xs transition-colors ${modulus === size
                       ? "accent-soft accent-border accent-text"
                       : "border-edge text-muted hover:text-foreground"
-                  }`}
+                    }`}
                 >
                   {size}
                 </button>
