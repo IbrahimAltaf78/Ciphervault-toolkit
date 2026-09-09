@@ -82,9 +82,8 @@ export function ToolPanel({
             </span>
             <ChevronDown
               aria-hidden
-              className={`size-4 transition-transform duration-300 ${
-                isExplainerOpen ? "rotate-180" : ""
-              }`}
+              className={`size-4 transition-transform duration-300 ${isExplainerOpen ? "rotate-180" : ""
+                }`}
             />
           </button>
           {isExplainerOpen && (
