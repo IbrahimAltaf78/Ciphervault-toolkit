@@ -110,11 +110,10 @@ export function TextHidingTool({ technique }: TextHidingToolProps) {
               key={slug}
               href={`/text-hiding/${slug}`}
               aria-current={isCurrent ? "page" : undefined}
-              className={`rounded-lg border px-3 py-1.5 font-mono text-xs uppercase tracking-widest transition-colors ${
-                isCurrent
+              className={`rounded-lg border px-3 py-1.5 font-mono text-xs uppercase tracking-widest transition-colors ${isCurrent
                   ? "accent-soft accent-border accent-text"
                   : "border-edge text-muted hover:border-phos-dim hover:text-foreground"
-              }`}
+                }`}
             >
               {TEXT_HIDING_TECHNIQUES[slug].label}
             </Link>
@@ -183,9 +182,8 @@ export function TextHidingTool({ technique }: TextHidingToolProps) {
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="cv-label">Capacity · {spec.carrier}</span>
                   <span
-                    className={`cv-label normal-case tracking-normal ${
-                      budget.over ? "text-red-400" : ""
-                    }`}
+                    className={`cv-label normal-case tracking-normal ${budget.over ? "text-red-400" : ""
+                      }`}
                   >
                     {budget.needed} / {budget.available} bits · fits{" "}
                     {budget.maxChars} chars
@@ -193,9 +191,8 @@ export function TextHidingTool({ technique }: TextHidingToolProps) {
                 </div>
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-edge">
                   <div
-                    className={`h-full rounded-full transition-[width] duration-300 ${
-                      budget.over ? "bg-red-500" : "accent-fill"
-                    }`}
+                    className={`h-full rounded-full transition-[width] duration-300 ${budget.over ? "bg-red-500" : "accent-fill"
+                      }`}
                     style={{ width: `${budget.percent}%` }}
                   />
                 </div>
@@ -239,9 +236,8 @@ export function TextHidingTool({ technique }: TextHidingToolProps) {
           </div>
 
           <output
-            className={`cv-field block min-h-32 whitespace-pre-wrap break-words ${
-              result && !result.ok ? "border-red-900/70 text-red-400" : ""
-            }`}
+            className={`cv-field block min-h-32 whitespace-pre-wrap wrap-break-word ${result && !result.ok ? "border-red-900/70 text-red-400" : ""
+              }`}
           >
             {result ? (
               result.ok ? (
