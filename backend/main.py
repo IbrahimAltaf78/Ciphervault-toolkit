@@ -3,13 +3,16 @@ import wave
 import base64
 import os
 import math
+import hashlib
 import numpy as np
 import pywt
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 from scipy.stats import chi2
+from scipy.fftpack import dct, idct
 from datetime import datetime
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 
 # Cryptography modules for AES-256-GCM
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -63,6 +66,7 @@ app.include_router(video_router)
 
 DELIMITER = "###END###"
 ALPHA = 2.0  # DWT coefficient scaling factor for robust embedding
+DCT_STRENGTH = 25.0  # DCT coefficient scaling factor for robust watermarking
 
 
 # ==========================================
@@ -128,6 +132,83 @@ def bits_to_text(bits: str) -> str:
 
 
 # ==========================================
+# DCT Steganography Helpers (2D DCT)
+# ==========================================
+
+def dct2(a):
+    return dct(dct(a.T, norm='ortho').T, norm='ortho')
+
+
+def idct2(a):
+    return idct(idct(a.T, norm='ortho').T, norm='ortho')
+
+
+def embed_dct(image_bytes: bytes, secret_text: str) -> bytes:
+    pil_img = Image.open(io.BytesIO(image_bytes)).convert("YCbCr")
+    y, cb, cr = pil_img.split()
+    y_arr = np.array(y, dtype=np.float32)
+
+    bits = text_to_bits(secret_text)
+    total_bits = len(bits)
+
+    h, w = y_arr.shape
+    block_size = 8
+    bit_idx = 0
+
+    for r in range(0, h - h % block_size, block_size):
+        for c in range(0, w - w % block_size, block_size):
+            if bit_idx >= total_bits:
+                break
+            block = y_arr[r:r+block_size, c:c+block_size]
+            dct_block = dct2(block)
+
+            bit = int(bits[bit_idx])
+            v1, v2 = dct_block[4, 3], dct_block[3, 4]
+
+            if bit == 1:
+                if v1 <= v2 + DCT_STRENGTH:
+                    avg = (v1 + v2) / 2.0
+                    dct_block[4, 3] = avg + DCT_STRENGTH / 2.0 + 1.0
+                    dct_block[3, 4] = avg - DCT_STRENGTH / 2.0 - 1.0
+            else:
+                if v2 <= v1 + DCT_STRENGTH:
+                    avg = (v1 + v2) / 2.0
+                    dct_block[3, 4] = avg + DCT_STRENGTH / 2.0 + 1.0
+                    dct_block[4, 3] = avg - DCT_STRENGTH / 2.0 - 1.0
+
+            y_arr[r:r+block_size, c:c+block_size] = idct2(dct_block)
+            bit_idx += 1
+
+        if bit_idx >= total_bits:
+            break
+
+    y_arr = np.clip(y_arr, 0, 255).astype(np.uint8)
+    stego_img = Image.merge("YCbCr", (Image.fromarray(y_arr), cb, cr)).convert("RGB")
+    buffered = io.BytesIO()
+    stego_img.save(buffered, format="PNG")
+    return buffered.getvalue()
+
+
+def extract_dct(image_bytes: bytes) -> str:
+    pil_img = Image.open(io.BytesIO(image_bytes)).convert("YCbCr")
+    y, _, _ = pil_img.split()
+    y_arr = np.array(y, dtype=np.float32)
+
+    h, w = y_arr.shape
+    block_size = 8
+    bits = []
+
+    for r in range(0, h - h % block_size, block_size):
+        for c in range(0, w - w % block_size, block_size):
+            block = y_arr[r:r+block_size, c:c+block_size]
+            dct_block = dct2(block)
+            v1, v2 = dct_block[4, 3], dct_block[3, 4]
+            bits.append("1" if v1 > v2 else "0")
+
+    return bits_to_text("".join(bits))
+
+
+# ==========================================
 # DWT Steganography Helpers (Haar Wavelet)
 # ==========================================
 
@@ -186,6 +267,77 @@ def extract_dwt(image_bytes: bytes) -> str:
 
 
 # ==========================================
+# Robust / DCT Watermarking Routes
+# ==========================================
+
+@app.post("/api/watermark/robust")
+@app.post("/api/watermark/robust/embed")
+@app.post("/api/stego/image/dct/hide")
+async def hide_dct_image(
+    image: UploadFile = File(None),
+    file: UploadFile = File(None),
+    secretText: str = Form(None),
+    text: str = Form(None),
+    watermarkText: str = Form(None),
+    seed: str = Form(None),
+    payload: str = Form(None),
+    password: str = Form(None)
+):
+    try:
+        input_image = image or file
+        raw_text = secretText or text or watermarkText or seed or payload
+
+        if not input_image or not raw_text:
+            return {"success": False, "error": {"message": "Please provide both an image and text payload."}}
+
+        payload_to_embed = raw_text
+        if password and password.strip():
+            payload_to_embed = f"ENC:{encrypt_payload(raw_text, password.strip())}"
+
+        contents = await input_image.read()
+        stego_bytes = embed_dct(contents, payload_to_embed)
+        encoded_image = base64.b64encode(stego_bytes).decode('utf-8')
+
+        return {
+            "success": True,
+            "data": {
+                "image": f"data:image/png;base64,{encoded_image}",
+                "filename": f"robust_dct_{input_image.filename.split('.')[0]}.png"
+            }
+        }
+    except Exception as e:
+        return {"success": False, "error": {"message": str(e)}}
+
+
+@app.post("/api/watermark/robust/extract")
+@app.post("/api/stego/image/dct/extract")
+async def extract_dct_image(
+    image: UploadFile = File(None),
+    file: UploadFile = File(None),
+    password: str = Form(None)
+):
+    try:
+        input_image = image or file
+        if not input_image:
+            return {"success": False, "error": {"message": "Please select an image file to extract watermark from."}}
+
+        contents = await input_image.read()
+        extracted_raw = extract_dct(contents)
+
+        if extracted_raw.startswith("ENC:"):
+            if not password or not password.strip():
+                return {"success": False, "error": {"message": "Payload is encrypted with AES-256. Password required."}}
+            
+            encrypted_b64 = extracted_raw[4:]
+            decrypted_text = decrypt_payload(encrypted_b64, password.strip())
+            return {"success": True, "data": {"secretText": decrypted_text, "watermarkText": decrypted_text, "isEncrypted": True}}
+
+        return {"success": True, "data": {"secretText": extracted_raw, "watermarkText": extracted_raw, "isEncrypted": False}}
+    except Exception as e:
+        return {"success": False, "error": {"message": str(e)}}
+
+
+# ==========================================
 # Steganalysis Engine Route
 # ==========================================
 
@@ -218,7 +370,6 @@ async def analyze_steganalysis_file(
             except Exception as img_err:
                 raise HTTPException(status_code=400, detail=f"Invalid image file: {str(img_err)}")
 
-            # 1. Real LSB Channel Analysis
             channels_data = []
             channel_names = ["Red", "Green", "Blue"]
             channel_keys = ["red", "green", "blue"]
@@ -235,7 +386,6 @@ async def analyze_steganalysis_file(
                 lsb_dist_dict[channel_keys[idx]] = {"zero": r_zero, "one": r_one, "lsb0": r_zero, "lsb1": r_one}
                 channels_data.append({"name": name, "lsb0": r_zero, "lsb1": r_one, "zero": r_zero, "one": r_one})
 
-            # 2. Chi-Square Attack Test
             flat_pixels = img_np[:, :, 0].flatten()
             counts = np.bincount(flat_pixels, minlength=256)
             chi2_stat = 0.0
@@ -250,21 +400,18 @@ async def analyze_steganalysis_file(
             if math.isnan(p_val):
                 p_val = 0.0002
 
-            # 3. LSB Shannon Entropy
             lsb_flat = (img_np & 1).flatten()
             p1 = float(np.mean(lsb_flat))
             p0 = 1.0 - p1
             ent = - (p0 * math.log2(p0) + p1 * math.log2(p1)) if p0 > 0 and p1 > 0 else 0.0
             entropy_8 = round(ent * 8.0, 2)
 
-            # 4. Trailing PNG Chunk Check (EOF anomaly)
             has_eof_anomaly = False
             if file_name.lower().endswith(".png"):
                 iend_index = contents.find(b"IEND")
                 if iend_index != -1 and iend_index + 8 < len(contents):
                     has_eof_anomaly = True
 
-            # 5. Embedding Likelihood Score
             avg_zero_pct = float(np.mean([ch["zero"] for ch in channels_data]))
             lsb_balance_diff = abs(50.0 - avg_zero_pct)
 
@@ -286,7 +433,7 @@ async def analyze_steganalysis_file(
             if has_eof_anomaly:
                 anomalies.append({
                     "title": "Data appended after IEND",
-                    "description": f"{len(contents) - (iend_index + 8)} bytes follow the PNG end-of-stream marker. Decoders ignore this region entirely.",
+                    "description": f"{len(contents) - (iend_index + 8)} bytes follow the PNG end-of-stream marker.",
                     "severity": "CRITICAL"
                 })
             if "sRGB" in str(contents[:2000]):
@@ -329,7 +476,7 @@ async def analyze_steganalysis_file(
                     {
                         "id": "chi-square",
                         "name": "Chi-square attack",
-                        "description": "Compares adjacent value pairs against the distribution expected of untouched pixels.",
+                        "description": "Compares adjacent value pairs against untouched pixel distribution.",
                         "value": f"p = {p_val:.4f} — {chi_score}%",
                         "score": chi_score,
                         "status": "critical" if chi_score > 60 else "clean"
@@ -337,7 +484,7 @@ async def analyze_steganalysis_file(
                     {
                         "id": "rs-analysis",
                         "name": "RS analysis",
-                        "description": "Measures how groups of pixels respond to a flipping mask; embedding disturbs the ratio.",
+                        "description": "Measures mask flipping responses to detect modification.",
                         "value": f"estimated {max(0.01, round(embedding_likelihood * 0.002, 2))} bpp — {rs_score}%",
                         "score": rs_score,
                         "status": "critical" if rs_score > 60 else "clean"
@@ -345,7 +492,7 @@ async def analyze_steganalysis_file(
                     {
                         "id": "sample-pairs",
                         "name": "Sample pairs",
-                        "description": "Estimates embedding rate from transitions between neighbouring sample values.",
+                        "description": "Estimates embedding rate from adjacent sample values.",
                         "value": f"rate {max(0.02, round(embedding_likelihood * 0.0018, 2))} — {sp_score}%",
                         "score": sp_score,
                         "status": "critical" if sp_score > 60 else "clean"
@@ -353,7 +500,7 @@ async def analyze_steganalysis_file(
                     {
                         "id": "lsb-entropy",
                         "name": "LSB plane entropy",
-                        "description": "A natural low bit plane is noisy but structured; a payload pushes it toward pure randomness.",
+                        "description": "Measures bit plane noise randomness.",
                         "value": f"{entropy_8:.2f} / 8.00 bits — {entropy_score}%",
                         "score": entropy_score,
                         "status": "critical" if entropy_score > 60 else "clean"
@@ -428,22 +575,33 @@ async def analyze_steganalysis_file(
 
 
 # ==========================================
-# Image Steganography Routes
+# Image Steganography / Invisible Watermarking Routes
 # ==========================================
 
 @app.post("/api/stego/image/hide")
 @app.post("/api/stego/image/lsb/hide")
+@app.post("/api/watermark/invisible")
+@app.post("/api/watermark/invisible/embed")
 async def hide_lsb_image(
-    image: UploadFile = File(...),
-    secretText: str = Form(...),
+    image: UploadFile = File(None),
+    file: UploadFile = File(None),
+    secretText: str = Form(None),
+    text: str = Form(None),
+    payload: str = Form(None),
     password: str = Form(None)
 ):
     try:
-        payload_to_embed = secretText
-        if password and password.strip():
-            payload_to_embed = f"ENC:{encrypt_payload(secretText, password.strip())}"
+        input_image = image or file
+        raw_text = secretText or text or payload
 
-        contents = await image.read()
+        if not input_image or not raw_text:
+            return {"success": False, "error": {"message": "Please provide both an image and text payload."}}
+
+        payload_to_embed = raw_text
+        if password and password.strip():
+            payload_to_embed = f"ENC:{encrypt_payload(raw_text, password.strip())}"
+
+        contents = await input_image.read()
         pil_img = Image.open(io.BytesIO(contents)).convert("RGB")
         img_array = np.array(pil_img)
 
@@ -452,7 +610,7 @@ async def hide_lsb_image(
         flat_array = img_array.flatten()
         
         if total_bits > len(flat_array):
-            raise HTTPException(status_code=400, detail="Text payload is too large for this image capacity.")
+            return {"success": False, "error": {"message": "Text payload is too large for this image capacity."}}
 
         for i in range(total_bits):
             flat_array[i] = (flat_array[i] & 254) | int(bits[i])
@@ -468,7 +626,7 @@ async def hide_lsb_image(
             "success": True,
             "data": {
                 "image": f"data:image/png;base64,{encoded_image}",
-                "filename": f"stego_lsb_{image.filename.split('.')[0]}.png"
+                "filename": f"stego_lsb_{input_image.filename.split('.')[0]}.png"
             }
         }
     except Exception as e:
@@ -477,12 +635,18 @@ async def hide_lsb_image(
 
 @app.post("/api/stego/image/extract")
 @app.post("/api/stego/image/lsb/extract")
+@app.post("/api/watermark/invisible/extract")
 async def extract_lsb_image(
-    image: UploadFile = File(...),
+    image: UploadFile = File(None),
+    file: UploadFile = File(None),
     password: str = Form(None)
 ):
     try:
-        contents = await image.read()
+        input_image = image or file
+        if not input_image:
+            return {"success": False, "error": {"message": "Please select an image file to extract text from."}}
+
+        contents = await input_image.read()
         pil_img = Image.open(io.BytesIO(contents)).convert("RGB")
         img_array = np.array(pil_img)
 
@@ -492,31 +656,150 @@ async def extract_lsb_image(
 
         if extracted_raw.startswith("ENC:"):
             if not password or not password.strip():
-                raise HTTPException(status_code=400, detail="Payload is encrypted with AES-256. Password required.")
+                return {"success": False, "error": {"message": "Payload is encrypted with AES-256. Password required."}}
             
             encrypted_b64 = extracted_raw[4:]
             decrypted_text = decrypt_payload(encrypted_b64, password.strip())
             return {"success": True, "data": {"secretText": decrypted_text, "isEncrypted": True}}
 
         return {"success": True, "data": {"secretText": extracted_raw, "isEncrypted": False}}
-    except HTTPException as he:
-        raise he
     except Exception as e:
         return {"success": False, "error": {"message": str(e)}}
 
 
+# ==========================================
+# Fragile Watermarking Routes
+# ==========================================
+
+@app.post("/api/watermark/fragile")
+@app.post("/api/watermark/fragile/embed")
+@app.post("/api/stego/image/fragile/embed")
+async def embed_fragile_watermark(
+    file: UploadFile = File(None),
+    image: UploadFile = File(None),
+    blockSize: int = Form(8)
+):
+    try:
+        input_file = file or image
+        if not input_file:
+            return {"success": False, "error": {"message": "Image file is required for fragile watermarking."}}
+
+        contents = await input_file.read()
+        pil_img = Image.open(io.BytesIO(contents)).convert("RGB")
+        img_np = np.array(pil_img)
+
+        h, w, c = img_np.shape
+        watermarked = img_np.copy()
+
+        for r in range(0, h - h % blockSize, blockSize):
+            for col in range(0, w - w % blockSize, blockSize):
+                block = img_np[r:r+blockSize, col:col+blockSize]
+                msb_block = block & 0xFE
+                block_hash = hashlib.md5(msb_block.tobytes()).digest()
+                hash_bits = np.unpackbits(np.frombuffer(block_hash, dtype=np.uint8))
+
+                flat_block = watermarked[r:r+blockSize, col:col+blockSize].flatten()
+                num_bits = min(len(hash_bits), len(flat_block))
+
+                for i in range(num_bits):
+                    flat_block[i] = (flat_block[i] & 0xFE) | hash_bits[i]
+
+                watermarked[r:r+blockSize, col:col+blockSize] = flat_block.reshape((blockSize, blockSize, c))
+
+        stego_img = Image.fromarray(watermarked.astype('uint8'), 'RGB')
+        buffered = io.BytesIO()
+        stego_img.save(buffered, format="PNG")
+        encoded_image = base64.b64encode(buffered.getvalue()).decode('utf-8')
+
+        return {
+            "success": True,
+            "data": {
+                "image": f"data:image/png;base64,{encoded_image}",
+                "filename": f"fragile_watermarked_{input_file.filename.split('.')[0]}.png"
+            }
+        }
+    except Exception as e:
+        return {"success": False, "error": {"message": str(e)}}
+
+
+@app.post("/api/watermark/fragile/verify")
+@app.post("/api/stego/image/fragile/verify")
+async def verify_fragile_watermark(
+    file: UploadFile = File(None),
+    image: UploadFile = File(None),
+    blockSize: int = Form(8)
+):
+    try:
+        input_file = file or image
+        if not input_file:
+            return {"success": False, "error": {"message": "Image file is required for verification."}}
+
+        contents = await input_file.read()
+        pil_img = Image.open(io.BytesIO(contents)).convert("RGB")
+        img_np = np.array(pil_img)
+
+        h, w, c = img_np.shape
+        tampered_blocks = 0
+        total_blocks = 0
+
+        for r in range(0, h - h % blockSize, blockSize):
+            for col in range(0, w - w % blockSize, blockSize):
+                total_blocks += 1
+                block = img_np[r:r+blockSize, col:col+blockSize]
+                msb_block = block & 0xFE
+                block_hash = hashlib.md5(msb_block.tobytes()).digest()
+                expected_bits = np.unpackbits(np.frombuffer(block_hash, dtype=np.uint8))
+
+                flat_block = block.flatten()
+                num_bits = min(len(expected_bits), len(flat_block))
+                extracted_bits = flat_block[:num_bits] & 1
+
+                if not np.array_equal(extracted_bits, expected_bits[:num_bits]):
+                    tampered_blocks += 1
+
+        is_tampered = tampered_blocks > 0
+        tamper_percentage = round((tampered_blocks / max(total_blocks, 1)) * 100, 2)
+
+        return {
+            "success": True,
+            "data": {
+                "isAuthentic": not is_tampered,
+                "isTampered": is_tampered,
+                "tamperedBlocks": tampered_blocks,
+                "totalBlocks": total_blocks,
+                "tamperPercentage": tamper_percentage,
+                "message": "Image is untampered and authentic." if not is_tampered else f"Tampering detected in {tampered_blocks} blocks ({tamper_percentage}%)."
+            }
+        }
+    except Exception as e:
+        return {"success": False, "error": {"message": str(e)}}
+
+
+# ==========================================
+# DWT Steganography Routes
+# ==========================================
+
 @app.post("/api/stego/image/dwt/hide")
 async def hide_dwt_image(
-    image: UploadFile = File(...),
-    secretText: str = Form(...),
+    image: UploadFile = File(None),
+    file: UploadFile = File(None),
+    secretText: str = Form(None),
+    text: str = Form(None),
+    payload: str = Form(None),
     password: str = Form(None)
 ):
     try:
-        payload_to_embed = secretText
-        if password and password.strip():
-            payload_to_embed = f"ENC:{encrypt_payload(secretText, password.strip())}"
+        input_image = image or file
+        raw_text = secretText or text or payload
 
-        contents = await image.read()
+        if not input_image or not raw_text:
+            return {"success": False, "error": {"message": "Please provide both an image and text payload."}}
+
+        payload_to_embed = raw_text
+        if password and password.strip():
+            payload_to_embed = f"ENC:{encrypt_payload(raw_text, password.strip())}"
+
+        contents = await input_image.read()
         stego_bytes = embed_dwt(contents, payload_to_embed)
         encoded_image = base64.b64encode(stego_bytes).decode('utf-8')
 
@@ -524,7 +807,7 @@ async def hide_dwt_image(
             "success": True,
             "data": {
                 "image": f"data:image/png;base64,{encoded_image}",
-                "filename": f"stego_dwt_{image.filename.split('.')[0]}.png"
+                "filename": f"stego_dwt_{input_image.filename.split('.')[0]}.png"
             }
         }
     except Exception as e:
@@ -533,24 +816,72 @@ async def hide_dwt_image(
 
 @app.post("/api/stego/image/dwt/extract")
 async def extract_dwt_image(
-    image: UploadFile = File(...),
+    image: UploadFile = File(None),
+    file: UploadFile = File(None),
     password: str = Form(None)
 ):
     try:
-        contents = await image.read()
+        input_image = image or file
+        if not input_image:
+            return {"success": False, "error": {"message": "Please select an image file to extract text from."}}
+
+        contents = await input_image.read()
         extracted_raw = extract_dwt(contents)
 
         if extracted_raw.startswith("ENC:"):
             if not password or not password.strip():
-                raise HTTPException(status_code=400, detail="Payload is encrypted with AES-256. Password required.")
+                return {"success": False, "error": {"message": "Payload is encrypted with AES-256. Password required."}}
             
             encrypted_b64 = extracted_raw[4:]
             decrypted_text = decrypt_payload(encrypted_b64, password.strip())
             return {"success": True, "data": {"secretText": decrypted_text, "isEncrypted": True}}
 
         return {"success": True, "data": {"secretText": extracted_raw, "isEncrypted": False}}
-    except HTTPException as he:
-        raise he
+    except Exception as e:
+        return {"success": False, "error": {"message": str(e)}}
+
+
+# ==========================================
+# Visible Watermarking Route
+# ==========================================
+
+@app.post("/api/watermark/visible")
+@app.post("/api/watermark/visible/embed")
+@app.post("/api/stego/image/watermark")
+async def apply_visible_watermark(
+    file: UploadFile = File(None),
+    image: UploadFile = File(None),
+    text: str = Form(None),
+    watermarkText: str = Form(None)
+):
+    try:
+        input_file = file or image
+        watermark_val = text or watermarkText
+
+        if not input_file or not watermark_val:
+            return {"success": False, "error": {"message": "Image file and watermark text are required."}}
+
+        contents = await input_file.read()
+        image_obj = Image.open(io.BytesIO(contents)).convert("RGBA")
+
+        txt_layer = Image.new("RGBA", image_obj.size, (255, 255, 255, 0))
+        draw = ImageDraw.Draw(txt_layer)
+        font = ImageFont.load_default()
+
+        draw.text((20, 20), watermark_val, fill=(255, 255, 255, 128), font=font)
+        watermarked = Image.alpha_composite(image_obj, txt_layer)
+
+        buf = io.BytesIO()
+        watermarked.convert("RGB").save(buf, format="PNG")
+        encoded_image = base64.b64encode(buf.getvalue()).decode('utf-8')
+
+        return {
+            "success": True,
+            "data": {
+                "image": f"data:image/png;base64,{encoded_image}",
+                "filename": f"watermarked_{input_file.filename.split('.')[0]}.png"
+            }
+        }
     except Exception as e:
         return {"success": False, "error": {"message": str(e)}}
 
@@ -561,23 +892,32 @@ async def extract_dwt_image(
 
 @app.post("/api/stego/audio/wav/hide")
 async def hide_wav_audio(
-    audio: UploadFile = File(...),
-    secretText: str = Form(...),
+    audio: UploadFile = File(None),
+    file: UploadFile = File(None),
+    secretText: str = Form(None),
+    text: str = Form(None),
+    payload: str = Form(None),
     password: str = Form(None)
 ):
     try:
-        payload_to_embed = secretText
-        if password and password.strip():
-            payload_to_embed = f"ENC:{encrypt_payload(secretText, password.strip())}"
+        input_audio = audio or file
+        raw_text = secretText or text or payload
 
-        contents = await audio.read()
+        if not input_audio or not raw_text:
+            return {"success": False, "error": {"message": "Audio file and secret text are required."}}
+
+        payload_to_embed = raw_text
+        if password and password.strip():
+            payload_to_embed = f"ENC:{encrypt_payload(raw_text, password.strip())}"
+
+        contents = await input_audio.read()
         with wave.open(io.BytesIO(contents), mode='rb') as wav_in:
             params = wav_in.getparams()
             frames = bytearray(wav_in.readframes(wav_in.getnframes()))
 
         bits = text_to_bits(payload_to_embed)
         if len(bits) > len(frames):
-            raise HTTPException(status_code=400, detail="Payload is too large for this audio file.")
+            return {"success": False, "error": {"message": "Payload is too large for this audio file capacity."}}
 
         for i, bit in enumerate(bits):
             frames[i] = (frames[i] & 254) | int(bit)
@@ -593,7 +933,7 @@ async def hide_wav_audio(
             "success": True,
             "data": {
                 "audio": f"data:audio/wav;base64,{encoded_audio}",
-                "filename": f"stego_{audio.filename}"
+                "filename": f"stego_{input_audio.filename}"
             }
         }
     except Exception as e:
@@ -602,11 +942,16 @@ async def hide_wav_audio(
 
 @app.post("/api/stego/audio/wav/extract")
 async def extract_wav_audio(
-    audio: UploadFile = File(...),
+    audio: UploadFile = File(None),
+    file: UploadFile = File(None),
     password: str = Form(None)
 ):
     try:
-        contents = await audio.read()
+        input_audio = audio or file
+        if not input_audio:
+            return {"success": False, "error": {"message": "Audio file is required to extract payload."}}
+
+        contents = await input_audio.read()
         with wave.open(io.BytesIO(contents), mode='rb') as wav_in:
             frames = bytearray(wav_in.readframes(wav_in.getnframes()))
 
@@ -615,14 +960,12 @@ async def extract_wav_audio(
 
         if extracted_raw.startswith("ENC:"):
             if not password or not password.strip():
-                raise HTTPException(status_code=400, detail="Payload is encrypted with AES-256. Password required.")
+                return {"success": False, "error": {"message": "Payload is encrypted with AES-256. Password required."}}
             
             encrypted_b64 = extracted_raw[4:]
             decrypted_text = decrypt_payload(encrypted_b64, password.strip())
             return {"success": True, "data": {"secretText": decrypted_text, "isEncrypted": True}}
 
         return {"success": True, "data": {"secretText": extracted_raw, "isEncrypted": False}}
-    except HTTPException as he:
-        raise he
     except Exception as e:
         return {"success": False, "error": {"message": str(e)}}
