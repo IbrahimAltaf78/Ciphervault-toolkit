@@ -22,6 +22,8 @@ export function Anomalies({ anomalies }: { anomalies: MetadataAnomaly[] }) {
 
       {anomalies.length === 0 ? (
         <p className="flex items-center gap-2 text-muted">
+          {/* Green, not the site blue: "nothing flagged" is a verdict, and a
+              verdict never takes the decorative colour. */}
           <CheckCircle2 aria-hidden className="size-4 text-emerald-400" />
           Nothing flagged in the container.
         </p>

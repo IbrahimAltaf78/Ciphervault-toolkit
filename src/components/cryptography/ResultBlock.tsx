@@ -70,7 +70,7 @@ export function ResultBlock({
             <span
               className={
                 result.ok
-                  ? "cv-badge border-emerald-800 bg-emerald-950/60 text-emerald-400"
+                  ? "cv-badge border-edge bg-phos-deep/60 text-[#60A5FA]"
                   : "cv-badge border-red-800 bg-red-950/60 text-red-400"
               }
             >
@@ -99,7 +99,7 @@ export function ResultBlock({
       <div className="flex flex-wrap items-center gap-2 pt-1">
         <button type="button" onClick={copyOutput} disabled={!hasOutput} className="cv-btn">
           {hasCopied ? (
-            <Check aria-hidden className="size-3.5 text-emerald-400" />
+            <Check aria-hidden className="size-3.5 text-[#60A5FA]" />
           ) : (
             <Copy aria-hidden className="size-3.5" />
           )}

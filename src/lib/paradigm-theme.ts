@@ -15,13 +15,13 @@ export const PARADIGM_ACCENT: Record<Paradigm, string> = {
   // the hue. The map is kept rather than deleted so components that set
   // `--cv-accent` per module keep working, and so a future theme can give the
   // paradigms their own colours back by editing this one table.
-  cryptography: "#22c55e",
-  steganography: "#22c55e",
-  "text-hiding": "#22c55e",
-  encoding: "#22c55e",
-  "covert-channels": "#22c55e",
-  watermarking: "#22c55e",
-  steganalysis: "#22c55e",
+  cryptography: "#60A5FA",
+  steganography: "#60A5FA",
+  "text-hiding": "#60A5FA",
+  encoding: "#60A5FA",
+  "covert-channels": "#60A5FA",
+  watermarking: "#60A5FA",
+  steganalysis: "#60A5FA",
 };
 
 /** Inline style that scopes an accent to a subtree. */

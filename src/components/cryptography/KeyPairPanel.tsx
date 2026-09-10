@@ -45,7 +45,7 @@ function PemField({
         </label>
         <button type="button" onClick={copy} disabled={!value} className="cv-btn">
           {hasCopied ? (
-            <Check aria-hidden className="size-3.5 text-emerald-400" />
+            <Check aria-hidden className="size-3.5 text-[#60A5FA]" />
           ) : (
             <Copy aria-hidden className="size-3.5" />
           )}

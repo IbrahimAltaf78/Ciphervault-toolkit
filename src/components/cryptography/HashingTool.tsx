@@ -157,7 +157,7 @@ export function HashingTool({ id }: { id: HashingId }) {
               <span
                 className={
                   matches
-                    ? "cv-badge border-emerald-800 bg-emerald-950/60 text-emerald-400"
+                    ? "cv-badge border-edge bg-phos-deep/60 text-[#60A5FA]"
                     : "cv-badge border-red-800 bg-red-950/60 text-red-400"
                 }
               >

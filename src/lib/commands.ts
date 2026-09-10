@@ -18,7 +18,7 @@ export interface Command {
 }
 
 export const COMMANDS: Command[] = [
-  { label: "Suite overview", group: "General", href: "/", keywords: "home landing start" },
+  { label: "Console", group: "General", href: "/console", keywords: "home dashboard overview start" },
 
   // Cryptography
   { label: "AES", group: "Cryptography", href: "/cryptography/symmetric/aes", keywords: "symmetric gcm cbc ctr encrypt 256" },

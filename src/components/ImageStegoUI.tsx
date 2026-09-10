@@ -193,7 +193,7 @@ export default function ImageStegoUI({ initialAlgorithm = "lsb" }: ImageStegoUIP
     return (
         <div className="max-w-xl mx-auto space-y-6">
             <div className="text-center space-y-2">
-                <h1 className="text-2xl font-extrabold text-emerald-400">
+                <h1 className="text-2xl font-extrabold text-[#60A5FA]">
                     Image Steganography ({algorithm.toUpperCase()})
                 </h1>
             </div>
@@ -204,8 +204,8 @@ export default function ImageStegoUI({ initialAlgorithm = "lsb" }: ImageStegoUIP
                     type="button"
                     onClick={() => handleTabChange("hide")}
                     className={`px-5 py-2 text-xs font-semibold rounded-lg transition-colors ${activeTab === "hide"
-                            ? "bg-emerald-500 text-slate-950 font-bold"
-                            : "bg-emerald-950/40 text-emerald-400 hover:bg-emerald-900/40"
+                            ? "bg-[#60A5FA] text-[#07080a] font-bold"
+                            : "bg-phos-deep/40 text-[#60A5FA] hover:bg-phos-faint/40"
                         }`}
                 >
                     Hide Data
@@ -214,24 +214,24 @@ export default function ImageStegoUI({ initialAlgorithm = "lsb" }: ImageStegoUIP
                     type="button"
                     onClick={() => handleTabChange("extract")}
                     className={`px-5 py-2 text-xs font-semibold rounded-lg transition-colors ${activeTab === "extract"
-                            ? "bg-emerald-500 text-slate-950 font-bold"
-                            : "bg-emerald-950/40 text-emerald-400 hover:bg-emerald-900/40"
+                            ? "bg-[#60A5FA] text-[#07080a] font-bold"
+                            : "bg-phos-deep/40 text-[#60A5FA] hover:bg-phos-faint/40"
                         }`}
                 >
                     Extract Data
                 </button>
             </div>
 
-            <div className="bg-emerald-950/20 border border-emerald-800/40 rounded-xl p-6 space-y-5">
+            <div className="bg-phos-deep/20 border border-edge/40 rounded-xl p-6 space-y-5">
                 {/* Algorithm Selection */}
                 <div>
-                    <label className="block text-xs font-semibold text-emerald-300 uppercase tracking-wider mb-2">
+                    <label className="block text-xs font-semibold text-[#60A5FA] uppercase tracking-wider mb-2">
                         Algorithm
                     </label>
                     <select
                         value={algorithm}
                         onChange={(e) => setAlgorithm(e.target.value)}
-                        className="w-full rounded-lg bg-emerald-950/80 border border-emerald-800 p-2.5 text-xs text-emerald-100 focus:outline-none focus:border-emerald-500"
+                        className="w-full rounded-lg bg-phos-deep/80 border border-edge p-2.5 text-xs text-phos-white focus:outline-none focus:border-[#60A5FA]"
                     >
                         <option value="lsb">LSB (Least Significant Bit)</option>
                         <option value="dwt">DWT (Discrete Wavelet Transform)</option>
@@ -240,7 +240,7 @@ export default function ImageStegoUI({ initialAlgorithm = "lsb" }: ImageStegoUIP
 
                 {/* Drag & Drop File Area */}
                 <div>
-                    <label className="block text-xs font-semibold text-emerald-300 uppercase tracking-wider mb-2">
+                    <label className="block text-xs font-semibold text-[#60A5FA] uppercase tracking-wider mb-2">
                         {activeTab === "hide" ? "Upload Cover Image (PNG/BMP)" : "Upload Stego Image (PNG/BMP)"}
                     </label>
                     <label
@@ -248,12 +248,12 @@ export default function ImageStegoUI({ initialAlgorithm = "lsb" }: ImageStegoUIP
                         onDragLeave={handleDragLeave}
                         onDrop={handleDrop}
                         className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-6 cursor-pointer transition-colors ${isDragging
-                                ? "border-emerald-400 bg-emerald-900/30"
-                                : "border-emerald-800/60 bg-emerald-950/40 hover:border-emerald-500"
+                                ? "border-[#60A5FA] bg-phos-faint/30"
+                                : "border-edge/60 bg-phos-deep/40 hover:border-[#60A5FA]"
                             }`}
                     >
-                        <Upload className={`h-8 w-8 mb-2 ${isDragging ? "text-emerald-400" : "text-emerald-500/70"}`} />
-                        <span className="text-xs font-medium text-emerald-200 text-center break-all">
+                        <Upload className={`h-8 w-8 mb-2 ${isDragging ? "text-[#60A5FA]" : "text-muted/70"}`} />
+                        <span className="text-xs font-medium text-phos-white text-center break-all">
                             {selectedFile
                                 ? selectedFile.name
                                 : isDragging
@@ -272,7 +272,7 @@ export default function ImageStegoUI({ initialAlgorithm = "lsb" }: ImageStegoUIP
 
                 {/* Preview */}
                 {previewUrl && (
-                    <div className="flex justify-center bg-slate-950/80 p-3 rounded-lg border border-emerald-900/50 max-h-48 overflow-hidden">
+                    <div className="flex justify-center bg-phos-void/80 p-3 rounded-lg border border-edge/50 max-h-48 overflow-hidden">
                         <img src={previewUrl} alt="Preview" className="object-contain max-h-40 rounded" />
                     </div>
                 )}
@@ -281,7 +281,7 @@ export default function ImageStegoUI({ initialAlgorithm = "lsb" }: ImageStegoUIP
                 {activeTab === "hide" ? (
                     <form onSubmit={handleHideSubmit} className="space-y-4">
                         <div>
-                            <label className="block text-xs font-semibold text-emerald-300 uppercase tracking-wider mb-2">
+                            <label className="block text-xs font-semibold text-[#60A5FA] uppercase tracking-wider mb-2">
                                 Secret Text
                             </label>
                             <textarea
@@ -289,13 +289,13 @@ export default function ImageStegoUI({ initialAlgorithm = "lsb" }: ImageStegoUIP
                                 value={secretText}
                                 onChange={(e) => setSecretText(e.target.value)}
                                 placeholder="Enter secret text to encode..."
-                                className="w-full rounded-lg bg-emerald-950/80 border border-emerald-800 p-3 text-xs text-emerald-100 focus:outline-none focus:border-emerald-500"
+                                className="w-full rounded-lg bg-phos-deep/80 border border-edge p-3 text-xs text-phos-white focus:outline-none focus:border-[#60A5FA]"
                             />
                         </div>
 
                         <div>
-                            <label className="block text-xs font-semibold text-emerald-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                <Shield className="h-3.5 w-3.5 text-emerald-400" />
+                            <label className="block text-xs font-semibold text-[#60A5FA] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                <Shield className="h-3.5 w-3.5 text-[#60A5FA]" />
                                 Passphrase (Optional)
                             </label>
                             <input
@@ -303,14 +303,14 @@ export default function ImageStegoUI({ initialAlgorithm = "lsb" }: ImageStegoUIP
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="Optional AES passphrase..."
-                                className="w-full rounded-lg bg-emerald-950/80 border border-emerald-800 p-2.5 text-xs text-emerald-100 focus:outline-none focus:border-emerald-500"
+                                className="w-full rounded-lg bg-phos-deep/80 border border-edge p-2.5 text-xs text-phos-white focus:outline-none focus:border-[#60A5FA]"
                             />
                         </div>
 
                         <button
                             type="submit"
                             disabled={loading || !selectedFile}
-                            className="w-full py-3 px-4 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-slate-950 font-bold text-xs transition-colors flex items-center justify-center gap-2"
+                            className="w-full py-3 px-4 rounded-lg bg-[#60A5FA] hover:bg-[#60A5FA] disabled:opacity-50 text-[#07080a] font-bold text-xs transition-colors flex items-center justify-center gap-2"
                         >
                             {loading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
                             {loading ? "Encoding..." : "Encode Secret Image"}
@@ -319,8 +319,8 @@ export default function ImageStegoUI({ initialAlgorithm = "lsb" }: ImageStegoUIP
                 ) : (
                     <form onSubmit={handleExtractSubmit} className="space-y-4">
                         <div>
-                            <label className="block text-xs font-semibold text-emerald-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                <Shield className="h-3.5 w-3.5 text-emerald-400" />
+                            <label className="block text-xs font-semibold text-[#60A5FA] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                <Shield className="h-3.5 w-3.5 text-[#60A5FA]" />
                                 Passphrase (If encrypted)
                             </label>
                             <input
@@ -328,14 +328,14 @@ export default function ImageStegoUI({ initialAlgorithm = "lsb" }: ImageStegoUIP
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="Enter passphrase..."
-                                className="w-full rounded-lg bg-emerald-950/80 border border-emerald-800 p-2.5 text-xs text-emerald-100 focus:outline-none focus:border-emerald-500"
+                                className="w-full rounded-lg bg-phos-deep/80 border border-edge p-2.5 text-xs text-phos-white focus:outline-none focus:border-[#60A5FA]"
                             />
                         </div>
 
                         <button
                             type="submit"
                             disabled={loading || !selectedFile}
-                            className="w-full py-3 px-4 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-slate-950 font-bold text-xs transition-colors flex items-center justify-center gap-2"
+                            className="w-full py-3 px-4 rounded-lg bg-[#60A5FA] hover:bg-[#60A5FA] disabled:opacity-50 text-[#07080a] font-bold text-xs transition-colors flex items-center justify-center gap-2"
                         >
                             {loading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
                             {loading ? "Extracting..." : "Extract Text from Image"}
@@ -354,15 +354,15 @@ export default function ImageStegoUI({ initialAlgorithm = "lsb" }: ImageStegoUIP
 
             {/* Encoded Result */}
             {stegoImageResult && activeTab === "hide" && (
-                <div className="bg-emerald-950/30 border border-emerald-800/60 rounded-xl p-5 space-y-3 text-center">
-                    <h3 className="text-sm font-bold text-emerald-400">Stego Image Ready</h3>
-                    <div className="flex justify-center bg-slate-950 p-3 rounded-lg border border-emerald-900/50">
+                <div className="bg-phos-deep/30 border border-edge/60 rounded-xl p-5 space-y-3 text-center">
+                    <h3 className="text-sm font-bold text-[#60A5FA]">Stego Image Ready</h3>
+                    <div className="flex justify-center bg-phos-void p-3 rounded-lg border border-edge/50">
                         <img src={stegoImageResult} alt="Stego Output" className="max-h-48 object-contain rounded" />
                     </div>
                     <a
                         href={stegoImageResult}
                         download={downloadFilename}
-                        className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-emerald-950 hover:bg-emerald-900 text-emerald-400 font-semibold text-xs border border-emerald-700/50 transition-colors"
+                        className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-phos-deep hover:bg-phos-faint text-[#60A5FA] font-semibold text-xs border border-phos-edge/50 transition-colors"
                     >
                         <Download className="h-4 w-4" />
                         Download Encoded Image
@@ -372,11 +372,11 @@ export default function ImageStegoUI({ initialAlgorithm = "lsb" }: ImageStegoUIP
 
             {/* Extracted Output Result */}
             {extractedResult !== null && activeTab === "extract" && (
-                <div className="bg-emerald-950/30 border border-emerald-800/60 rounded-xl p-5 space-y-2">
-                    <h3 className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
+                <div className="bg-phos-deep/30 border border-edge/60 rounded-xl p-5 space-y-2">
+                    <h3 className="text-xs font-bold text-[#60A5FA] uppercase tracking-wider">
                         Extracted Payload
                     </h3>
-                    <div className="p-3 rounded-lg bg-slate-950 border border-emerald-900/50 text-emerald-100 font-mono text-xs whitespace-pre-wrap break-all">
+                    <div className="p-3 rounded-lg bg-phos-void border border-edge/50 text-phos-white font-mono text-xs whitespace-pre-wrap break-all">
                         {extractedResult || "(No text found)"}
                     </div>
                 </div>

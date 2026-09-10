@@ -1,161 +1,89 @@
 import Link from "next/link";
-import {
-  Binary,
-  ChevronRight,
-  EyeOff,
-  Fingerprint,
-  ScanSearch,
-  Stamp,
-  Terminal,
-  Type,
-  type LucideIcon,
-} from "lucide-react";
-import { WireCube } from "@/components/layout/WireCube";
-import { DecodeText } from "@/components/home/DecodeText";
-import { Assurances } from "@/components/home/Assurances";
+import type { Metadata } from "next";
+import ParticleDrift from "@/components/ui/particle-drift";
 
-interface Module {
-  title: string;
-  description: string;
-  icon: LucideIcon;
-  href: string;
-  badge?: string;
-}
+export const metadata: Metadata = {
+  title: "CipherVault",
+  description:
+    "Six data-hiding and cryptography paradigms in one stateless workspace.",
+};
 
-/**
- * The six paradigms, in the order the PRD introduces them.
- *
- * Descriptions name what the module actually does to a file rather than listing
- * the algorithms — the algorithm names live on each module's own hub, where
- * someone has already decided they want that module.
- */
-const MODULES: Module[] = [
-  {
-    title: "Steganography Engine",
-    description:
-      "Hide encrypted payloads inside digital images and WAV audio using LSB and frequency-domain embedding.",
-    icon: EyeOff,
-    href: "/stego",
-    badge: "Core",
-  },
-  {
-    title: "Steganalysis",
-    description:
-      "Detect hidden data in suspect media using chi-square tests, RS analysis and pixel histograms.",
-    icon: ScanSearch,
-    href: "/steganalysis",
-    badge: "Forensics",
-  },
-  {
-    title: "Cryptography Toolkit",
-    description:
-      "AES, DES, Triple DES, RSA, ECC, SHA-2, SHA-3 and hybrid encryption, executed in the browser.",
-    icon: Fingerprint,
-    href: "/cryptography",
-  },
-  {
-    title: "Text Hiding",
-    description:
-      "Zero-width Unicode, whitespace, capitalisation and acrostics to conceal messages in plain text.",
-    icon: Type,
-    href: "/text-hiding",
-  },
-  {
-    title: "Digital Watermarking",
-    description:
-      "Embed robust ownership markers and verify signatures to protect media copyright.",
-    icon: Stamp,
-    href: "/watermark",
-  },
-  {
-    title: "Encoding & Decoding",
-    description:
-      "Base64, Base32, hexadecimal, binary, URL and ASCII conversions for payload inspection.",
-    icon: Binary,
-    href: "/encoding",
-  },
+const MODULES = [
+  "Steganography",
+  "Steganalysis",
+  "Cryptography",
+  "Text hiding",
+  "Watermarking",
+  "Encoding",
 ];
 
-export default function HomePage() {
+/**
+ * Cover page.
+ *
+ * Deliberately holds one idea: the name, one line about it, and the way in.
+ * It sits outside `(shell)`, so it carries no navbar, no gutter and no footer
+ * — the drift field runs edge to edge behind it.
+ *
+ * The particles are blue because blue is this design system's primary data
+ * hue; orange stays on the button, where the whole site keeps its one
+ * interactive colour. The cover therefore states the colour rule before the
+ * console has to explain it.
+ */
+export default function CoverPage() {
   return (
-    <div className="crt phos-boot phos-sweep px-5 py-10 sm:px-8 sm:py-14 lg:px-12">
-      {/* The binary field now comes from the layout, behind every page. */}
-      <WireCube className="pointer-events-none absolute -right-16 top-24 z-0 hidden h-[34rem] w-[34rem] text-phos opacity-45 lg:block" />
+    <main className="relative grid min-h-dvh place-items-center overflow-hidden px-5 py-10">
+      {/* The effect renders a sandboxed iframe that isolates its canvas and
+          hides the rest of its own markup, so it behaves as a background
+          layer. aria-hidden because it carries no meaning. */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 z-0">
+        <ParticleDrift className="h-full w-full" density={1.15} length={1.1} />
+      </div>
 
-      <div className="relative z-[1] mx-auto max-w-5xl space-y-12">
-        {/* Hero */}
-        <header className="space-y-5 text-center">
-          <p className="phos-pill phos-rise phos-delay-1 mx-auto">
-            <Terminal aria-hidden className="size-3" />
-            CipherVault Toolkit v1.0
-          </p>
+      {/* A vignette so the type never has to compete with a bright particle
+          passing behind it. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-[1]"
+        style={{
+          background:
+            "radial-gradient(ellipse 60% 55% at 50% 50%, rgba(8,10,13,0.88), rgba(8,10,13,0.35) 60%, transparent 100%)",
+        }}
+      />
 
-          {/* The headline says what the toolkit is for, not what category it
-              belongs to. Every module here runs in two directions — hide and
-              extract, encrypt and decrypt, encode and decode — and that duality
-              is the whole product, so the two halves are set against each other
-              typographically as well: the first line recedes, the second one
-              burns. */}
-          <h1 className="phos-rise phos-delay-2 text-balance text-4xl font-extrabold leading-[1.06] tracking-tight sm:text-5xl lg:text-6xl">
-            <span className="block text-phos-dim">Hide anything.</span>
-            <DecodeText
-              text="Reveal everything."
-              className="phos-glow-strong block text-phos-hot"
-              delay={520}
-            />
-          </h1>
+      <div className="relative z-[2] w-full max-w-3xl text-center">
+        <p className="cv-label phos-rise flex items-center justify-center gap-3">
+          <span className="phos-dot" />
+          Client-side · Nothing stored
+        </p>
 
-          <p className="phos-rise phos-delay-3 mx-auto max-w-2xl text-pretty leading-relaxed text-phos-dim">
-            Encryption, steganography, text hiding, encoding, covert channels
-            and watermarking — six paradigms, one workspace. Every tool works in
-            both directions, and nothing you run through it is ever stored.
-          </p>
-        </header>
+        <h1 className="phos-rise phos-delay-1 mt-6">
+          Cipher<span className="accent-text">Vault</span>
+        </h1>
 
-        {/* Modules */}
-        <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {MODULES.map((module, index) => (
-            // Each card arrives just after the one before it, so the grid
-            // fills in rather than appearing all at once.
-            <li
-              key={module.href}
-              className="phos-rise"
-              style={{ animationDelay: `${420 + index * 70}ms` }}
-            >
-              <Link
-                href={module.href}
-                className="phos-card group flex h-full flex-col p-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-phos-hot focus-visible:ring-offset-2 focus-visible:ring-offset-phos-deep"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <span className="phos-tile shrink-0">
-                    <module.icon aria-hidden className="size-5" />
-                  </span>
-                  {module.badge && <span className="phos-pill">{module.badge}</span>}
-                </div>
+        <p className="phos-rise phos-delay-2 mx-auto mt-5 max-w-xl text-balance text-lg text-muted">
+          Hide anything. Reveal everything. Six paradigms of concealment and
+          cryptography, running entirely in your browser.
+        </p>
 
-                <h2 className="mt-5 text-base font-semibold tracking-tight text-phos-white">
-                  {module.title}
-                </h2>
+        <div className="phos-rise phos-delay-3 mt-10 flex flex-wrap items-center justify-center gap-3">
+          <Link href="/console" className="cv-btn">
+            Go to website
+          </Link>
+          <Link href="/steganalysis" className="phos-btn">
+            Analyse a file
+          </Link>
+        </div>
 
-                <p className="mt-2 flex-1 text-sm leading-relaxed text-phos-dim">
-                  {module.description}
-                </p>
-
-                {/* Rule above the action, so the card reads as two zones. */}
-                <span className="mt-5 flex items-center gap-1 border-t border-phos-line pt-3 font-mono text-xs font-bold uppercase tracking-wider text-phos transition-colors group-hover:text-phos-hot">
-                  Launch module
-                  <ChevronRight
-                    aria-hidden
-                    className="size-3.5 transition-transform group-hover:translate-x-1"
-                  />
-                </span>
-              </Link>
+        {/* The contents of the toolkit, stated once so the cover is not a
+            dead end that says only a name. */}
+        <ul className="phos-rise phos-delay-4 mt-14 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+          {MODULES.map((module) => (
+            <li key={module} className="cv-label">
+              {module}
             </li>
           ))}
         </ul>
-
-        <Assurances />
       </div>
-    </div>
+    </main>
   );
 }

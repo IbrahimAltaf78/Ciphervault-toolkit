@@ -72,7 +72,7 @@ export default function SteganalysisDashboard() {
                 <button
                     onClick={analyzeImage}
                     disabled={!file || loading}
-                    className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 font-semibold rounded transition"
+                    className="px-5 py-2 bg-phos-faint hover:bg-[#60A5FA] disabled:opacity-50 font-semibold rounded transition"
                 >
                     {loading ? 'Analyzing...' : 'Run Analysis'}
                 </button>
@@ -86,7 +86,7 @@ export default function SteganalysisDashboard() {
                     {/* Probability Score Header */}
                     <div className={`p-6 rounded-lg border flex items-center justify-between ${report.is_suspicious
                             ? 'bg-red-950/40 border-red-700'
-                            : 'bg-emerald-950/40 border-emerald-700'
+                            : 'bg-phos-deep/40 border-phos-edge'
                         }`}>
                         <div>
                             <p className="text-sm uppercase tracking-wider text-phos-dim">Suspicion Status</p>

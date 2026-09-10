@@ -226,7 +226,7 @@ export function TextHidingTool({ technique }: TextHidingToolProps) {
               <span
                 className={
                   result.ok
-                    ? "cv-badge border-emerald-800 bg-emerald-950/60 text-emerald-400"
+                    ? "cv-badge border-edge bg-phos-deep/60 text-[#60A5FA]"
                     : "cv-badge border-red-800 bg-red-950/60 text-red-400"
                 }
               >
@@ -267,7 +267,7 @@ export function TextHidingTool({ technique }: TextHidingToolProps) {
               className="cv-btn"
             >
               {hasCopied ? (
-                <Check aria-hidden className="size-3.5 text-emerald-400" />
+                <Check aria-hidden className="size-3.5 text-[#60A5FA]" />
               ) : (
                 <Copy aria-hidden className="size-3.5" />
               )}

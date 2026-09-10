@@ -16,16 +16,16 @@ const TONE = [
   "bg-red-500",
   "bg-orange-500",
   "bg-amber-500",
-  "bg-lime-500",
-  "bg-emerald-500",
+  "bg-[#60A5FA]",
+  "bg-[#60A5FA]",
 ] as const;
 
 const TEXT_TONE = [
   "text-red-400",
   "text-orange-400",
   "text-amber-400",
-  "text-lime-400",
-  "text-emerald-400",
+  "text-[#60A5FA]",
+  "text-[#60A5FA]",
 ] as const;
 
 /**

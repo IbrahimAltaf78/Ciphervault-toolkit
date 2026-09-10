@@ -1,1113 +1,939 @@
 @import "tailwindcss";
 
-/* CipherVault design tokens — see DESIGN.md
-   Dark-first cybersecurity aesthetic: slate surfaces + paradigm accents. */
-@theme {
-  --color-background: #090d16;
-  --color-surface: #0f172a;
-  --color-edge: #1e293b;
-  --color-foreground: #f8fafc;
-  --color-muted: #94a3b8;
+/* ==========================================================================
+   CipherVault — Console
+   --------------------------------------------------------------------------
+   A mission-control console: instrument panels, live figures, and a dense
+   grid. Earlier passes were documents — type on a dark ground — and read as
+   flat because there was nothing on screen to look at. The interface is now
+   built out of its own subject matter: waveforms, histograms, bit planes and
+   a sweep.
 
-  /* Paradigm accents */
-  --color-crypto: #8b5cf6;
-  --color-stego: #10b981;
-  --color-texthide: #06b6d4;
-  --color-encoding: #3b82f6;
-  --color-covert: #f59e0b;
-  --color-watermark: #ec4899;
+   Palette. One accent for the whole site: #60A5FA, the same blue the cover
+   page particles and the console rain run in. An earlier pass held orange
+   back for chrome, which put two accents on a single page — an orange nav
+   chip directly above a blue tool panel — and that inconsistency was the
+   thing that read as unfinished.
+
+   The three data hues are the dataviz reference palette's first three slots,
+   which clear every all-pairs gate on a dark surface (CVD dE 9.4,
+   normal-vision dE 20.9, all >= 3:1 contrast). Verified with
+   `validate_palette.js --mode dark --pairs all`, not by eye.
+
+     --cv-accent #60A5FA  blue    every interactive and active state
+     --viz-1     #3987e5  blue    primary series
+     --viz-2     #199e70  aqua    secondary series
+     --viz-3     #c98500  yellow  third series
+
+   Status colours (emerald / amber / red) are the one exception and are never
+   folded into the accent: a broken cipher has to look broken.
+
+   Contract: this file owns every `.cv-*`, `.phos-*` and `.accent-*` class and
+   the tokens in `@theme`. Components set `--cv-accent` inline; the `.accent-*`
+   helpers read it. The `phos-` token names are historical and now carry the
+   console ramp, so `bg-phos-void` and friends keep working.
+   ========================================================================== */
+
+@theme {
+  --color-background: #080a0d;
+  --color-surface: #0f1318;
+  --color-edge: #212832;
+  --color-foreground: #e8ecf2;
+  --color-muted: #8794a5;
+
+  --color-phos-void: #080a0d;
+  --color-phos-deep: #0b0e13;
+  --color-phos-panel: #0f1318;
+  --color-phos-faint: #161c24;
+  --color-phos-line: #212832;
+  --color-phos-edge: #3a4553;
+  --color-phos-dim: #8794a5;
+  --color-phos: #60A5FA;
+  --color-phos-hot: #93c5fd;
+  --color-phos-white: #e8ecf2;
+
+  --color-live: #60A5FA;   /* "live/ready" dot. Not a verdict — those keep emerald/amber/red. */
+  --color-alert: #e66767;
+
+  --color-crypto: #60A5FA;
+  --color-stego: #60A5FA;
+  --color-texthide: #60A5FA;
+  --color-encoding: #60A5FA;
+  --color-covert: #60A5FA;
+  --color-watermark: #60A5FA;
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 }
 
+:root {
+  --cv-accent: #60A5FA;
+  --rule: #212832;
+  --ink: #080a0d;
+
+  /* Data series. Validated as a set for the dark surface. */
+  --viz-1: #3987e5;
+  --viz-2: #199e70;
+  --viz-3: #c98500;
+}
+
 @layer base {
-  html {
-    color-scheme: dark;
-  }
+  html { color-scheme: dark; }
 
   body {
-    background-color: var(--color-background);
+    background-color: var(--color-phos-void);
     color: var(--color-foreground);
     font-family: var(--font-sans);
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
   }
 
-  ::selection {
-    background-color: color-mix(in oklab, var(--color-crypto) 40%, transparent);
+  h1 {
+    font-size: clamp(2.25rem, 1rem + 5vw, 4.5rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 0.96;
+    color: var(--color-phos-white);
   }
 
-  ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+  h2 {
+    font-size: clamp(1.25rem, 1rem + 1.2vw, 1.75rem);
+    font-weight: 800;
+    letter-spacing: -0.028em;
+    line-height: 1.1;
+    color: var(--color-phos-white);
   }
-  ::-webkit-scrollbar-track {
-    background: var(--color-background);
-  }
-  ::-webkit-scrollbar-thumb {
-    background: var(--color-edge);
-    border-radius: 9999px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: #334155;
-  }
+
+  h3 { font-size: 1rem; font-weight: 700; letter-spacing: -0.012em; color: var(--color-phos-white); }
+
+  code, pre, kbd, samp { font-family: var(--font-mono); font-size: 0.9em; }
+
+  ::selection { background-color: var(--cv-accent); color: var(--ink); }
+
+  :focus-visible { outline: 2px solid var(--cv-accent); outline-offset: 2px; border-radius: 1px; }
+
+  ::-webkit-scrollbar { width: 12px; height: 12px; }
+  ::-webkit-scrollbar-track { background: var(--color-phos-void); }
+  ::-webkit-scrollbar-thumb { background: var(--color-phos-line); border: 3px solid var(--color-phos-void); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--color-phos-edge); }
 }
 
 @layer components {
-  /* --- Ambient backdrop: survey grid + aurora bloom ---------------------- */
-  .cv-backdrop {
+
+  .bg-background { background-color: var(--color-phos-void); }
+  .bg-surface    { background-color: var(--color-phos-panel); }
+  .border-edge   { border-color: var(--color-phos-line); }
+  .text-foreground { color: var(--color-foreground); }
+  .text-muted      { color: var(--color-muted); }
+  .bg-black { background-color: #000; }
+  .bg-white { background-color: #fff; }
+  .text-black { color: #000; }
+  .text-white { color: #fff; }
+
+  .accent-text   { color: var(--cv-accent); }
+  .accent-fill   { background-color: var(--cv-accent); color: var(--ink); }
+  .accent-border { border-color: var(--cv-accent); }
+  .accent-soft   { background-color: color-mix(in oklab, var(--cv-accent) 15%, transparent); }
+  .accent-glow   { box-shadow: inset 3px 0 0 0 var(--cv-accent); }
+  .accent-ring:focus-visible { outline: 2px solid var(--cv-accent); outline-offset: 2px; }
+
+  /* --- Console ground ------------------------------------------------------
+     Four static layers, no animation: a cool wash from the top, a faint blue
+     bloom off each shoulder, a fine measuring grid, and a coarser one over
+     it. The tool pages carry no animation of their own — a moving field
+     behind a form someone is typing a passphrase into is a distraction — so
+     the ground has to be interesting while standing perfectly still. */
+  .cv-backdrop,
+  .phos-backdrop {
     position: fixed;
     inset: 0;
     z-index: -10;
-    overflow: hidden;
     pointer-events: none;
+    background-color: var(--color-phos-void);
+    background-image:
+      radial-gradient(ellipse 90% 55% at 12% -10%, rgba(96, 165, 250, 0.09), transparent 60%),
+      radial-gradient(ellipse 80% 50% at 90% 0%, rgba(96, 165, 250, 0.055), transparent 62%),
+      linear-gradient(to right, rgba(232, 236, 242, 0.022) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(232, 236, 242, 0.022) 1px, transparent 1px),
+      linear-gradient(to right, rgba(232, 236, 242, 0.035) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(232, 236, 242, 0.035) 1px, transparent 1px);
+    background-size:
+      100% 100%,
+      100% 100%,
+      40px 40px,
+      40px 40px,
+      200px 200px,
+      200px 200px;
   }
 
-  .cv-grid {
+  /* Settles the bloom toward the foot of the screen. It stops well short of
+     opaque on purpose — an earlier version faded to solid and swallowed the
+     grid on the lower half of every page, which is the one thing the ground
+     is there to show. */
+  .cv-backdrop::after,
+  .phos-backdrop::after {
+    content: "";
     position: absolute;
     inset: 0;
-    background-image:
-      linear-gradient(to right, rgba(148, 163, 184, 0.07) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(148, 163, 184, 0.07) 1px, transparent 1px);
-    background-size: 60px 60px;
-    -webkit-mask-image: radial-gradient(ellipse 95% 55% at 50% 0%, #000 25%, transparent 80%);
-    mask-image: radial-gradient(ellipse 95% 55% at 50% 0%, #000 25%, transparent 80%);
+    background: linear-gradient(to bottom, transparent 0%, rgba(8, 10, 13, 0.32) 55%, rgba(8, 10, 13, 0.45) 100%);
   }
 
-  .cv-aurora {
-    position: absolute;
-    border-radius: 9999px;
-    filter: blur(130px);
-    opacity: 0.25;
-    animation: cv-float 18s ease-in-out infinite;
-  }
+  .cv-grid, .cv-aurora { display: none; }
+  .phos-rain, .phos-rain-col { display: none !important; }
+  .phos-above { position: relative; z-index: 1; }
 
-  /* --- Accent helpers -----------------------------------------------------
-     Each module sets --cv-accent once on its root; everything below inherits,
-     which keeps paradigm colouring out of the class names. */
-  .accent-text {
-    color: var(--cv-accent);
-  }
-  .accent-fill {
-    background-color: var(--cv-accent);
-  }
-  .accent-soft {
-    background-color: color-mix(in oklab, var(--cv-accent) 14%, transparent);
-  }
-  .accent-border {
-    border-color: color-mix(in oklab, var(--cv-accent) 45%, transparent);
-  }
-  .accent-glow {
-    box-shadow: 0 0 28px -8px var(--cv-accent);
-  }
-  .accent-ring:focus-visible {
-    outline: 2px solid var(--cv-accent);
-    outline-offset: 2px;
-  }
-
-  /* --- Glassmorphic tool panel -------------------------------------------- */
-  .cv-panel {
+  /* --- Instrument panel -----------------------------------------------------
+     The unit the console is assembled from: a titled bay with corner ticks. */
+  .cv-bay {
     position: relative;
-    overflow: hidden;
-    border-radius: 0.875rem;
-    border: 1px solid var(--color-edge);
-    background: linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.6));
-    backdrop-filter: blur(14px);
-    box-shadow: 0 30px 70px -40px rgba(0, 0, 0, 0.95);
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--rule);
+    background-color: var(--color-phos-panel);
   }
 
-  /* Accent hairline running along the panel's top edge. */
-  .cv-panel::before {
+  .cv-bay::before,
+  .cv-bay::after {
     content: "";
     position: absolute;
-    inset-inline: 0;
-    top: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--cv-accent), transparent);
-  }
-
-  /* Slow light sweep across that hairline. */
-  .cv-panel::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 1px;
-    width: 33%;
-    background: linear-gradient(90deg, transparent, #f8fafc, transparent);
-    opacity: 0.55;
-    animation: cv-sweep 7s ease-in-out infinite;
-  }
-
-  /* --- Monospace payload field -------------------------------------------- */
-  .cv-field {
-    width: 100%;
-    border-radius: 0.625rem;
-    border: 1px solid var(--color-edge);
-    background-color: #060a11;
-    padding: 0.75rem;
-    font-family: var(--font-mono);
-    font-size: 0.875rem;
-    line-height: 1.6;
-    color: var(--color-foreground);
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
-  .cv-field::placeholder {
-    color: #475569;
-  }
-  .cv-field:focus-visible {
-    outline: none;
+    width: 8px;
+    height: 8px;
     border-color: var(--cv-accent);
-    box-shadow: 0 0 0 3px color-mix(in oklab, var(--cv-accent) 16%, transparent);
+    border-style: solid;
+    pointer-events: none;
+    opacity: 0.85;
   }
 
-  /* --- Small type: labels, badges, chips ---------------------------------- */
-  .cv-label {
+  .cv-bay::before { top: -1px; left: -1px; border-width: 1px 0 0 1px; }
+  .cv-bay::after  { bottom: -1px; right: -1px; border-width: 0 1px 1px 0; }
+
+  .cv-bay-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border-bottom: 1px solid var(--rule);
+    padding: 0.6rem 0.85rem;
+  }
+
+  .cv-bay-body { padding: 0.85rem; flex: 1; }
+
+  /* --- Figures --------------------------------------------------------------
+     Radar. The rings are structure; the arm sweeps; contacts breathe. */
+  .cv-radar-ring { fill: none; stroke: var(--color-phos-line); stroke-width: 0.4; }
+
+  .cv-radar-arm {
+    transform-origin: 50% 50%;
+    animation: cv-spin 6s linear infinite;
+  }
+
+  .cv-radar-line { stroke: var(--viz-1); stroke-width: 0.5; opacity: 0.75; }
+
+  .cv-blip {
+    fill: var(--viz-1);
+    animation: cv-breathe 4s ease-in-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .cv-blip-halo {
+    fill: none;
+    stroke: var(--viz-1);
+    stroke-width: 0.45;
+    opacity: 0;
+    animation: cv-ping 4s ease-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  /* Waveform. Bars grow from the centre line on load. */
+  .cv-wave-bar {
+    fill: var(--viz-1);
+    opacity: 0.5;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: cv-grow 520ms cubic-bezier(0.2, 0, 0, 1) both;
+  }
+
+  /* The payload region is a second series, so it is legended where used. */
+  .cv-wave-bar--hot { fill: var(--viz-3); opacity: 1; }
+
+  /* Histogram. Bars rise from the baseline. */
+  .cv-hist-bar {
+    fill: var(--viz-1);
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    animation: cv-rise-bar 560ms cubic-bezier(0.2, 0, 0, 1) both;
+  }
+
+  .cv-hist-bar--odd { fill: var(--viz-2); }
+
+  /* Bit plane. Lit cells flicker independently. */
+  .cv-bit { fill: var(--color-phos-faint); }
+
+  .cv-bit--on {
+    fill: var(--viz-1);
+    animation: cv-flicker 3.2s steps(1, end) infinite;
+  }
+
+  /* Gauge. */
+  .cv-gauge-track { fill: none; stroke: var(--color-phos-line); stroke-width: 7; stroke-linecap: round; }
+
+  .cv-gauge-fill {
+    fill: none;
+    stroke: var(--viz-1);
+    stroke-width: 7;
+    stroke-linecap: round;
+    animation: cv-sweep-arc 1.1s cubic-bezier(0.2, 0, 0, 1) both;
+  }
+
+  /* Legend swatch — identity is never colour alone, so these sit beside text. */
+  .cv-key {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
     font-family: var(--font-mono);
     font-size: 0.6875rem;
-    font-weight: 500;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--color-muted);
   }
+
+  .cv-key::before {
+    content: "";
+    width: 0.55rem;
+    height: 0.55rem;
+    background-color: var(--cv-key, var(--viz-1));
+    flex: none;
+  }
+
+  /* --- Channel tiles --------------------------------------------------------- */
+  .cv-tile {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1.5rem;
+    min-height: 10rem;
+    padding: 1.15rem;
+    border: 1px solid var(--rule);
+    background-color: var(--color-phos-deep);
+    transition: border-color 200ms ease, background-color 200ms ease;
+  }
+
+  .cv-tile::before {
+    content: "";
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 2px;
+    background-color: var(--cv-accent);
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    transition: transform 300ms cubic-bezier(0.2, 0, 0, 1);
+  }
+
+  .cv-tile:hover,
+  .cv-tile:focus-visible {
+    border-color: var(--color-phos-edge);
+    background-color: var(--color-phos-faint);
+  }
+
+  .cv-tile:hover::before,
+  .cv-tile:focus-visible::before { transform: scaleX(1); }
+
+  .cv-tile:hover .cv-tile-go,
+  .cv-tile:focus-visible .cv-tile-go { color: var(--cv-accent); }
+
+  .cv-ghost {
+    position: absolute;
+    top: -0.7rem;
+    right: 0.3rem;
+    z-index: -1;
+    font-family: var(--font-mono);
+    font-size: 4rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.06em;
+    color: var(--color-phos-faint);
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .cv-tile-name { font-size: 1.0625rem; font-weight: 800; letter-spacing: -0.02em; color: var(--color-phos-white); }
+  .cv-tile-desc { font-size: 0.8125rem; line-height: 1.5; color: var(--color-muted); }
+  .cv-tile-meta { font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: 0.06em; color: var(--color-phos-edge); }
+
+  .cv-tile-go {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-phos-edge);
+    transition: color 200ms ease;
+  }
+
+  /* --- Readout ---------------------------------------------------------------- */
+  .cv-readout {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: baseline;
+    gap: 0 0.6rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    padding-block: 0.25rem;
+  }
+
+  .cv-readout > dt { color: var(--color-phos-edge); white-space: nowrap; }
+  .cv-readout > .cv-leader { border-bottom: 1px dotted var(--color-phos-line); transform: translateY(-0.25em); }
+  .cv-readout > dd { color: var(--color-phos-white); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  /* --- Marquee ------------------------------------------------------------------ */
+  .cv-ticker {
+    position: relative;
+    overflow: hidden;
+    border-block: 1px solid var(--rule);
+    padding-block: 0.6rem;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+  }
+
+  .cv-ticker-track { display: flex; width: max-content; gap: 2rem; animation: cv-marquee 48s linear infinite; }
+  .cv-ticker:hover .cv-ticker-track { animation-play-state: paused; }
+
+  .cv-ticker-item {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-phos-edge);
+    white-space: nowrap;
+  }
+
+  .cv-ticker-item[data-hot="true"] { color: var(--cv-accent); }
+
+  /* --- Legacy plates -------------------------------------------------------------- */
+  .cv-panel {
+    position: relative;
+    border: 1px solid var(--rule);
+    background-color: color-mix(in oklab, var(--color-phos-panel) 85%, transparent);
+    box-shadow: inset 0 1px 0 rgba(232, 236, 242, 0.05);
+  }
+
+  /* Changebar down the left edge: the mark a technical manual puts beside
+     the paragraph that matters. */
+  .cv-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background-color: var(--cv-accent);
+  }
+
+  /* Boxes on the tool pages. Translucent so the ground shows through, with a
+     hairline of light along the top edge — the cheapest way to make a flat
+     rectangle read as a machined panel rather than a div. */
+  .cv-card, .phos-card {
+    position: relative;
+    border: 1px solid var(--rule);
+    background-color: color-mix(in oklab, var(--color-phos-panel) 82%, transparent);
+    box-shadow: inset 0 1px 0 rgba(232, 236, 242, 0.045);
+    transition:
+      background-color 180ms ease,
+      border-color 180ms ease,
+      box-shadow 180ms ease;
+  }
+
+  /* Corner ticks, drawn on the two opposite corners so the eye reads the box
+     as bracketed instead of simply outlined. */
+  .cv-card::before, .phos-card::before,
+  .cv-card::after, .phos-card::after {
+    content: "";
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    border-color: var(--color-phos-edge);
+    border-style: solid;
+    pointer-events: none;
+    transition: border-color 180ms ease;
+  }
+
+  .cv-card::before, .phos-card::before {
+    top: -1px; left: -1px;
+    border-width: 1px 0 0 1px;
+  }
+
+  .cv-card::after, .phos-card::after {
+    bottom: -1px; right: -1px;
+    border-width: 0 1px 1px 0;
+  }
+
+  .cv-card:hover, .phos-card:hover {
+    background-color: color-mix(in oklab, var(--color-phos-faint) 88%, transparent);
+    border-color: var(--color-phos-edge);
+    box-shadow:
+      inset 0 1px 0 rgba(232, 236, 242, 0.07),
+      0 0 0 1px color-mix(in oklab, var(--cv-accent) 18%, transparent);
+  }
+
+  .cv-card:hover::before, .phos-card:hover::before,
+  .cv-card:hover::after, .phos-card:hover::after {
+    border-color: var(--cv-accent);
+  }
+
+  .cv-plate { position: relative; border: 1px solid var(--rule); background-color: var(--color-phos-panel); }
+
+  .cv-row {
+    display: grid;
+    grid-template-columns: 3rem minmax(0, 1fr);
+    gap: 0 1.25rem;
+    align-items: baseline;
+    border-top: 1px solid var(--rule);
+    padding: 0.9rem 0.75rem 0.9rem 0.5rem;
+    transition: background-color 160ms ease, padding-left 200ms cubic-bezier(0.2, 0, 0, 1);
+  }
+
+  .cv-row:last-child { border-bottom: 1px solid var(--rule); }
+  .cv-row:hover { background-color: var(--color-phos-deep); padding-left: 1.1rem; }
+
+  .cv-ord {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.08em;
+    color: var(--color-phos-edge);
+    transition: color 160ms ease;
+  }
+
+  .cv-row:hover .cv-ord { color: var(--cv-accent); }
+
+  /* --- Labels ----------------------------------------------------------------------- */
+  .cv-label {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  .cv-meta { font-family: var(--font-mono); font-size: 0.75rem; color: var(--color-muted); font-variant-numeric: tabular-nums; }
 
   .cv-badge {
     display: inline-flex;
     align-items: center;
-    gap: 0.375rem;
-    border-radius: 0.375rem;
-    border: 1px solid;
-    padding: 0.125rem 0.5rem;
+    gap: 0.35rem;
+    border: 1px solid var(--rule);
+    padding: 0.1rem 0.4rem;
     font-family: var(--font-mono);
     font-size: 0.6875rem;
-    font-weight: 500;
-    letter-spacing: 0.1em;
+    font-weight: 600;
+    letter-spacing: 0.09em;
     text-transform: uppercase;
-    white-space: nowrap;
+    color: var(--color-muted);
   }
 
-  /* --- Interactive card ---------------------------------------------------- */
-  .cv-card {
-    transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
-  }
-  .cv-card:hover {
-    transform: translateY(-2px);
-    border-color: color-mix(in oklab, var(--cv-accent) 55%, transparent);
-    box-shadow:
-      0 0 0 1px color-mix(in oklab, var(--cv-accent) 18%, transparent),
-      0 30px 60px -34px var(--cv-accent);
+  .phos-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background-color: var(--cv-accent);
+    padding: 0.18rem 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink);
   }
 
-  /* --- Ghost / icon button ------------------------------------------------- */
+  .phos-dot {
+    display: inline-block;
+    width: 0.4rem;
+    height: 0.4rem;
+    background-color: var(--color-live);
+    animation: phos-pulse 1.8s steps(1, end) infinite;
+  }
+
+  .phos-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-live);
+  }
+
+  .phos-tile {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--rule);
+    background-color: transparent;
+    color: var(--color-phos-white);
+    transition: color 180ms ease, border-color 180ms ease;
+  }
+
+  .phos-card:hover .phos-tile,
+  .cv-row:hover .phos-tile,
+  .cv-tile:hover .phos-tile { color: var(--cv-accent); border-color: var(--cv-accent); }
+
+  /* --- Buttons --------------------------------------------------------------------- */
   .cv-btn {
     display: inline-flex;
     align-items: center;
-    gap: 0.375rem;
-    border-radius: 0.5rem;
-    border: 1px solid var(--color-edge);
-    padding: 0.3125rem 0.625rem;
+    justify-content: center;
+    gap: 0.5rem;
+    border: 1px solid var(--cv-accent);
+    background-color: var(--cv-accent);
+    padding: 0.6rem 1.15rem;
+    font-family: var(--font-mono);
     font-size: 0.75rem;
-    font-weight: 500;
-    color: var(--color-muted);
-    transition: color 0.2s, border-color 0.2s, background-color 0.2s;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink);
+    cursor: pointer;
+    transition: background-color 160ms ease, color 160ms ease;
   }
-  .cv-btn:hover:not(:disabled) {
+
+  .cv-btn:hover:not(:disabled) { background-color: transparent; color: var(--cv-accent); }
+
+  .phos-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border: 1px solid var(--rule);
+    background-color: transparent;
+    padding: 0.6rem 1.15rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
     color: var(--color-foreground);
-    border-color: #334155;
-    background-color: rgba(30, 41, 59, 0.6);
-  }
-  .cv-btn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
+    cursor: pointer;
+    transition: border-color 160ms ease, background-color 160ms ease;
   }
 
-  .cv-pulse {
-    animation: cv-blink 2.4s ease-in-out infinite;
+  .phos-btn:hover:not(:disabled) { border-color: var(--cv-accent); background-color: var(--color-phos-faint); }
+  .cv-btn:disabled, .phos-btn:disabled { opacity: 0.38; cursor: not-allowed; }
+
+  /* --- Fields ------------------------------------------------------------------------ */
+  .cv-field {
+    width: 100%;
+    border: 1px solid var(--rule);
+    background-color: var(--color-phos-void);
+    padding: 0.65rem 0.8rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--color-phos-white);
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+  }
+
+  .cv-field::placeholder { color: #5b6675; }
+  .cv-field:hover:not(:disabled) { border-color: var(--color-phos-edge); }
+
+  .cv-field:focus-visible {
+    outline: none;
+    border-color: var(--cv-accent);
+    box-shadow: inset 0 -3px 0 0 var(--cv-accent);
+  }
+
+  .cv-field[data-dropzone="true"] { border-style: dashed; }
+
+  /* --- Legacy glow helpers -------------------------------------------------------- */
+  .phos-glow { color: var(--color-phos-white); }
+  .phos-glow-strong { color: var(--cv-accent); font-weight: 800; }
+
+  .phos-caret::after {
+    content: "_";
+    margin-left: 0.08em;
+    color: var(--cv-accent);
+    animation: phos-blink 1.1s steps(1, end) infinite;
+  }
+
+  .phos-progress {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    z-index: 60;
+    transform-origin: 0 50%;
+    background-color: var(--cv-accent);
+  }
+
+  /* --- Entrances -------------------------------------------------------------------- */
+  .phos-enter { animation: phos-fade 240ms ease-out both; }
+  .phos-rise  { animation: phos-rise 420ms cubic-bezier(0.2, 0, 0, 1) both; }
+  .phos-pop   { animation: phos-rise 320ms cubic-bezier(0.2, 0, 0, 1) both; }
+  .phos-boot  { animation: phos-fade 300ms ease-out both; }
+  .phos-sweep { animation: phos-wipe 520ms cubic-bezier(0.2, 0, 0, 1) both; }
+  .cv-word    { display: inline-block; animation: phos-rise 560ms cubic-bezier(0.2, 0, 0, 1) both; }
+
+  .phos-delay-1 { animation-delay: 60ms; }
+  .phos-delay-2 { animation-delay: 120ms; }
+  .phos-delay-3 { animation-delay: 180ms; }
+  .phos-delay-4 { animation-delay: 240ms; }
+
+  @supports (animation-timeline: view()) {
+    .cv-reveal {
+      animation: phos-rise 1ms linear both;
+      animation-timeline: view();
+      animation-range: entry 4% cover 20%;
+    }
+  }
+
+  .cv-rule { border: 0; border-top: 1px solid var(--rule); }
+  .cv-rule-strong { position: relative; border: 0; border-top: 1px solid var(--color-phos-edge); }
+  .cv-rule-strong::before {
+    content: "";
+    position: absolute;
+    top: -2px; left: 0;
+    width: 3rem;
+    border-top: 3px solid var(--cv-accent);
   }
 }
 
-@keyframes cv-float {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  50% {
-    transform: translate3d(0, -28px, 0) scale(1.06);
-  }
-}
+/* ==========================================================================
+   KEYFRAMES
+   ========================================================================== */
 
-@keyframes cv-sweep {
-  0% {
-    transform: translateX(-120%);
-  }
-  55%,
-  100% {
-    transform: translateX(400%);
-  }
-}
-
-@keyframes cv-blink {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.3;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .cv-aurora,
-  .cv-panel::after,
-  .cv-pulse {
-    animation: none;
-  }
-  .cv-card:hover {
-    transform: none;
-  }
-}
-
-/* ===========================================================================
-   PHOSPHOR — CRT terminal theme
-   ===========================================================================
-   A monochrome green treatment modelled on a phosphor CRT: one hue, everything
-   emissive, and the light bleeding slightly past every edge the way it does on
-   real glass.
-
-   This deliberately sets aside the six paradigm accents in DESIGN.md. That
-   palette gives each module its own identity; this one trades that for a single
-   strong one. Module identity moves to the icon and the label instead of the
-   hue. */
-@theme {
-  --color-phos-void: #050a06;   /* outside the screen */
-  --color-phos-deep: #071008;   /* screen ground */
-  --color-phos-panel: #0a1a0e;  /* card fill */
-  --color-phos-line: #1c4d2a;   /* resting borders */
-  --color-phos-dim: #2f7a44;    /* inactive text */
-  --color-phos: #22c55e;        /* the phosphor itself */
-  --color-phos-hot: #4ade80;    /* highlights, hover */
-  --color-phos-white: #d9ffe4;  /* headline ink */
-}
-
-/* --- The screen ---------------------------------------------------------- */
-
-/* Bezel: dark surround, rounded glass, light pooling in from the edges. */
-.crt {
-  position: relative;
-  border-radius: 28px;
-  background: var(--color-phos-deep);
-  box-shadow:
-    inset 0 0 120px 40px rgba(0, 0, 0, 0.9),
-    inset 0 0 0 2px rgba(34, 197, 94, 0.08),
-    0 0 80px -20px rgba(34, 197, 94, 0.25);
-  overflow: hidden;
-  isolation: isolate;
-}
-
-/* Scanlines. Kept very faint — legibility beats the effect. */
-.crt::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  background: repeating-linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.16) 0px,
-    rgba(0, 0, 0, 0.16) 1px,
-    transparent 1px,
-    transparent 3px
-  );
-}
-
-/* Vignette, so the corners fall away like a curved tube. */
-.crt::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  background: radial-gradient(
-    ellipse 85% 75% at 50% 50%,
-    transparent 40%,
-    rgba(5, 10, 6, 0.75) 100%
-  );
-}
-
-/* --- Emission ------------------------------------------------------------ */
-
-.phos-glow {
-  text-shadow:
-    0 0 8px rgba(34, 197, 94, 0.55),
-    0 0 28px rgba(34, 197, 94, 0.3);
-}
-
-.phos-glow-strong {
-  text-shadow:
-    0 0 10px rgba(74, 222, 128, 0.7),
-    0 0 34px rgba(34, 197, 94, 0.5),
-    0 0 70px rgba(34, 197, 94, 0.25);
-}
-
-/* --- Card ---------------------------------------------------------------- */
-
-.phos-card {
-  position: relative;
-  border: 1px solid var(--color-phos);
-  border-radius: 6px;
-  background: linear-gradient(
-    160deg,
-    rgba(10, 26, 14, 0.9),
-    rgba(7, 16, 8, 0.75)
-  );
-  box-shadow:
-    0 0 20px -4px rgba(34, 197, 94, 0.35),
-    inset 0 0 30px -12px rgba(34, 197, 94, 0.3);
-  transition: box-shadow 0.3s, border-color 0.3s, transform 0.3s;
-}
-
-.phos-card:hover {
-  border-color: var(--color-phos-hot);
-  transform: translateY(-2px);
-  box-shadow:
-    0 0 32px -2px rgba(74, 222, 128, 0.5),
-    inset 0 0 40px -10px rgba(34, 197, 94, 0.4);
-}
-
-/* --- Small parts --------------------------------------------------------- */
-
-.phos-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  border: 1px solid var(--color-phos);
-  border-radius: 9999px;
-  padding: 0.125rem 0.625rem;
-  font-family: var(--font-mono);
-  font-size: 0.625rem;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--color-phos-hot);
-  background: rgba(34, 197, 94, 0.1);
-  box-shadow: 0 0 14px -4px rgba(34, 197, 94, 0.6);
-  white-space: nowrap;
-}
-
-.phos-tile {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  border: 1px solid var(--color-phos);
-  border-radius: 6px;
-  color: var(--color-phos-hot);
-  background: rgba(34, 197, 94, 0.08);
-  box-shadow: inset 0 0 16px -6px rgba(34, 197, 94, 0.8);
-}
-
-.phos-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  border: 1px solid var(--color-phos);
-  border-radius: 6px;
-  padding: 0.5rem 1.125rem;
-  color: var(--color-phos-hot);
-  font-weight: 500;
-  background: rgba(34, 197, 94, 0.06);
-  box-shadow: 0 0 18px -6px rgba(34, 197, 94, 0.7);
-  transition: background-color 0.25s, box-shadow 0.25s, color 0.25s;
-}
-
-.phos-btn:hover {
-  background: rgba(34, 197, 94, 0.16);
-  color: var(--color-phos-white);
-  box-shadow: 0 0 26px -4px rgba(74, 222, 128, 0.8);
-}
-
-/* --- Background binary field --------------------------------------------- */
-
-.phos-rain {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-  pointer-events: none;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  line-height: 1.35;
-  color: var(--color-phos);
-  user-select: none;
-}
-
-.phos-rain-col {
-  position: absolute;
-  top: -10%;
-  white-space: pre;
-  writing-mode: vertical-rl;
-  animation: phos-drift linear infinite;
-}
-
-@keyframes phos-drift {
-  from { transform: translateY(-20%); }
-  to   { transform: translateY(20%); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .phos-rain-col { animation: none; }
-}
-
-/* ===========================================================================
-   PHOSPHOR — shared component overrides
-   ===========================================================================
-   The tool panels were built against the six-accent palette. Rather than
-   editing every component, the shared classes they already use are redefined
-   here in the phosphor treatment: one change converts every module at once, and
-   the components keep working untouched.
-
-   Appended last, so these win over the definitions above at equal specificity.
-   Semantic colours — red for failure, amber for warning — are deliberately left
-   alone: those carry meaning, and folding them into the green would throw that
-   meaning away. */
-
-/* --- Ground -------------------------------------------------------------- */
-body {
-  background-color: var(--color-phos-void);
-  color: var(--color-phos-white);
-}
-
-/* --- Accent ------------------------------------------------------------- */
-/* Every module now resolves to the phosphor, so the `--cv-accent` variable the
-   panels set inline lands on green whatever paradigm it names. */
-.accent-text  { color: var(--color-phos-hot); }
-.accent-fill  { background-color: var(--color-phos); }
-.accent-soft  { background-color: rgba(34, 197, 94, 0.1); }
-.accent-border { border-color: var(--color-phos); }
-.accent-glow  { box-shadow: 0 0 22px -6px rgba(34, 197, 94, 0.75); }
-.accent-ring:focus-visible {
-  outline: 2px solid var(--color-phos-hot);
-  outline-offset: 2px;
-}
-
-/* --- Panel --------------------------------------------------------------- */
-.cv-panel {
-  border: 1px solid var(--color-phos);
-  border-radius: 6px;
-  background: linear-gradient(160deg, rgba(10, 26, 14, 0.92), rgba(7, 16, 8, 0.8));
-  box-shadow:
-    0 0 24px -6px rgba(34, 197, 94, 0.35),
-    inset 0 0 40px -16px rgba(34, 197, 94, 0.3);
-  backdrop-filter: none;
-}
-/* The sweeping hairline belonged to the old panel; the border already glows. */
-.cv-panel::before,
-.cv-panel::after { display: none; }
-
-.cv-card { transition: border-color .3s, box-shadow .3s, transform .3s; }
-.cv-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--color-phos-hot);
-  box-shadow: 0 0 30px -4px rgba(74, 222, 128, 0.45);
-}
-
-/* --- Controls ------------------------------------------------------------ */
-.cv-field {
-  border: 1px solid var(--color-phos-line);
-  border-radius: 6px;
-  background-color: #040806;
-  color: var(--color-phos-white);
-  font-family: var(--font-mono);
-}
-.cv-field::placeholder { color: #245c33; }
-.cv-field:focus-visible {
-  border-color: var(--color-phos);
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.16);
-  outline: none;
-}
-
-.cv-btn {
-  border: 1px solid var(--color-phos-line);
-  border-radius: 6px;
-  color: var(--color-phos);
-  background: transparent;
-}
-.cv-btn:hover:not(:disabled) {
-  border-color: var(--color-phos);
-  background-color: rgba(34, 197, 94, 0.12);
-  color: var(--color-phos-hot);
-}
-
-.cv-label { color: var(--color-phos-dim); }
-
-.cv-badge {
-  border-radius: 9999px;
-  border-color: var(--color-phos-line);
-}
-
-/* --- Type ---------------------------------------------------------------- */
-/* Headings pick up a light bloom, the way emissive text does on a tube. */
-h1, h2 { text-shadow: 0 0 12px rgba(34, 197, 94, 0.35); }
-
-/* Anything still reaching for the old neutral ink lands on the phosphor scale. */
-.text-muted { color: var(--color-phos-dim); }
-.text-foreground { color: var(--color-phos-white); }
-.bg-surface { background-color: var(--color-phos-panel); }
-.bg-background { background-color: var(--color-phos-deep); }
-.border-edge { border-color: var(--color-phos-line); }
-
-/* ===========================================================================
-   PHOSPHOR — page-wide backdrop
-   ===========================================================================
-   The binary field sits behind every page, fixed to the viewport rather than
-   the document, so it stays put while the page scrolls — a field that scrolls
-   away reads as content, and this is atmosphere.
-
-   Masked heavily toward the middle: the digits must never compete with the text
-   sitting on top of them. */
-.phos-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-  pointer-events: none;
-  -webkit-mask-image: linear-gradient(
-    to right,
-    #000 0%, rgba(0,0,0,.35) 22%, transparent 40%,
-    transparent 60%, rgba(0,0,0,.35) 78%, #000 100%
-  );
-  mask-image: linear-gradient(
-    to right,
-    #000 0%, rgba(0,0,0,.35) 22%, transparent 40%,
-    transparent 60%, rgba(0,0,0,.35) 78%, #000 100%
-  );
-}
-
-/* Content rides above the field. */
-.phos-above { position: relative; z-index: 1; }
-
-
-/* --- Status strip ---------------------------------------------------------
-   A readout line, in the manner of a terminal status bar. */
-.phos-status {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 1.5rem;
-  border-top: 1px solid var(--color-phos-line);
-  padding: 0.75rem 0;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--color-phos-dim);
-}
-
-.phos-dot {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 9999px;
-  background: var(--color-phos);
-  box-shadow: 0 0 8px var(--color-phos);
-  animation: phos-pulse 2.4s ease-in-out infinite;
-}
-
-@keyframes phos-pulse {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0.25; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .phos-dot { animation: none; }
-}
-
-/* ===========================================================================
-   PHOSPHOR — revisions
-   ===========================================================================
-   Three corrections, appended so they win over the rules above.
-
-   1. The binary field covered the full width but was masked to a pair of side
-      bands, which left the middle of every page empty. The mask is dropped and
-      the field is dimmed instead, so the digits run edge to edge and still sit
-      behind the text rather than fighting it.
-
-   2. The bezel painted a heavy black vignette and an inset shadow over the
-      screen. Between them they swallowed the corners and dulled the field
-      underneath, so both come off; the border and the outer bloom are enough to
-      read the panel as a screen.
-
-   3. The screen ground was opaque, hiding the field behind it. It is now
-      translucent, so the binary shows through the panel. */
-
-.phos-backdrop {
-  -webkit-mask-image: none;
-  mask-image: none;
-  opacity: 0.85;
-}
-
-/* Digits run everywhere, so each one has to be quieter. */
-.phos-rain { font-size: 12px; }
-
-.crt {
-  background: rgba(7, 16, 8, 0.55);
-  box-shadow:
-    inset 0 0 0 1px rgba(34, 197, 94, 0.18),
-    0 0 90px -30px rgba(34, 197, 94, 0.35);
-}
-
-/* The vignette and the scanline wash both darkened the field; the bezel keeps
-   only its faint scanlines. */
-.crt::before { display: none; }
-.crt::after {
-  background: repeating-linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.1) 0px,
-    rgba(0, 0, 0, 0.1) 1px,
-    transparent 1px,
-    transparent 4px
-  );
-}
-
-/* Panels stay legible over a live background by being translucent rather than
-   opaque — the digits pass behind the text instead of stopping at its edge. */
-.phos-card,
-.cv-panel {
-  background: linear-gradient(
-    160deg,
-    rgba(10, 26, 14, 0.82),
-    rgba(7, 16, 8, 0.72)
-  );
-  backdrop-filter: blur(2px);
-}
-
-/* ===========================================================================
-   PHOSPHOR — power-on sequence
-   ===========================================================================
-   One orchestrated moment rather than effects scattered across the page: the
-   screen strikes, a refresh line sweeps down it, and the content rises in
-   order. Scattered micro-animations are what make an interface feel restless;
-   a single sequence with a beginning and an end feels built.
-
-   Everything here runs on page load and finishes. Nothing waits on a scroll
-   observer, so no element is ever parked invisible — the whole sequence is done
-   inside 700ms. */
-
-/* --- 1. The tube strikes -------------------------------------------------- */
-.phos-boot {
-  animation: phos-strike 620ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
-}
-
-@keyframes phos-strike {
-  0%   { opacity: 0; transform: scaleY(0.4); filter: brightness(2.4); }
-  35%  { opacity: 1; transform: scaleY(1.02); filter: brightness(1.7); }
-  55%  { filter: brightness(0.85); }
-  70%  { filter: brightness(1.3); }
-  100% { opacity: 1; transform: scaleY(1); filter: brightness(1); }
-}
-
-/* --- 2. Refresh line ------------------------------------------------------
-   A single bright line travelling down the glass once, the way a CRT looks
-   mid-refresh when a camera catches it. */
-.phos-sweep::before {
-  content: "";
-  position: absolute;
-  inset-inline: 0;
-  top: 0;
-  height: 120px;
-  z-index: 3;
-  pointer-events: none;
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    rgba(74, 222, 128, 0.14),
-    rgba(217, 255, 228, 0.28),
-    rgba(74, 222, 128, 0.14),
-    transparent
-  );
-  animation: phos-scan 1100ms ease-out 380ms backwards;
-}
-
-@keyframes phos-scan {
-  from { transform: translateY(-140px); opacity: 0; }
-  25%  { opacity: 1; }
-  to   { transform: translateY(105vh); opacity: 0; }
-}
-
-/* --- 3. Content rises ----------------------------------------------------
-   Staggered by depth on the page, so the eye is led down it rather than
-   everything arriving at once. */
-.phos-rise {
-  animation: phos-rise 520ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
-}
+@keyframes phos-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+@keyframes cv-blink   { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+@keyframes phos-pulse { 0%, 62% { opacity: 1; } 63%, 100% { opacity: 0.2; } }
+@keyframes phos-fade  { from { opacity: 0; } to { opacity: 1; } }
 
 @keyframes phos-rise {
-  from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.phos-delay-1 { animation-delay: 120ms; }
-.phos-delay-2 { animation-delay: 220ms; }
-.phos-delay-3 { animation-delay: 320ms; }
-.phos-delay-4 { animation-delay: 420ms; }
-
-/* --- 4. Card hover: light crosses the border ------------------------------ */
-.phos-card {
-  transition:
-    box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-    border-color 0.35s,
-    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.phos-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: 0;
-  background: linear-gradient(
-    115deg,
-    transparent 35%,
-    rgba(74, 222, 128, 0.09) 50%,
-    transparent 65%
-  );
-  background-size: 250% 100%;
-  background-position: 100% 0;
-  transition: opacity 0.3s;
-}
-
-.phos-card:hover::after {
-  opacity: 1;
-  animation: phos-wipe 850ms ease-out;
+  from { opacity: 0; transform: translate3d(0, 12px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
 @keyframes phos-wipe {
-  from { background-position: 100% 0; }
-  to   { background-position: -50% 0; }
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 0 0 0); }
 }
 
-/* The icon tile answers the hover too, so the whole card feels like one object. */
-.phos-card:hover .phos-tile {
-  box-shadow: inset 0 0 20px -4px rgba(74, 222, 128, 0.9);
-  border-color: var(--color-phos-hot);
-  transition: box-shadow 0.35s, border-color 0.35s;
+@keyframes cv-marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
 }
 
-/* --- 5. Caret ------------------------------------------------------------- */
-.phos-caret::after {
-  content: "_";
-  margin-left: 0.06em;
-  color: var(--color-phos);
-  animation: phos-blink 1.1s steps(1) infinite;
+@keyframes cv-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
 
-@keyframes phos-blink {
-  0%, 45%   { opacity: 1; }
-  50%, 100% { opacity: 0; }
+@keyframes cv-breathe {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.4); }
 }
 
-/* --- Reduced motion -------------------------------------------------------
-   Everything above is atmosphere, so it all goes. Content still arrives; it
-   simply arrives already in place. */
+@keyframes cv-ping {
+  0%   { opacity: 0.5; transform: scale(0.6); }
+  70%  { opacity: 0;   transform: scale(3.4); }
+  100% { opacity: 0;   transform: scale(3.4); }
+}
+
+@keyframes cv-grow {
+  from { transform: scaleY(0); opacity: 0; }
+  to   { transform: scaleY(1); opacity: 1; }
+}
+
+@keyframes cv-rise-bar {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
+}
+
+@keyframes cv-flicker {
+  0%, 78%  { opacity: 1; }
+  79%, 84% { opacity: 0.25; }
+  85%, 100% { opacity: 1; }
+}
+
+@keyframes cv-sweep-arc {
+  from { stroke-dashoffset: 107; }
+}
+
+/* Retained so any caller naming them resolves. */
+@keyframes cv-float   { 0%, 100% { transform: none; } }
+@keyframes cv-sweep   { from { transform: translateX(-120%); } to { transform: translateX(120%); } }
+@keyframes cv-drift   { from { transform: none; } to { transform: none; } }
+@keyframes phos-drift { from { transform: none; } to { transform: none; } }
+@keyframes phos-scan  { from { opacity: 0; } to { opacity: 0; } }
+@keyframes phos-pop   { from { opacity: 0; } to { opacity: 1; } }
+@keyframes phos-enter { from { opacity: 0; } to { opacity: 1; } }
+@keyframes phos-boot  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes phos-strike { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+.crt { position: relative; }
+.crt::before, .crt::after { content: none; }
+
+/* ==========================================================================
+   REDUCED MOTION
+   --------------------------------------------------------------------------
+   The figures are the content here, so they keep their finished shape — only
+   the looping motion stops.
+   ========================================================================== */
+
 @media (prefers-reduced-motion: reduce) {
-  .phos-boot,
-  .phos-rise,
-  .phos-sweep::before,
-  .phos-card:hover::after,
-  .phos-caret::after {
-    animation: none;
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
   }
-  .phos-rise,
-  .phos-boot { opacity: 1; transform: none; }
-  .phos-sweep::before { display: none; }
+
+  .phos-enter, .phos-rise, .phos-pop, .phos-boot, .phos-sweep,
+  .cv-word, .cv-reveal, .cv-wave-bar, .cv-hist-bar {
+    opacity: 1;
+    transform: none;
+    clip-path: none;
+  }
+
+  .cv-ticker-track { animation: none; transform: none; }
+  .cv-radar-arm { display: none; }
+  .cv-blip-halo { display: none; }
+  .cv-blip { opacity: 0.9; }
+  .cv-bit--on { opacity: 1; }
+  .cv-gauge-fill { animation: none; }
+  .cv-row:hover { padding-left: 0.5rem; }
+  .cv-box:hover { transform: none; }
 }
 
-/* ===========================================================================
-   PHOSPHOR — motion, second pass
-   =========================================================================== */
+/* ==========================================================================
+   MODULE RAIL
+   --------------------------------------------------------------------------
+   The console page is one horizontal rail of six tiles over the drift field.
+   Tiles are wide and mostly empty on purpose: the field showing through is
+   the content, and a tile crowded with copy would cover it up.
+   ========================================================================== */
 
-/* --- Route change ---------------------------------------------------------
-   Shorter and flatter than the cold-boot strike: arriving at a new screen
-   should feel like the same device changing channel, not powering on again. */
-.phos-enter {
-  animation: phos-enter 380ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
-}
+@layer components {
 
-@keyframes phos-enter {
-  from { opacity: 0; transform: translateY(8px); filter: brightness(1.5); }
-  to   { opacity: 1; transform: translateY(0); filter: brightness(1); }
-}
+  .cv-rail {
+    scrollbar-width: none;
+    scroll-padding-inline: 0;
+  }
 
-/* --- Scroll position ------------------------------------------------------
-   A hairline across the top edge. On long tool pages it is the only indication
-   of how much is left. */
-.phos-progress {
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 2px;
-  z-index: 40;
-  width: 0;
-  background: linear-gradient(90deg, var(--color-phos), var(--color-phos-hot));
-  box-shadow: 0 0 12px rgba(34, 197, 94, 0.8);
-  transition: width 90ms linear;
-  pointer-events: none;
-}
+  .cv-rail::-webkit-scrollbar { display: none; }
 
-/* --- Press ----------------------------------------------------------------
-   Buttons take a real, if tiny, dent. Without it a click on a control that
-   does its work off-screen gives no feedback at all. */
-.cv-btn:active:not(:disabled),
-.phos-btn:active {
-  transform: translateY(1px) scale(0.985);
-}
-.cv-btn,
-.phos-btn {
-  transition:
-    color 0.2s,
-    background-color 0.2s,
-    border-color 0.2s,
-    box-shadow 0.2s,
-    transform 0.12s;
-}
+  .cv-box {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 2rem;
+    width: clamp(17rem, 40vw, 29rem);
+    height: clamp(15rem, 34vh, 20rem);
+    padding: 1.5rem;
+    border: 1px solid var(--rule);
+    /* Translucent, so the field keeps moving behind the tile. */
+    background-color: rgba(11, 13, 16, 0.72);
+    backdrop-filter: blur(2px);
+    transition:
+      border-color 220ms ease,
+      background-color 220ms ease,
+      transform 220ms cubic-bezier(0.2, 0, 0, 1);
+  }
 
-/* --- Focus ----------------------------------------------------------------
-   The glow opens outward rather than snapping on, so tabbing through a form
-   reads as movement between fields instead of a series of flashes. */
-.cv-field {
-  transition: border-color 0.25s, box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-}
+  .cv-box::before {
+    content: "";
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 2px;
+    background-color: var(--cv-accent);
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    transition: transform 320ms cubic-bezier(0.2, 0, 0, 1);
+  }
 
-/* --- Icon tiles -----------------------------------------------------------
-   A small lift on the card hover, so the glyph belongs to the card rather than
-   sitting on top of it. */
-.phos-card .phos-tile {
-  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s,
-    border-color 0.35s;
-}
-.phos-card:hover .phos-tile {
-  transform: translateY(-2px);
-}
+  .cv-box:hover,
+  .cv-box:focus-visible {
+    border-color: var(--cv-accent);
+    background-color: rgba(16, 19, 24, 0.82);
+    transform: translateY(-4px);
+  }
 
-/* --- Confirmation ---------------------------------------------------------
-   A copied or succeeded state pops once. A confirmation that fades in is easy
-   to miss; one that overshoots is not. */
-.phos-pop {
-  animation: phos-pop 340ms cubic-bezier(0.34, 1.56, 0.64, 1);
-}
+  .cv-box:hover::before,
+  .cv-box:focus-visible::before { transform: scaleX(1); }
 
-@keyframes phos-pop {
-  0%   { transform: scale(0.6); opacity: 0; }
-  60%  { transform: scale(1.15); }
-  100% { transform: scale(1); opacity: 1; }
-}
+  .cv-box-ord {
+    position: absolute;
+    top: -1rem;
+    right: 0.4rem;
+    z-index: -1;
+    font-family: var(--font-mono);
+    font-size: 6rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.06em;
+    color: rgba(236, 239, 245, 0.045);
+    pointer-events: none;
+    user-select: none;
+  }
 
-@media (prefers-reduced-motion: reduce) {
-  .phos-enter,
-  .phos-pop { animation: none; }
-  .phos-enter { opacity: 1; transform: none; }
-  .phos-progress { transition: none; }
-  .cv-btn:active:not(:disabled),
-  .phos-btn:active,
-  .phos-card:hover .phos-tile { transform: none; }
-}
+  .cv-box-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid var(--rule);
+    color: var(--color-phos-white);
+    transition: color 220ms ease, border-color 220ms ease;
+  }
 
-/* ===========================================================================
-   PHOSPHOR — refinement pass
-   ===========================================================================
-   Same terminal, better built. What separates a convincing hacker interface
-   from a costume is restraint: the effects stay, but they stop being applied to
-   everything at once.
+  .cv-box:hover .cv-box-icon,
+  .cv-box:focus-visible .cv-box-icon {
+    color: var(--cv-accent);
+    border-color: var(--cv-accent);
+  }
 
-   Three things were making the page shout. Every heading glowed, so nothing
-   did. Every card carried a full-brightness border, so the eye had no route
-   through the grid. And the secondary text sat too close to the ground to read
-   comfortably, which is the fastest way for a design to feel amateur. */
+  .cv-box-name {
+    font-size: clamp(1.35rem, 1rem + 1.1vw, 1.9rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    color: var(--color-phos-white);
+  }
 
-/* --- 1. Text scale, made readable ---------------------------------------
-   #2f7a44 on the screen ground is around 3:1 — under the 4.5:1 body-text
-   floor, and it showed. Secondary text moves up; the old value survives as a
-   separate token for the things that genuinely should recede. */
-@theme {
-  --color-phos-dim: #6f9e80;    /* secondary text — now legible */
-  --color-phos-faint: #3d7a52;  /* captions, hints, disabled */
-}
+  .cv-box-note {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    color: var(--color-muted);
+  }
 
-/* --- 2. Glow, spent in one place -----------------------------------------
-   A page where everything glows has no focal point. Only elements that opt in
-   with .phos-glow emit now. */
-h1, h2 { text-shadow: none; }
+  /* Round arrow buttons under the rail. */
+  .cv-nub {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid var(--color-phos-edge);
+    border-radius: 9999px;
+    background-color: transparent;
+    color: var(--color-foreground);
+    cursor: pointer;
+    transition: border-color 160ms ease, color 160ms ease, background-color 160ms ease;
+  }
 
-/* --- 3. Cards at rest ----------------------------------------------------
-   Muted edge until the pointer arrives. The grid reads as a set of objects
-   rather than a wall of lit rectangles, and hover becomes meaningful because
-   it is the only thing lit. */
-.phos-card {
-  border-color: var(--color-phos-line);
-  box-shadow:
-    0 0 0 1px rgba(34, 197, 94, 0.04),
-    0 12px 28px -20px rgba(0, 0, 0, 0.9);
-}
+  .cv-nub:hover:not(:disabled) {
+    border-color: var(--cv-accent);
+    color: var(--cv-accent);
+  }
 
-.phos-card:hover {
-  border-color: var(--color-phos);
-  box-shadow:
-    0 0 26px -8px rgba(34, 197, 94, 0.4),
-    0 14px 30px -20px rgba(0, 0, 0, 0.9);
-}
-
-/* Panels hold content rather than announce themselves. */
-.cv-panel {
-  border-color: var(--color-phos-line);
-  box-shadow: 0 14px 34px -24px rgba(0, 0, 0, 0.95);
-}
-
-/* --- 4. Small parts, quieter --------------------------------------------- */
-.phos-pill {
-  border-color: var(--color-phos-line);
-  color: var(--color-phos);
-  background: rgba(34, 197, 94, 0.06);
-  box-shadow: none;
-}
-
-.phos-tile {
-  border-color: var(--color-phos-line);
-  box-shadow: none;
-}
-.phos-card:hover .phos-tile {
-  border-color: var(--color-phos);
-  box-shadow: inset 0 0 18px -8px rgba(74, 222, 128, 0.8);
-}
-
-.phos-btn { box-shadow: none; }
-.phos-btn:hover { box-shadow: 0 0 20px -8px rgba(74, 222, 128, 0.7); }
-
-/* --- 5. Headline emission, softened --------------------------------------
-   Three stacked shadows read as a blur rather than a glow. Two, tighter. */
-.phos-glow-strong {
-  text-shadow:
-    0 0 12px rgba(74, 222, 128, 0.45),
-    0 0 42px rgba(34, 197, 94, 0.22);
-}
-.phos-glow {
-  text-shadow: 0 0 10px rgba(34, 197, 94, 0.35);
-}
-
-/* --- 6. Backdrop, down to texture ----------------------------------------
-   It should register at the edge of vision and never be read. */
-.phos-backdrop { opacity: 0.4; }
-.phos-rain { font-size: 11px; letter-spacing: 0.04em; }
-
-/* Scanlines finer and fainter — visible on a large flat colour, invisible
-   under text, which is the only place they were ever doing harm. */
-.crt::after {
-  background: repeating-linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.055) 0px,
-    rgba(0, 0, 0, 0.055) 1px,
-    transparent 1px,
-    transparent 5px
-  );
-}
-
-/* --- 7. Type ------------------------------------------------------------
-   Headings settle from black to bold and tighten up. Black weight at display
-   size is a poster, not an interface. */
-h1 { font-weight: 800; letter-spacing: -0.035em; }
-h2, h3 { letter-spacing: -0.02em; }
-
-/* Uppercase mono labels need the tracking; sentence-case text does not. */
-.cv-label { color: var(--color-phos-faint); }
-
-/* ===========================================================================
-   PHOSPHOR — one system
-   ===========================================================================
-   Three inconsistencies were doing more damage than any single effect. Each is
-   fixed at the token level rather than by editing forty files. */
-
-/* --- 1. Corner radius ----------------------------------------------------
-   Six different radii were in use — lg, xl, 2xl, full, md and sm — because
-   each page picked its own. Mixed radii are the fastest way for an interface
-   to look assembled rather than designed.
-
-   The scale is redefined tight rather than removed: a terminal reads as
-   precise, and precision is square-ish. Existing classes keep working and
-   simply land closer together, so the difference between one card and the
-   next stops registering. */
-@theme {
-  --radius-sm: 2px;
-  --radius-md: 4px;
-  --radius-lg: 6px;
-  --radius-xl: 6px;
-  --radius-2xl: 8px;
-  --radius-3xl: 10px;
-}
-
-/* --- 2. Ink --------------------------------------------------------------
-   Pure white was hardcoded in thirty-eight places. On a green-tinted ground it
-   reads as a foreign element — the eye notices it is the one colour that was
-   not chosen. Everything lands on the theme ink instead. */
-.text-white { color: var(--color-phos-white); }
-.bg-white { background-color: var(--color-phos-white); }
-.text-black { color: var(--color-phos-void); }
-.bg-black { background-color: var(--color-phos-void); }
-
-/* --- 3. Page headings ----------------------------------------------------
-   Four weights were in play across four hub pages: black, extrabold, bold and
-   a hardcoded white. One rule, so a hub looks like a hub wherever you land. */
-main h1 {
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--color-phos-white);
-}
-
-/* The hero is the deliberate exception, and says so by opting in. */
-main h1.phos-glow-strong,
-main h1 .phos-glow-strong {
-  font-weight: 800;
-}
-
-/* ===========================================================================
-   PHOSPHOR — correction
-   ===========================================================================
-   The previous pass over-corrected. Muting every border to #1c4d2a left cards
-   sitting at 2.04:1 against the ground — technically present, visually absent.
-   The page went from shouting to saying nothing, which is the emptiness that
-   reads as "something is missing".
-
-   Restraint is not the same as absence. Cards get their edge back at 3.1:1 —
-   enough to read as objects, well short of the lit wall they were before — plus
-   a faint inner light along the top, the way a panel catches its own glow. */
-@theme {
-  --color-phos-line: #276b40;   /* resting borders — visible again */
-  --color-phos-edge: #17402406; /* hairlines inside a panel */
-}
-
-.phos-card {
-  border-color: var(--color-phos-line);
-  box-shadow:
-    inset 0 1px 0 0 rgba(74, 222, 128, 0.07),
-    0 0 18px -14px rgba(34, 197, 94, 0.5),
-    0 14px 30px -22px rgba(0, 0, 0, 0.9);
-}
-
-.cv-panel {
-  border-color: var(--color-phos-line);
-  box-shadow:
-    inset 0 1px 0 0 rgba(74, 222, 128, 0.06),
-    0 16px 36px -26px rgba(0, 0, 0, 0.95);
-}
-
-/* The icon tile is the card's one bright note at rest — a single point of
-   colour per card gives the grid a rhythm without lighting all of it. */
-.phos-tile {
-  border-color: var(--color-phos-line);
-  color: var(--color-phos-hot);
-  background: rgba(34, 197, 94, 0.1);
-  box-shadow: inset 0 0 14px -8px rgba(74, 222, 128, 0.7);
+  .cv-nub:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
 }
