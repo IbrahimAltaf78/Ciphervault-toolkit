@@ -165,12 +165,15 @@ export default function VideoStegoPage() {
 
     return (
         <div className="text-phos-white font-sans flex flex-col relative overflow-hidden">
-            {/* Background Pattern */}
-            <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] z-0"></div>
 
             {/* Main Content */}
             <main className="flex-1 relative z-10 flex flex-col items-center justify-start pt-12 px-4 pb-20 overflow-y-auto">
-                <h1 className="text-2xl font-bold text-white mb-6">Video Steganography</h1>
+                <div className="mb-6 space-y-2 text-center">
+                    <h1 className="text-2xl font-extrabold text-[#60A5FA]">Video Steganography</h1>
+                    <p className="text-xs text-muted">
+                        Hide and reveal text payloads across the frames of an MP4 or AVI video.
+                    </p>
+                </div>
 
                 {/* Tab Buttons */}
                 <div className="flex space-x-4 mb-8">

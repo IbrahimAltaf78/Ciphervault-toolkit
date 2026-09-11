@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import ParticleDrift from "@/components/ui/particle-drift";
 
 export const metadata: Metadata = {
-  title: "CipherVault",
+  title: { absolute: "CipherVault — Hide anything, reveal everything" },
   description:
     "Six data-hiding and cryptography paradigms in one stateless workspace.",
 };
@@ -50,7 +50,11 @@ export default function CoverPage() {
         }}
       />
 
-      <div className="relative z-[2] w-full max-w-3xl text-center">
+      {/* The scrim is a dark pool directly behind the words. The particle
+          field drifts characters of its own, and without it those glyphs
+          passed straight across the headline and the module names — the
+          text looked as if it had stray letters in it. */}
+      <div className="cv-scrim relative z-[2] w-full max-w-3xl text-center">
         <p className="cv-label phos-rise flex items-center justify-center gap-3">
           <span className="phos-dot" />
           Client-side · Nothing stored

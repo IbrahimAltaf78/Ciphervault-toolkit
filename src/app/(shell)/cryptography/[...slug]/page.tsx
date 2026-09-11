@@ -19,10 +19,10 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: RouteParams): Promise<Metadata> {
   const { slug } = await params;
   const tool = toolFromSlug(slug);
-  if (!tool) return { title: "Not found — CipherVault" };
+  if (!tool) return { title: "Not found" };
 
   return {
-    title: `${tool.label} — CipherVault Cryptography`,
+    title: `${tool.label} — Cryptography`,
     description: tool.tagline,
   };
 }

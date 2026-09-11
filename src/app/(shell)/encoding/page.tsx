@@ -4,7 +4,7 @@ import { ModuleIndex } from "@/components/shared/ModuleIndex";
 import { FxEncoding } from "@/components/viz/ModuleFx";
 
 export const metadata: Metadata = {
-  title: "Encoding — CipherVault",
+  title: "Encoding",
   description:
     "Base64, Base32, Hex, Binary, URL and ASCII converters, all client-side.",
 };

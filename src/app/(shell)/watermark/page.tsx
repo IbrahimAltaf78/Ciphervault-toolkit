@@ -3,7 +3,7 @@ import { ModuleIndex } from "@/components/shared/ModuleIndex";
 import { FxWatermark } from "@/components/viz/ModuleFx";
 
 export const metadata: Metadata = {
-  title: "Watermarking — CipherVault",
+  title: "Watermarking",
   description:
     "Visible overlays, invisible signatures, robust DCT marks and fragile tamper detection.",
 };

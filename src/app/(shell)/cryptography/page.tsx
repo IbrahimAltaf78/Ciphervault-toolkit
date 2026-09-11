@@ -4,7 +4,7 @@ import { ModuleIndex } from "@/components/shared/ModuleIndex";
 import { FxCipher } from "@/components/viz/ModuleFx";
 
 export const metadata: Metadata = {
-  title: "Cryptography — CipherVault",
+  title: "Cryptography",
   description:
     "AES, DES, Triple DES, RSA, ECC, SHA-2, SHA-3 and hybrid encryption, all executed in the browser.",
 };

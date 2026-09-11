@@ -4,7 +4,7 @@ import { ModuleIndex } from "@/components/shared/ModuleIndex";
 import { FxZeroWidth } from "@/components/viz/ModuleFx";
 
 export const metadata: Metadata = {
-  title: "Text Hiding — CipherVault",
+  title: "Text Hiding",
   description:
     "Zero-width Unicode, whitespace, capitalization, punctuation, acrostic and word-choice concealment, all client-side.",
 };

@@ -3,7 +3,7 @@ import { ModuleIndex } from "@/components/shared/ModuleIndex";
 import { FxEmbed } from "@/components/viz/ModuleFx";
 
 export const metadata: Metadata = {
-  title: "Steganography — CipherVault",
+  title: "Steganography",
   description:
     "Hide payloads inside images, audio and video using LSB and frequency-domain embedding.",
 };

@@ -937,3 +937,191 @@
     cursor: not-allowed;
   }
 }
+
+/* ==========================================================================
+   COVERFLOW
+   --------------------------------------------------------------------------
+   The console's six modules on a 3D rack (coverflow-carousel.tsx). Side
+   cards are dimmed rather than just smaller, so the eye goes to the centre
+   without being told; the centre card alone carries the accent edge.
+   ========================================================================== */
+
+@layer components {
+
+  .cv-cover {
+    display: block;
+    padding: 0;
+    border: 1px solid var(--rule);
+    border-radius: 1rem;
+    overflow: hidden;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    background:
+      radial-gradient(ellipse 90% 70% at 50% 0%, rgba(96, 165, 250, 0.14), transparent 65%),
+      linear-gradient(180deg, #111722 0%, #0a0d12 100%);
+    box-shadow:
+      0 30px 60px -22px rgba(0, 0, 0, 0.85),
+      inset 0 1px 0 rgba(232, 236, 242, 0.06);
+    transition: border-color 240ms ease, box-shadow 240ms ease, filter 240ms ease;
+  }
+
+  .cv-cover:not([data-active]) { filter: brightness(0.7) saturate(0.85); }
+  .cv-cover:not([data-active]):hover { filter: brightness(0.9); }
+
+  .cv-cover[data-active] {
+    border-color: var(--cv-accent);
+    box-shadow:
+      0 30px 70px -18px rgba(0, 0, 0, 0.9),
+      0 0 0 1px var(--cv-accent),
+      0 0 46px -10px rgba(96, 165, 250, 0.5);
+  }
+
+  .cv-cover:focus-visible {
+    outline: 2px solid var(--cv-accent);
+    outline-offset: 4px;
+  }
+
+  .cv-cover-face {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 100%;
+    height: 100%;
+    /* Everything on the face scales with the card, so a six-slot rack on a
+       laptop and a larger one on a wide screen both keep the name inside. */
+    padding: calc(var(--cf-card, 240px) * 0.09);
+  }
+
+  /* A faint measuring grid on each card, fading from the middle out. */
+  .cv-cover-face::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image:
+      linear-gradient(to right, rgba(232, 236, 242, 0.035) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(232, 236, 242, 0.035) 1px, transparent 1px);
+    background-size: 22px 22px;
+    -webkit-mask-image: radial-gradient(ellipse at 50% 42%, #000 30%, transparent 80%);
+    mask-image: radial-gradient(ellipse at 50% 42%, #000 30%, transparent 80%);
+  }
+
+  .cv-cover-ord {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+    color: var(--color-phos-edge);
+  }
+
+  .cv-cover-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: calc(var(--cf-card, 240px) * 0.32);
+    height: calc(var(--cf-card, 240px) * 0.32);
+    margin: 0 auto;
+    border: 1px solid var(--rule);
+    border-radius: 0.9rem;
+    color: var(--cv-accent);
+    background-color: rgba(96, 165, 250, 0.07);
+    transition: border-color 240ms ease, background-color 240ms ease, box-shadow 240ms ease;
+  }
+
+  .cv-cover[data-active] .cv-cover-icon {
+    border-color: rgba(96, 165, 250, 0.55);
+    background-color: rgba(96, 165, 250, 0.14);
+    box-shadow: 0 0 32px -6px rgba(96, 165, 250, 0.6);
+  }
+
+  .cv-cover-icon svg {
+    width: 52%;
+    height: 52%;
+  }
+
+  .cv-cover-name {
+    /* Sized off the card so "Steganography" fits the narrowest slot. */
+    font-size: calc(var(--cf-card, 240px) * 0.086);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    text-align: center;
+    color: var(--color-phos-white);
+  }
+
+  /* Caption under the rack re-enters whenever a new card lands. */
+  .cv-caption-in {
+    animation: cv-caption 340ms cubic-bezier(0.2, 0, 0, 1) both;
+  }
+
+  /* A soft dark pool directly behind a block of text, so glyphs in an
+     animated backdrop can never drift across a letter. */
+  .cv-scrim {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .cv-scrim::before {
+    content: "";
+    position: absolute;
+    inset: -2.5rem -4rem;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(
+      ellipse at center,
+      rgba(8, 10, 13, 0.94) 28%,
+      rgba(8, 10, 13, 0.62) 58%,
+      transparent 78%
+    );
+    filter: blur(6px);
+  }
+}
+
+@keyframes cv-caption {
+  from { opacity: 0; transform: translate3d(0, 6px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cv-caption-in { animation: none; }
+}
+
+/* ==========================================================================
+   NAVBAR LINKS
+   --------------------------------------------------------------------------
+   Full module names in sentence case. The earlier uppercase, letter-spaced
+   codes had to stay short to fit; spelled out, they read at a glance and
+   still fit on one line. The module you are in carries the accent and a
+   short bar under it.
+   ========================================================================== */
+
+@layer components {
+  .cv-navlink {
+    position: relative;
+    display: inline-block;
+    padding-block: 0.25rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    color: var(--color-muted);
+    transition: color 160ms ease;
+  }
+
+  .cv-navlink:hover { color: var(--color-phos-white); }
+
+  .cv-navlink--active { color: var(--cv-accent); }
+
+  .cv-navlink--active::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.2rem;
+    height: 2px;
+    border-radius: 1px;
+    background-color: var(--cv-accent);
+  }
+}

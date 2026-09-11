@@ -35,6 +35,13 @@ const formatError = (err: any): string => {
     return String(err);
 };
 
+/** What each algorithm does to the carrier, in one line. */
+const IMAGE_DESCRIPTIONS: Record<string, string> = {
+    lsb: "Hide and reveal text payloads in the least significant bit of each pixel's colour channels.",
+    dct: "Hide and reveal text payloads in the image's frequency coefficients, so they survive re-compression.",
+    dwt: "Hide and reveal text payloads in the wavelet sub-bands, so they survive re-compression.",
+};
+
 export default function ImageStegoUI({ initialAlgorithm = "lsb" }: ImageStegoUIProps) {
     const [activeTab, setActiveTab] = useState<"hide" | "extract">("hide");
     const [algorithm, setAlgorithm] = useState(initialAlgorithm);
@@ -196,6 +203,12 @@ export default function ImageStegoUI({ initialAlgorithm = "lsb" }: ImageStegoUIP
                 <h1 className="text-2xl font-extrabold text-[#60A5FA]">
                     Image Steganography ({algorithm.toUpperCase()})
                 </h1>
+                {/* One line on what this carrier does, matching the audio and
+                    video tools. It follows the algorithm picker, because LSB
+                    and the frequency methods make different promises. */}
+                <p className="text-xs text-muted">
+                    {IMAGE_DESCRIPTIONS[algorithm] ?? IMAGE_DESCRIPTIONS.lsb}
+                </p>
             </div>
 
             {/* Tab Switcher */}

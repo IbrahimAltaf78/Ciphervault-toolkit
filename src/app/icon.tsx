@@ -3,9 +3,10 @@ import { ImageResponse } from "next/og";
 /**
  * Favicon, generated at build time.
  *
- * The project shipped with the Next.js template icon, so every open tab was
- * advertising the framework rather than the product. Generated rather than
- * drawn so it stays in step with the theme: one glyph, phosphor on void.
+ * Black tile, the site's blue, and one mark: "CV" over a short bar. The bar
+ * is what turns two letters into a logo at 16px — without it the glyphs read
+ * as a stray text label in the tab strip. Colours are the site tokens
+ * (#07080a ground, #60A5FA accent), so the tab matches the page it opens.
  */
 export const size = { width: 32, height: 32 };
 export const contentType = "image/png";
@@ -18,17 +19,37 @@ export default function Icon() {
           width: "100%",
           height: "100%",
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "#050a06",
-          color: "#22c55e",
-          fontSize: 22,
-          fontWeight: 700,
-          borderRadius: 6,
-          border: "1px solid #1c4d2a",
+          background: "linear-gradient(145deg, #0d1522 0%, #05070a 100%)",
+          borderRadius: 7,
+          border: "1.5px solid #60A5FA",
         }}
       >
-        CV
+        <div
+          style={{
+            display: "flex",
+            color: "#60A5FA",
+            fontSize: 16,
+            fontWeight: 900,
+            letterSpacing: -1,
+            lineHeight: 1,
+            marginTop: 1,
+          }}
+        >
+          CV
+        </div>
+        <div
+          style={{
+            display: "flex",
+            width: 14,
+            height: 2,
+            marginTop: 3,
+            borderRadius: 1,
+            background: "#60A5FA",
+          }}
+        />
       </div>
     ),
     size,
