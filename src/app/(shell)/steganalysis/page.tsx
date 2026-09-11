@@ -2,144 +2,10 @@
 
 import React, { useState } from "react";
 import { analyzeFile } from "@/lib/steganalysis/api";
+import { SAMPLE_CARRIER_REPORT, SAMPLE_CLEAN_REPORT } from "@/lib/steganalysis/samples";
+import { ACCEPT_ATTRIBUTE } from "@/lib/steganalysis/validation";
 import { FxScan } from "@/components/viz/ModuleFx";
 import type { AnalysisReport, MetadataAnomaly } from "@/lib/steganalysis/types";
-
-// Static mock data for "Sample: carrier"
-const MOCK_CARRIER_REPORT: AnalysisReport = {
-  file: {
-    name: "sample-carrier.png",
-    type: "image/png",
-    size: "1.61 MB",
-    dimensions: "800 × 600",
-    analyzedAt: "08/09/2026, 16:44:12",
-  },
-  threatLevel: "CRITICAL THREAT",
-  embeddingLikelihood: 94,
-  summary:
-    "Chi-square and RS analysis both indicate a payload occupying most of the LSB plane, concentrated in the first two thirds of the image.",
-  lsbDistribution: {
-    red: { zero: 50.0, one: 50.0 },
-    green: { zero: 50.0, one: 50.0 },
-    blue: { zero: 50.0, one: 50.0 },
-  },
-  tests: [
-    {
-      id: "chi-square",
-      name: "Chi-square attack",
-      description: "Compares adjacent value pairs against the distribution expected of untouched pixels.",
-      value: "p = 0.9991 — 98%",
-      score: 98,
-      status: "critical",
-    },
-    {
-      id: "rs-analysis",
-      name: "RS analysis",
-      description: "Measures how groups of pixels respond to a flipping mask; embedding disturbs the ratio.",
-      value: "estimated 0.18 bpp — 91%",
-      score: 91,
-      status: "critical",
-    },
-    {
-      id: "sample-pairs",
-      name: "Sample pairs",
-      description: "Estimates embedding rate from transitions between neighbouring sample values.",
-      value: "rate 0.16 — 88%",
-      score: 88,
-      status: "critical",
-    },
-    {
-      id: "lsb-entropy",
-      name: "LSB plane entropy",
-      description: "A natural low bit plane is noisy but structured; a payload pushes it toward pure randomness.",
-      value: "7.88 / 8.00 bits — 85%",
-      score: 85,
-      status: "critical",
-    },
-  ],
-  anomalies: [
-    {
-      title: "Data appended after IEND",
-      description: "4,096 bytes follow the PNG end-of-stream marker. Decoders ignore this region entirely.",
-      severity: "CRITICAL",
-    },
-    {
-      title: "Software tag rewritten",
-      description: "iTXt chunk names a tool inconsistent with the gamma EXIF block.",
-      severity: "WARNING",
-    },
-    {
-      title: "Modification precedes creation",
-      description: "The file mtime is 3 hours earlier than the embedded capture timestamp.",
-      severity: "WARNING",
-    },
-    {
-      title: "No colour profile",
-      description: "Common in re-encoded files; on its own not evidence of anything.",
-      severity: "INFO",
-    },
-  ],
-};
-
-// Static mock data for "Sample: clean"
-const MOCK_CLEAN_REPORT: AnalysisReport = {
-  file: {
-    name: "sample-original.png",
-    type: "image/png",
-    size: "1.25 MB",
-    dimensions: "800 × 600",
-    analyzedAt: "08/09/2026, 16:42:44",
-  },
-  threatLevel: "CLEAN THREAT",
-  embeddingLikelihood: 7,
-  summary: "Value pairs follow the distribution expected of an untouched image, and no test disagrees.",
-  lsbDistribution: {
-    red: { zero: 50.0, one: 50.0 },
-    green: { zero: 50.0, one: 50.0 },
-    blue: { zero: 50.0, one: 50.0 },
-  },
-  tests: [
-    {
-      id: "chi-square",
-      name: "Chi-square attack",
-      description: "Compares adjacent value pairs against the distribution expected of untouched pixels.",
-      value: "p = 0.0002 — 4%",
-      score: 4,
-      status: "clean",
-    },
-    {
-      id: "rs-analysis",
-      name: "RS analysis",
-      description: "Measures how groups of pixels respond to a flipping mask; embedding disturbs the ratio.",
-      value: "estimated 0.01 bpp — 8%",
-      score: 8,
-      status: "clean",
-    },
-    {
-      id: "sample-pairs",
-      name: "Sample pairs",
-      description: "Estimates embedding rate from transitions between neighbouring sample values.",
-      value: "rate 0.02 — 6%",
-      score: 6,
-      status: "clean",
-    },
-    {
-      id: "lsb-entropy",
-      name: "LSB plane entropy",
-      description: "A natural low bit plane is noisy but structured; a payload pushes it toward pure randomness.",
-      value: "7.41 / 8.00 bits — 11%",
-      score: 11,
-      status: "clean",
-    },
-  ],
-  anomalies: [
-    {
-      title: "sRGB profile present",
-      description: "Matches the encoder named in the metadata.",
-      severity: "INFO",
-    },
-  ],
-};
 
 export default function StegananalysisPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -154,6 +20,8 @@ export default function StegananalysisPage() {
       setSelectedFile(e.target.files[0]);
       setErrorMessage(null);
     }
+    // Clear it, or choosing the same file again (say after Reset) fires no change.
+    e.target.value = "";
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -205,14 +73,14 @@ export default function StegananalysisPage() {
 
   const handleLoadSampleCarrier = () => {
     setSelectedFile(null);
-    setReport(MOCK_CARRIER_REPORT);
+    setReport(SAMPLE_CARRIER_REPORT);
     setIsSampleReport(true);
     setErrorMessage(null);
   };
 
   const handleLoadSampleClean = () => {
     setSelectedFile(null);
-    setReport(MOCK_CLEAN_REPORT);
+    setReport(SAMPLE_CLEAN_REPORT);
     setIsSampleReport(true);
     setErrorMessage(null);
   };
@@ -225,7 +93,7 @@ export default function StegananalysisPage() {
   };
 
   const renderDimensions = (dims: string | { width: number; height: number } | undefined) => {
-    if (!dims) return "undefined × undefined";
+    if (!dims) return "—";
     if (typeof dims === "string") return dims;
     if (typeof dims === "object" && dims !== null && "width" in dims && "height" in dims) {
       return `${dims.width} × ${dims.height}`;
@@ -233,10 +101,22 @@ export default function StegananalysisPage() {
     return String(dims);
   };
 
-  const isCritical = report ? (report.embeddingLikelihood ?? 0) > 50 : false;
-  const redDist = report?.lsbDistribution?.red || { zero: 50.0, one: 50.0 };
-  const greenDist = report?.lsbDistribution?.green || { zero: 50.0, one: 50.0 };
-  const blueDist = report?.lsbDistribution?.blue || { zero: 50.0, one: 50.0 };
+  // The engine's own bands: over 75 is a finding, over 40 is worth a look.
+  const likelihood = report?.embeddingLikelihood ?? 0;
+  const isCritical = likelihood > 75;
+  const isSuspicious = !isCritical && likelihood > 40;
+  const verdict = isCritical
+    ? "Strong evidence of a hidden payload."
+    : isSuspicious
+      ? "Some evidence — not conclusive on its own."
+      : "No evidence of embedding.";
+
+  // Image reports carry red, green and blue; audio reports one channel.
+  const channelLabel = (key: string) => (key === "audio" ? "Samples" : key.charAt(0).toUpperCase() + key.slice(1));
+  const lsbRows = Object.entries(report?.lsbDistribution ?? {}).flatMap(([key, dist]) =>
+    dist ? [{ key, label: channelLabel(key), zero: dist.zero, one: dist.one }] : [],
+  );
+  const histograms = Object.entries(report?.histograms ?? {});
   const anomaliesList = report?.anomalies || [];
 
   return (
@@ -288,7 +168,7 @@ export default function StegananalysisPage() {
               type="file"
               id="suspectFileInput"
               className="hidden"
-              accept="image/png,image/jpeg,image/bmp,audio/wav"
+              accept={ACCEPT_ATTRIBUTE}
               onChange={handleFileChange}
             />
             {selectedFile ? (
@@ -319,7 +199,7 @@ export default function StegananalysisPage() {
                 <p className={`font-semibold ${isDragging ? "text-phos-white" : "text-foreground"}`}>
                   {isDragging ? "Drop your file here" : "Drop a suspect image or audio file"}
                 </p>
-                <p className="text-[10px] text-muted">PNG, BMP, TIFF, WEBP, WAV, FLAC or AIFF — up to 10 MB</p>
+                <p className="text-[10px] text-muted">PNG, BMP, TIFF, WEBP or WAV — up to 10 MB</p>
                 <span className="inline-block px-3 py-1 mt-2 text-[10px] border border-edge bg-phos-faint hover:bg-phos-faint text-foreground rounded">
                   Browse files
                 </span>
@@ -383,35 +263,33 @@ export default function StegananalysisPage() {
               <div className="border border-amber-600/60 bg-amber-950/20 p-3 rounded text-amber-500 text-[11px] flex items-center gap-2">
                 <span>⚠️</span>
                 <span>
-                  <strong>Sample report.</strong> These figures are illustrative, generated to exercise the dashboard while the detection engine is being built. Nothing here reflects a real file.
+                  <strong>Sample report</strong> — a bundled test file, analysed ahead of time.
                 </span>
               </div>
             )}
 
             {/* Threat Level Summary Banner */}
-            <div className={`border rounded-md p-5 bg-phos-panel flex justify-between items-start ${isCritical ? "border-red-900/60" : "border-edge"}`}>
+            <div className={`border rounded-md p-5 bg-phos-panel flex justify-between items-start gap-4 ${isCritical ? "border-red-900/60" : isSuspicious ? "border-amber-900/60" : "border-edge"}`}>
               <div className="space-y-3 max-w-2xl">
-                <span className={`px-2 py-0.5 text-[10px] border rounded font-semibold tracking-wide ${isCritical ? "border-red-600 text-red-400 bg-red-950/40" : "border-[#60A5FA] text-[#60A5FA] bg-phos-faint"}`}>
-                  {report.threatLevel ?? "CLEAN THREAT"}
+                <span className={`px-2 py-0.5 text-[10px] border rounded font-semibold tracking-wide ${isCritical ? "border-red-600 text-red-400 bg-red-950/40" : isSuspicious ? "border-amber-600 text-amber-400 bg-amber-950/40" : "border-[#60A5FA] text-[#60A5FA] bg-phos-faint"}`}>
+                  {report.threatLevel ?? "CLEAN"}
                 </span>
                 <p className="text-foreground text-xs leading-relaxed">{report.summary}</p>
 
                 <div className="space-y-1">
                   <div className="w-full h-1.5 bg-phos-deep rounded-full overflow-hidden">
                     <div
-                      style={{ width: `${report.embeddingLikelihood ?? 0}%` }}
-                      className={`h-full transition-all duration-500 ${isCritical ? "bg-red-500" : "bg-[#60A5FA]"}`}
+                      style={{ width: `${likelihood}%` }}
+                      className={`h-full transition-all duration-500 ${isCritical ? "bg-red-500" : isSuspicious ? "bg-amber-500" : "bg-[#60A5FA]"}`}
                     ></div>
                   </div>
-                  <p className="text-[10px] text-muted">
-                    {isCritical ? "Multiple tests agree that a payload is present." : "No statistical evidence of embedding."}
-                  </p>
+                  <p className="text-[10px] text-muted">{verdict}</p>
                 </div>
               </div>
 
               <div className="text-right">
-                <span className={`text-5xl font-extrabold tracking-tight ${isCritical ? "text-red-500" : "text-[#60A5FA]"}`}>
-                  {report.embeddingLikelihood ?? 0}%
+                <span className={`text-5xl font-extrabold tracking-tight ${isCritical ? "text-red-500" : isSuspicious ? "text-amber-400" : "text-[#60A5FA]"}`}>
+                  {likelihood}%
                 </span>
                 <p className="text-[9px] tracking-widest uppercase text-muted font-semibold mt-1">EMBEDDING LIKELIHOOD</p>
               </div>
@@ -437,7 +315,7 @@ export default function StegananalysisPage() {
               </div>
               <div>
                 <span className="text-muted block uppercase tracking-wider font-semibold">ANALYSED</span>
-                <span className="text-foreground font-bold block">{report.file?.analyzedAt ?? "08/09/2026, 16:42:02"}</span>
+                <span className="text-foreground font-bold block">{report.file?.analyzedAt ?? "—"}</span>
               </div>
             </div>
 
@@ -462,80 +340,50 @@ export default function StegananalysisPage() {
                 <span className="text-[10px] tracking-widest text-muted font-semibold block uppercase">LOW BIT BALANCE</span>
 
                 <div className="space-y-2.5">
-                  <div>
-                    <div className="flex justify-between text-[10px] mb-1">
-                      <span className="text-[#60A5FA] font-semibold">Red</span>
-                      <span className="text-phos-edge">{redDist.zero.toFixed(1)}% / {redDist.one.toFixed(1)}% — even</span>
+                  {lsbRows.map((row) => (
+                    <div key={row.key}>
+                      <div className="flex justify-between text-[10px] mb-1">
+                        <span className="text-[#60A5FA] font-semibold">{row.label}</span>
+                        <span className="text-phos-edge">
+                          {row.zero.toFixed(1)}% / {row.one.toFixed(1)}% — {Math.abs(row.zero - 50) < 1 ? "even" : "skewed"}
+                        </span>
+                      </div>
+                      <div className="w-full h-2 bg-phos-deep rounded overflow-hidden flex">
+                        <div style={{ width: `${row.zero}%` }} className="bg-blue-600 h-full"></div>
+                        <div style={{ width: `${row.one}%` }} className="bg-orange-600 h-full"></div>
+                      </div>
                     </div>
-                    <div className="w-full h-2 bg-phos-deep rounded overflow-hidden flex">
-                      <div style={{ width: `${redDist.zero}%` }} className="bg-blue-600 h-full"></div>
-                      <div style={{ width: `${redDist.one}%` }} className="bg-orange-600 h-full"></div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-[10px] mb-1">
-                      <span className="text-[#60A5FA] font-semibold">Green</span>
-                      <span className="text-phos-edge">{greenDist.zero.toFixed(1)}% / {greenDist.one.toFixed(1)}% — even</span>
-                    </div>
-                    <div className="w-full h-2 bg-phos-deep rounded overflow-hidden flex">
-                      <div style={{ width: `${greenDist.zero}%` }} className="bg-blue-600 h-full"></div>
-                      <div style={{ width: `${greenDist.one}%` }} className="bg-orange-600 h-full"></div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-[10px] mb-1">
-                      <span className="text-[#60A5FA] font-semibold">Blue</span>
-                      <span className="text-phos-edge">{blueDist.zero.toFixed(1)}% / {blueDist.one.toFixed(1)}% — even</span>
-                    </div>
-                    <div className="w-full h-2 bg-phos-deep rounded overflow-hidden flex">
-                      <div style={{ width: `${blueDist.zero}%` }} className="bg-blue-600 h-full"></div>
-                      <div style={{ width: `${blueDist.one}%` }} className="bg-orange-600 h-full"></div>
-                    </div>
-                  </div>
+                  ))}
                 </div>
 
                 <p className="text-[10px] text-muted pt-1">
-                  A natural channel sits away from an even split. Every channel landing on 50/50 means the low bit plane has been overwritten.
+                  Photos and recordings sit near 50/50 anyway — the split alone proves nothing. The tests below do the detecting.
                 </p>
               </div>
 
-              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-edge">
-                <div className="text-center space-y-1">
-                  <div className="flex justify-between text-[10px] text-muted">
-                    <span>RED</span>
-                    <span>peak 9,600</span>
-                  </div>
-                  <svg className="w-full h-16 text-blue-500/80" viewBox="0 0 100 40" fill="none" stroke="currentColor">
-                    <path d="M 0 38 Q 50 2 100 38" strokeWidth="1.5" fill="rgba(59,130,246,0.15)" />
-                  </svg>
+              {histograms.length > 0 && (
+                <div
+                  className="grid gap-4 pt-4 border-t border-edge"
+                  style={{ gridTemplateColumns: `repeat(${histograms.length}, minmax(0, 1fr))` }}
+                >
+                  {histograms.map(([key, bins]) => {
+                    const peak = Math.max(1, ...bins);
+                    const step = 100 / Math.max(1, bins.length - 1);
+                    const line = bins.map((count, i) => `L ${(i * step).toFixed(2)} ${(38 - (count / peak) * 34).toFixed(2)}`).join(" ");
+                    return (
+                      <div key={key} className="space-y-1">
+                        <div className="flex justify-between text-[10px] text-muted uppercase">
+                          <span>{channelLabel(key)}</span>
+                          <span>peak {peak.toLocaleString()}</span>
+                        </div>
+                        <svg className="w-full h-16 text-blue-500/80" viewBox="0 0 100 40" preserveAspectRatio="none" fill="none" stroke="currentColor">
+                          <path d={`M 0 38 ${line} L 100 38 Z`} strokeWidth="1" vectorEffect="non-scaling-stroke" fill="rgba(59,130,246,0.15)" />
+                        </svg>
+                      </div>
+                    );
+                  })}
                 </div>
-                <div className="text-center space-y-1">
-                  <div className="flex justify-between text-[10px] text-muted">
-                    <span>GREEN</span>
-                    <span>peak 10,400</span>
-                  </div>
-                  <svg className="w-full h-16 text-blue-500/80" viewBox="0 0 100 40" fill="none" stroke="currentColor">
-                    <path d="M 0 38 Q 50 2 100 38" strokeWidth="1.5" fill="rgba(59,130,246,0.15)" />
-                  </svg>
-                </div>
-                <div className="text-center space-y-1">
-                  <div className="flex justify-between text-[10px] text-muted">
-                    <span>BLUE</span>
-                    <span>peak 9,100</span>
-                  </div>
-                  <svg className="w-full h-16 text-blue-500/80" viewBox="0 0 100 40" fill="none" stroke="currentColor">
-                    <path d="M 0 38 Q 50 2 100 38" strokeWidth="1.5" fill="rgba(59,130,246,0.15)" />
-                  </svg>
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <button className="text-[10px] text-phos-edge hover:text-[#60A5FA] font-semibold flex items-center gap-1 cursor-pointer">
-                  ■ VIEW AS TABLE
-                </button>
-              </div>
+              )}
             </div>
 
             {/* Detection Tests Section */}
@@ -543,23 +391,24 @@ export default function StegananalysisPage() {
               <div>
                 <h3 className="text-sm font-semibold text-phos-white">Detection tests</h3>
                 <p className="text-muted text-[11px]">
-                  Each test targets a different embedding style, so they can and do disagree — the aggregate score above weighs them together.
+                  Each test targets a different embedding style, so they can disagree — the score above follows the strongest evidence.
                 </p>
               </div>
 
               <div className="space-y-4 pt-2">
                 {(report.tests || []).map((test) => {
-                  const testCritical = test.score > 50;
+                  const testCritical = test.status === "critical";
+                  const testWarning = test.status === "warning";
                   return (
                     <div key={test.id} className="space-y-1.5 border-b border-edge pb-3 last:border-none">
-                      <div className="flex justify-between items-center text-xs">
+                      <div className="flex justify-between items-center gap-4 text-xs">
                         <span className="font-bold text-phos-white">{test.name}</span>
-                        <span className={testCritical ? "text-red-400 font-semibold" : "text-muted"}>{test.value}</span>
+                        <span className={`text-right ${testCritical ? "text-red-400 font-semibold" : testWarning ? "text-amber-400" : "text-muted"}`}>{test.value}</span>
                       </div>
                       <div className="w-full h-1.5 bg-phos-deep rounded-full overflow-hidden">
                         <div
                           style={{ width: `${test.score}%` }}
-                          className={`h-full ${testCritical ? "bg-red-500" : "bg-[#60A5FA]"}`}
+                          className={`h-full ${testCritical ? "bg-red-500" : testWarning ? "bg-amber-500" : "bg-[#60A5FA]"}`}
                         ></div>
                       </div>
                       <p className="text-[10px] text-muted">{test.description}</p>

@@ -20,7 +20,6 @@ export default function AudioWaveform({
     useEffect(() => {
         if (!fileOrUrl || !canvasRef.current) return;
 
-        let animationFrameId: number;
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
@@ -89,7 +88,7 @@ export default function AudioWaveform({
             }
         };
 
-        animationFrameId = requestAnimationFrame(() => {
+        const animationFrameId = requestAnimationFrame(() => {
             renderWaveform();
         });
 

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, DragEvent, ChangeEvent } from "react";
+import { describeError } from "@/lib/errors";
+import { postForm } from "@/lib/backend";
 
 export default function RobustWatermarkPage() {
     const [mode, setMode] = useState<"embed" | "extract">("embed");
@@ -67,37 +69,19 @@ export default function RobustWatermarkPage() {
 
         try {
             if (mode === "embed") {
-                formData.append("watermark_key", watermarkKey);
-
-                const res = await fetch("http://localhost:8000/api/watermark/robust/embed", {
-                    method: "POST",
-                    body: formData,
-                });
-
-                if (!res.ok) {
-                    const errJson = await res.json().catch(() => null);
-                    throw new Error(errJson?.detail || `Server status ${res.status}`);
-                }
-
-                const blob = await res.blob();
-                if (watermarkedFileUrl) URL.revokeObjectURL(watermarkedFileUrl);
-                setWatermarkedFileUrl(URL.createObjectURL(blob));
+                formData.append("watermarkText", watermarkKey);
+                const data = await postForm<{ image: string }>(
+                    "/api/watermark/robust/embed", formData, "Failed to embed the watermark.",
+                );
+                setWatermarkedFileUrl(data.image);
             } else {
-                const res = await fetch("http://localhost:8000/api/watermark/robust/extract", {
-                    method: "POST",
-                    body: formData,
-                });
-
-                if (!res.ok) {
-                    const errJson = await res.json().catch(() => null);
-                    throw new Error(errJson?.detail || `Server status ${res.status}`);
-                }
-
-                const data = await res.json();
-                setExtractedKey(data.extracted_key || "No key detected.");
+                const data = await postForm<{ watermarkText: string }>(
+                    "/api/watermark/robust/extract", formData, "No watermark detected.",
+                );
+                setExtractedKey(data.watermarkText);
             }
-        } catch (err: any) {
-            setError(err.message || "Request failed.");
+        } catch (err: unknown) {
+            setError(describeError(err, "Request failed."));
         } finally {
             setLoading(false);
         }

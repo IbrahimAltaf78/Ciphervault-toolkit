@@ -6,7 +6,7 @@ import { FxEncoding } from "@/components/viz/ModuleFx";
 export const metadata: Metadata = {
   title: "Encoding",
   description:
-    "Base64, Base32, Hex, Binary, URL and ASCII converters, all client-side.",
+    "Base64, Base32, Hex, Binary, URL and ASCII converters, both directions.",
 };
 
 export default function EncodingHubPage() {

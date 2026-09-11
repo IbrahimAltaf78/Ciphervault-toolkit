@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, DragEvent, ChangeEvent } from "react";
+import { describeError } from "@/lib/errors";
+import { postForm } from "@/lib/backend";
 
 export default function InvisibleWatermarkPage() {
     const [mode, setMode] = useState<"embed" | "extract">("embed");
@@ -68,40 +70,20 @@ export default function InvisibleWatermarkPage() {
 
         try {
             if (mode === "embed") {
-                formData.append("secret_data", secretData);
-                const res = await fetch("http://localhost:8000/api/watermark/invisible/embed", {
-                    method: "POST",
-                    body: formData,
-                });
-
-                if (!res.ok) {
-                    const errorJson = await res.json().catch(() => null);
-                    throw new Error(errorJson?.detail || `Server returned error status ${res.status}`);
-                }
-
-                const blob = await res.blob();
-                if (resultUrl) URL.revokeObjectURL(resultUrl);
-                setResultUrl(URL.createObjectURL(blob));
+                formData.append("secretText", secretData);
+                const data = await postForm<{ image: string }>(
+                    "/api/watermark/invisible/embed", formData, "Failed to embed the watermark.",
+                );
+                setResultUrl(data.image);
             } else {
-                const res = await fetch("http://localhost:8000/api/watermark/invisible/extract", {
-                    method: "POST",
-                    body: formData,
-                });
-
-                if (!res.ok) {
-                    const errorJson = await res.json().catch(() => null);
-                    throw new Error(errorJson?.detail || `Server returned error status ${res.status}`);
-                }
-
-                const data = await res.json();
-                if (data.success) {
-                    setExtractedMessage(data.secret_data);
-                } else {
-                    setExtractedMessage(data.detail || "No watermark detected.");
-                }
+                // "Nothing hidden here" comes back as an error, shown below.
+                const data = await postForm<{ secretText: string }>(
+                    "/api/watermark/invisible/extract", formData, "No watermark detected.",
+                );
+                setExtractedMessage(data.secretText);
             }
-        } catch (err: any) {
-            setError(err.message || "An unexpected error occurred.");
+        } catch (err: unknown) {
+            setError(describeError(err, "An unexpected error occurred."));
         } finally {
             setLoading(false);
         }

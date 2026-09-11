@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import { describeError } from "@/lib/errors";
+import { API_BASE_URL } from "@/lib/backend";
 
 export default function VideoStegoPage() {
     // 1. Changed default active tab to "hide"
@@ -68,7 +70,7 @@ export default function VideoStegoPage() {
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(link.href);
-        } catch (err) {
+        } catch {
             setError("Failed to convert video file for download.");
         }
     };
@@ -100,7 +102,7 @@ export default function VideoStegoPage() {
         if (password) formData.append("password", password);
 
         try {
-            const res = await fetch("http://127.0.0.1:8000/api/stego/video/hide", {
+            const res = await fetch(`${API_BASE_URL}/api/stego/video/hide`, {
                 method: "POST",
                 body: formData,
             });
@@ -113,8 +115,8 @@ export default function VideoStegoPage() {
             setOutputVideo(data.data.video);
             setOutputFilename(data.data.filename || "stego_video.avi");
             setSuccess("Payload hidden in video successfully!");
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            setError(describeError(err));
         } finally {
             setLoading(false);
         }
@@ -138,7 +140,7 @@ export default function VideoStegoPage() {
         if (password) formData.append("password", password);
 
         try {
-            const res = await fetch("http://127.0.0.1:8000/api/stego/video/extract", {
+            const res = await fetch(`${API_BASE_URL}/api/stego/video/extract`, {
                 method: "POST",
                 body: formData,
             });
@@ -156,8 +158,8 @@ export default function VideoStegoPage() {
 
             setExtractedMessage(finalSecret);
             setSuccess("Secret payload extracted successfully!");
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            setError(describeError(err));
         } finally {
             setLoading(false);
         }

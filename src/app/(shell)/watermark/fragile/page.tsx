@@ -1,12 +1,16 @@
 "use client";
 
 import { useState, DragEvent, ChangeEvent } from "react";
+import { describeError } from "@/lib/errors";
+import { postForm } from "@/lib/backend";
 
+/** The `data` of /api/watermark/fragile/verify. */
 interface VerificationReport {
-    is_authentic: boolean;
-    tamper_percentage?: number;
+    isAuthentic: boolean;
+    tamperPercentage: number;
+    tamperedBlocks: number;
+    totalBlocks: number;
     message: string;
-    tamper_map_url?: string | null;
 }
 
 export default function FragileWatermarkPage() {
@@ -67,35 +71,17 @@ export default function FragileWatermarkPage() {
 
         try {
             if (mode === "embed") {
-                const res = await fetch("http://localhost:8000/api/watermark/fragile/embed", {
-                    method: "POST",
-                    body: formData,
-                });
-
-                if (!res.ok) {
-                    const errJson = await res.json().catch(() => null);
-                    throw new Error(errJson?.detail || `Server status ${res.status}`);
-                }
-
-                const blob = await res.blob();
-                if (embedResultUrl) URL.revokeObjectURL(embedResultUrl);
-                setEmbedResultUrl(URL.createObjectURL(blob));
+                const data = await postForm<{ image: string }>(
+                    "/api/watermark/fragile/embed", formData, "Failed to embed the fragile watermark.",
+                );
+                setEmbedResultUrl(data.image);
             } else {
-                const res = await fetch("http://localhost:8000/api/watermark/fragile/verify", {
-                    method: "POST",
-                    body: formData,
-                });
-
-                if (!res.ok) {
-                    const errJson = await res.json().catch(() => null);
-                    throw new Error(errJson?.detail || `Server status ${res.status}`);
-                }
-
-                const data: VerificationReport = await res.json();
-                setReport(data);
+                setReport(await postForm<VerificationReport>(
+                    "/api/watermark/fragile/verify", formData, "Verification failed.",
+                ));
             }
-        } catch (err: any) {
-            setError(err.message || "Request failed.");
+        } catch (err: unknown) {
+            setError(describeError(err, "Request failed."));
         } finally {
             setLoading(false);
         }
@@ -212,32 +198,19 @@ export default function FragileWatermarkPage() {
             {/* Verification Report Output */}
             {report && mode === "verify" && (
                 <div
-                    className={`p-6 rounded-2xl border space-y-3 ${report.is_authentic
+                    className={`p-6 rounded-2xl border space-y-3 ${report.isAuthentic
                             ? "bg-phos-deep/40 border-edge/80 text-[#60A5FA]"
                             : "bg-red-950/40 border-red-800/80 text-red-300"
                         }`}
                 >
                     <h2 className="font-bold text-xl flex items-center gap-2">
-                        {report.is_authentic ? "✓ File Authentic" : "⚠ Tampering Detected"}
+                        {report.isAuthentic ? "✓ File Authentic" : "⚠ Tampering Detected"}
                     </h2>
                     <p className="text-sm opacity-90">{report.message}</p>
-
-                    {report.tamper_percentage !== undefined && (
-                        <p className="text-xs font-mono">Tamper Ratio: {report.tamper_percentage}%</p>
-                    )}
-
-                    {report.tamper_map_url && (
-                        <div className="pt-2 space-y-2">
-                            <p className="text-xs font-semibold text-red-400">Tampered Region Overlay (Red):</p>
-                            <div className="flex justify-center bg-phos-deep p-4 rounded-xl border border-red-900/50">
-                                <img
-                                    src={report.tamper_map_url}
-                                    alt="Tamper Map"
-                                    className="max-h-80 rounded-lg object-contain"
-                                />
-                            </div>
-                        </div>
-                    )}
+                    <p className="text-xs font-mono">
+                        Tamper Ratio: {report.tamperPercentage}% ({report.tamperedBlocks.toLocaleString()} of{" "}
+                        {report.totalBlocks.toLocaleString()} blocks)
+                    </p>
                 </div>
             )}
         </div>

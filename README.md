@@ -33,7 +33,7 @@
 | # | Module | What it does | Route |
 |---|---|---|---|
 | 01 | **Steganography** | Hide a payload inside an image (LSB, DCT/DWT), WAV audio, or MP4/AVI video — and extract it again | `/stego` |
-| 02 | **Steganalysis** | Test a suspect image or audio file for a hidden payload (chi-square, RS analysis, histograms, metadata) | `/steganalysis` |
+| 02 | **Steganalysis** | Test a PNG/BMP/TIFF/WebP image or WAV file for a hidden payload (CipherVault signature, RS analysis, sample pairs, weighted stego, chi-square, appended data) | `/steganalysis` |
 | 03 | **Cryptography** | AES, DES, Triple DES, RSA, ECC, SHA-2, SHA-3 and hybrid encryption, run in the browser | `/cryptography` |
 | 04 | **Text Hiding** | Hide a message inside ordinary text — zero-width Unicode, whitespace, capitalisation, punctuation, acrostic, word choice | `/text-hiding` |
 | 05 | **Watermarking** | Visible, invisible, robust (survives compression) and fragile (detects tampering) watermarks | `/watermark` |
@@ -122,7 +122,9 @@ python -m uvicorn main:app --reload
 
 The API is now at **http://127.0.0.1:8000**. Interactive API docs (try every endpoint in the browser) are at **http://127.0.0.1:8000/docs**.
 
-> **Keep the backend on port 8000.** The frontend looks for it at `http://127.0.0.1:8000` (set in `src/lib/api.ts`). Uvicorn uses 8000 by default, so the command above needs no `--port`.
+> **Keep the backend on port 8000.** The frontend looks for it at `http://127.0.0.1:8000` (set in `src/lib/backend.ts`). Uvicorn uses 8000 by default, so the command above needs no `--port`.
+>
+> To run the backend somewhere else, create a file called `.env.local` in the project folder containing `NEXT_PUBLIC_API_URL=http://127.0.0.1:9000` (your address), then restart `npm run dev`.
 
 ### 3 · Check that both are running
 
@@ -173,6 +175,8 @@ python -m pytest
 
 `pytest.ini` points the tests at the `backend` folder, which is why they run from one level up.
 
+The sample files in `backend/tests/samples/` (a clean image and WAV, and the same two with a hidden payload) are also handy for trying the Steganalysis page by hand. To rebuild them, run `python tests/samples/make_samples.py` from inside `backend`.
+
 **Frontend** — lint the code:
 
 ```bash
@@ -222,7 +226,7 @@ The backend isn't running, or isn't on port 8000. Check terminal 2 is running an
 <details>
 <summary><b>"Port 3000 / 8000 is already in use"</b></summary>
 
-An earlier copy is still running. Close its terminal (or press **Ctrl + C** in it) and start again. Keep the backend on 8000 — the frontend won't find it anywhere else.
+An earlier copy is still running. Close its terminal (or press **Ctrl + C** in it) and start again. Keep the backend on 8000, or point the frontend at another port with `NEXT_PUBLIC_API_URL` (see [Quick start](#2--backend--terminal-2)).
 </details>
 
 <details>

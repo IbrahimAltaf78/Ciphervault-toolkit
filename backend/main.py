@@ -3,19 +3,15 @@ import wave
 import base64
 import urllib.parse
 import os
-import math
 import hashlib
 import numpy as np
 import pywt
 from PIL import Image, ImageDraw, ImageFont
-from scipy.stats import chi2
 from scipy.fftpack import dct, idct
-from datetime import datetime
-from typing import Optional
-from pydantic import BaseModel
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
+from fastapi.responses import Response, JSONResponse
+from starlette.concurrency import run_in_threadpool
 
 
 # Cryptography modules for AES-256-GCM
@@ -25,6 +21,7 @@ from cryptography.hazmat.primitives import hashes
 
 # Modular Stegananalysis Router Inclusion
 from app.steganalysis.router import router as steganalysis_router
+from app.steganalysis.engine import UnsupportedMedia, analyze_audio, analyze_image
 
 # Video Steganography Router Inclusion (with fallback for folder naming)
 
@@ -67,18 +64,70 @@ app.include_router(steganalysis_router)
 app.include_router(video_router)
 
 DELIMITER = "###END###"
-ALPHA = 2.0  # DWT coefficient scaling factor for robust embedding
+# DWT quantisation step. Each bit is the parity of round(LH / ALPHA), so saving
+# the image may move a coefficient by up to ALPHA / 2 before the bit flips.
+# At 2.0 the ±1 rounding of an RGB round trip was enough to flip bits.
+ALPHA = 6.0
+LEGACY_DWT_ALPHA = 2.0  # files made before ALPHA was raised
 DCT_STRENGTH = 25.0  # DCT coefficient scaling factor for robust watermarking
 
 
 # ==========================================
-# Pydantic Models
+# Request Field Helpers
 # ==========================================
 
-class Base64Payload(BaseModel):
-    text: Optional[str] = None
-    payload: Optional[str] = None
-    data: Optional[str] = None
+async def read_fields(request: Request) -> dict:
+    """Return a request's text fields, whether they arrived as JSON, a
+    URL-encoded form, or multipart form data.
+
+    The text endpoints used to read only one of these - a JSON model, or
+    Form() parameters, or request.json() - so a request sent the other way
+    reached them as an empty string and came back as an empty 'success'.
+    """
+    content_type = request.headers.get("content-type", "").lower()
+    if "form" in content_type:
+        form = await request.form()
+        return {key: value for key, value in form.items() if isinstance(value, str)}
+
+    try:
+        body = await request.json()
+    except Exception:
+        body = None
+    if isinstance(body, dict):
+        return body
+    return dict(request.query_params)
+
+
+def first_field(fields: dict, *names: str) -> str:
+    """The first of `names` that holds a non-empty value, as a string."""
+    for name in names:
+        value = fields.get(name)
+        if value is not None and str(value) != "":
+            return str(value)
+    return ""
+
+
+def error_response(message: str, status_code: int = 400) -> JSONResponse:
+    """A failed request. Carries both `detail` (what FastAPI clients read)
+    and `error.message` (what the older tool pages read)."""
+    return JSONResponse(
+        status_code=status_code,
+        content={"success": False, "detail": message, "error": {"message": message}},
+    )
+
+
+def decode_base64_text(raw_input: str) -> str:
+    """Strict Base64 -> UTF-8 text. Accepts a data: URL prefix and missing
+    padding; rejects anything that is not Base64 instead of returning the
+    garbage a lenient decode produces."""
+    clean_input = "".join(raw_input.split(",")[-1].split())
+    missing_padding = len(clean_input) % 4
+    if missing_padding:
+        clean_input += "=" * (4 - missing_padding)
+    try:
+        return base64.b64decode(clean_input, validate=True).decode("utf-8")
+    except (ValueError, UnicodeDecodeError):
+        raise ValueError("Input is not valid Base64 text.")
 
 
 # ==========================================
@@ -132,15 +181,19 @@ def text_to_bits(text: str) -> str:
     return ''.join(format(ord(char), '08b') for char in text + DELIMITER)
 
 
-def bits_to_text(bits: str) -> str:
-    bytes_list = [bits[i:i+8] for i in range(0, len(bits), 8)]
-    chars = []
-    for b in bytes_list:
-        if len(b) < 8:
-            break
-        chars.append(chr(int(b, 2)))
-    full_text = "".join(chars)
-    return full_text.split(DELIMITER)[0] if DELIMITER in full_text else full_text
+def payload_from_bits(bits: np.ndarray) -> str | None:
+    """The text in a stream of extracted bits, 8 bits per character, up to
+    the end marker — or None when the marker never appears.
+
+    None means nothing was hidden with this method. The extractors used to
+    return every bit of the carrier as text instead, so a clean image
+    "succeeded" with half a megabyte of noise.
+    """
+    text = np.packbits(np.asarray(bits, dtype=np.uint8)).tobytes().decode("latin-1")
+    return text.split(DELIMITER)[0] if DELIMITER in text else None
+
+
+NO_PAYLOAD_MESSAGE = "No hidden text found. This file wasn't made with this method, or it has changed since."
 
 
 # ==========================================
@@ -166,6 +219,13 @@ def embed_dct(image_bytes: bytes, secret_text: str) -> bytes:
     h, w = y_arr.shape
     block_size = 8
     bit_idx = 0
+
+    # One bit per 8x8 block. Past that the text used to be cut off silently,
+    # end marker and all, so it could never be extracted.
+    capacity = (h // block_size) * (w // block_size)
+    if total_bits > capacity:
+        chars = max(0, capacity // 8 - len(DELIMITER))
+        raise ValueError(f"Text is too long for this image: it holds about {chars} characters with this method.")
 
     for r in range(0, h - h % block_size, block_size):
         for c in range(0, w - w % block_size, block_size):
@@ -201,7 +261,7 @@ def embed_dct(image_bytes: bytes, secret_text: str) -> bytes:
     return buffered.getvalue()
 
 
-def extract_dct(image_bytes: bytes) -> str:
+def extract_dct(image_bytes: bytes) -> str | None:
     pil_img = Image.open(io.BytesIO(image_bytes)).convert("YCbCr")
     y, _, _ = pil_img.split()
     y_arr = np.array(y, dtype=np.float32)
@@ -215,9 +275,9 @@ def extract_dct(image_bytes: bytes) -> str:
             block = y_arr[r:r+block_size, c:c+block_size]
             dct_block = dct2(block)
             v1, v2 = dct_block[4, 3], dct_block[3, 4]
-            bits.append("1" if v1 > v2 else "0")
+            bits.append(1 if v1 > v2 else 0)
 
-    return bits_to_text("".join(bits))
+    return payload_from_bits(np.array(bits, dtype=np.uint8))
 
 
 # ==========================================
@@ -252,30 +312,53 @@ def embed_dwt(image_bytes: bytes, secret_text: str) -> bytes:
     LH_mod = flat_lh.reshape(LH.shape)
     coeffs_mod = LL, (LH_mod, HL, HH)
     y_mod = pywt.idwt2(coeffs_mod, 'haar')
-    y_mod = np.clip(y_mod, 0, 255).astype(np.uint8)
+    # idwt2 always returns even dimensions; an odd-sized image would no longer
+    # fit its own Cb/Cr planes ("size mismatch").
+    y_mod = y_mod[:y_arr.shape[0], :y_arr.shape[1]]
 
-    stego_img = Image.merge("YCbCr", (Image.fromarray(y_mod), cb, cr)).convert("RGB")
+    rgb = _unclipped_rgb(y_mod, np.array(cb, dtype=np.float64), np.array(cr, dtype=np.float64))
+    stego_img = Image.fromarray(np.clip(np.round(rgb), 0, 255).astype(np.uint8), "RGB")
     buffered = io.BytesIO()
     stego_img.save(buffered, format="PNG")
     return buffered.getvalue()
 
 
-def extract_dwt(image_bytes: bytes) -> str:
+def _unclipped_rgb(y: np.ndarray, cb: np.ndarray, cr: np.ndarray) -> np.ndarray:
+    """RGB for a modified luma plane, with every 2x2 block moved just far
+    enough that none of its pixels clip.
+
+    Clipping is what used to lose DWT bits: in black or saturated areas the
+    embedding pushed pixels below 0 or above 255, the save cut them off, and
+    the payload came back corrupted (30 of 57 test round trips failed). A
+    constant added to all four pixels of a Haar block cancels out of LH, HL and
+    HH, so the shift moves the block's brightness but leaves the payload alone.
+    """
+    cb, cr = cb - 128.0, cr - 128.0
+    rgb = np.stack((y + 1.402 * cr, y - 0.344136 * cb - 0.714136 * cr, y + 1.772 * cb), axis=2)
+    h, w = y.shape
+    padded = np.pad(rgb, ((0, h % 2), (0, w % 2), (0, 0)), mode="edge")
+    blocks = padded.reshape(padded.shape[0] // 2, 2, padded.shape[1] // 2, 2, 3)
+    low, high = blocks.min(axis=(1, 3, 4)), blocks.max(axis=(1, 3, 4))
+    shift = np.maximum(0.0, -low) - np.maximum(0.0, high - 255.0)
+    shift = np.repeat(np.repeat(shift, 2, axis=0), 2, axis=1)[:h, :w]
+    return rgb + shift[:, :, None]
+
+
+def extract_dwt(image_bytes: bytes) -> str | None:
     pil_img = Image.open(io.BytesIO(image_bytes)).convert("YCbCr")
     y, _, _ = pil_img.split()
     y_arr = np.array(y, dtype=np.float32)
 
     coeffs = pywt.dwt2(y_arr, 'haar')
     _, (LH, _, _) = coeffs
-
     flat_lh = LH.flatten()
-    bits = []
 
-    for val in flat_lh:
-        q_val = int(round(val / ALPHA))
-        bits.append(str(abs(q_val) % 2))
-
-    return bits_to_text("".join(bits))
+    # Files made before the step size went up still decode at the old one.
+    for alpha in (ALPHA, LEGACY_DWT_ALPHA):
+        text = payload_from_bits(np.abs(np.round(flat_lh / alpha)).astype(np.int64) % 2)
+        if text is not None:
+            return text
+    return None
 
 
 # ==========================================
@@ -286,39 +369,30 @@ def extract_dwt(image_bytes: bytes) -> str:
 @app.post("/api/encoding/base64")
 @app.post("/api/crypto/base64/encode")
 @app.post("/api/base64/encode")
-async def handle_base64_encode(
-    body: Optional[Base64Payload] = None,
-    text: Optional[str] = Form(None),
-    payload: Optional[str] = Form(None)
-):
-    try:
-        raw_input = (body.text if body and body.text else None) or \
-                    (body.payload if body and body.payload else None) or \
-                    (body.data if body and body.data else None) or \
-                    text or payload or ""
-        encoded = base64.b64encode(raw_input.encode('utf-8')).decode('utf-8')
-        return {"success": True, "result": encoded, "data": {"encoded": encoded, "result": encoded}}
-    except Exception as e:
-        return {"success": False, "error": {"message": str(e)}}
+async def handle_base64_encode(request: Request):
+    fields = await read_fields(request)
+    raw_input = first_field(fields, "text", "payload", "data")
+    if not raw_input:
+        return error_response("Nothing to encode: send the text as 'text', 'payload' or 'data'.")
+
+    encoded = base64.b64encode(raw_input.encode('utf-8')).decode('utf-8')
+    return {"success": True, "result": encoded, "data": {"encoded": encoded, "result": encoded}}
 
 
 @app.post("/api/encoding/base64/decode")
 @app.post("/api/crypto/base64/decode")
 @app.post("/api/base64/decode")
-async def handle_base64_decode(
-    body: Optional[Base64Payload] = None,
-    text: Optional[str] = Form(None),
-    payload: Optional[str] = Form(None)
-):
+async def handle_base64_decode(request: Request):
+    fields = await read_fields(request)
+    raw_input = first_field(fields, "text", "payload", "data")
+    if not raw_input:
+        return error_response("Nothing to decode: send the Base64 text as 'text', 'payload' or 'data'.")
+
     try:
-        raw_input = (body.text if body and body.text else None) or \
-                    (body.payload if body and body.payload else None) or \
-                    (body.data if body and body.data else None) or \
-                    text or payload or ""
-        decoded = base64.b64decode(raw_input.encode('utf-8')).decode('utf-8')
-        return {"success": True, "result": decoded, "data": {"decoded": decoded, "result": decoded}}
-    except Exception as e:
-        return {"success": False, "error": {"message": str(e)}}
+        decoded = decode_base64_text(raw_input)
+    except ValueError as e:
+        return error_response(str(e))
+    return {"success": True, "result": decoded, "data": {"decoded": decoded, "result": decoded}}
 
 
 # ==========================================
@@ -378,6 +452,8 @@ async def extract_dct_image(
 
         contents = await input_image.read()
         extracted_raw = extract_dct(contents)
+        if extracted_raw is None:
+            return {"success": False, "error": {"message": NO_PAYLOAD_MESSAGE}}
 
         if extracted_raw.startswith("ENC:"):
             if not password or not password.strip():
@@ -401,232 +477,27 @@ async def analyze_steganalysis_file(
     file: UploadFile = File(...),
     kind: str = Form(None)
 ):
+    contents = await file.read()
+    if not contents:
+        return error_response("The uploaded file is empty.")
+
+    file_name = file.filename or "uploaded_file"
+    file_type = file.content_type or "application/octet-stream"
+    is_audio = (
+        file_type.startswith("audio/")
+        or kind == "audio"
+        or file_name.lower().endswith((".wav", ".flac", ".aiff", ".aif"))
+    )
+    analyze = analyze_audio if is_audio else analyze_image
+
     try:
-        contents = await file.read()
-        file_name = file.filename or "uploaded_file"
-        file_type = file.content_type or "image/png"
-        file_size_mb = round(len(contents) / (1024 * 1024), 2)
-        formatted_size = f"{file_size_mb:.2f} MB"
-        now_str = datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
-
-        is_audio = (
-            file_type.startswith("audio/")
-            or kind == "audio"
-            or any(file_name.lower().endswith(ext) for ext in [".wav", ".flac", ".aiff"])
-        )
-
-        if not is_audio:
-            try:
-                pil_img = Image.open(io.BytesIO(contents))
-                width, height = pil_img.size
-                dimensions_str = f"{width} × {height}"
-                rgb_img = pil_img.convert("RGB")
-                img_np = np.array(rgb_img)
-            except Exception as img_err:
-                raise HTTPException(status_code=400, detail=f"Invalid image file: {str(img_err)}")
-
-            channels_data = []
-            channel_names = ["Red", "Green", "Blue"]
-            channel_keys = ["red", "green", "blue"]
-            lsb_dist_dict = {}
-
-            for idx, name in enumerate(channel_names):
-                ch = img_np[:, :, idx]
-                lsb = ch & 1
-                zero_pct = float(np.mean(lsb == 0) * 100)
-                one_pct = float(np.mean(lsb == 1) * 100)
-                r_zero = round(zero_pct, 1)
-                r_one = round(one_pct, 1)
-
-                lsb_dist_dict[channel_keys[idx]] = {"zero": r_zero, "one": r_one, "lsb0": r_zero, "lsb1": r_one}
-                channels_data.append({"name": name, "lsb0": r_zero, "lsb1": r_one, "zero": r_zero, "one": r_one})
-
-            flat_pixels = img_np[:, :, 0].flatten()
-            counts = np.bincount(flat_pixels, minlength=256)
-            chi2_stat = 0.0
-            for k in range(128):
-                y_2k = counts[2 * k]
-                y_2k1 = counts[2 * k + 1]
-                avg = (y_2k + y_2k1) / 2.0
-                if avg > 0:
-                    chi2_stat += ((y_2k - avg) ** 2) / avg
-
-            p_val = float(chi2.sf(chi2_stat, df=127)) if chi2_stat > 0 else 0.0002
-            if math.isnan(p_val):
-                p_val = 0.0002
-
-            lsb_flat = (img_np & 1).flatten()
-            p1 = float(np.mean(lsb_flat))
-            p0 = 1.0 - p1
-            ent = - (p0 * math.log2(p0) + p1 * math.log2(p1)) if p0 > 0 and p1 > 0 else 0.0
-            entropy_8 = round(ent * 8.0, 2)
-
-            has_eof_anomaly = False
-            if file_name.lower().endswith(".png"):
-                iend_index = contents.find(b"IEND")
-                if iend_index != -1 and iend_index + 8 < len(contents):
-                    has_eof_anomaly = True
-
-            avg_zero_pct = float(np.mean([ch["zero"] for ch in channels_data]))
-            lsb_balance_diff = abs(50.0 - avg_zero_pct)
-
-            if has_eof_anomaly:
-                embedding_likelihood = min(99, max(85, int(90 + (10 - lsb_balance_diff))))
-            elif p_val > 0.8 or entropy_8 > 7.95:
-                embedding_likelihood = int(min(98, max(65, p_val * 90 + (entropy_8 - 7.5) * 20)))
-            else:
-                embedding_likelihood = int(max(3, min(25, (5.0 - lsb_balance_diff) * 3 + p_val * 10)))
-
-            threat_level = "CRITICAL THREAT" if embedding_likelihood > 75 else ("SUSPICIOUS" if embedding_likelihood > 40 else "CLEAN THREAT")
-            summary = (
-                "Chi-square and RS analysis indicate a payload swapping most of the LSB plane."
-                if embedding_likelihood > 75
-                else "Value pairs follow the distribution expected of an untouched image, and no test disagrees."
-            )
-
-            anomalies = []
-            if has_eof_anomaly:
-                anomalies.append({
-                    "title": "Data appended after IEND",
-                    "description": f"{len(contents) - (iend_index + 8)} bytes follow the PNG end-of-stream marker.",
-                    "severity": "CRITICAL"
-                })
-            if "sRGB" in str(contents[:2000]):
-                anomalies.append({
-                    "title": "sRGB profile present",
-                    "description": "Matches the encoder named in the metadata.",
-                    "severity": "INFO"
-                })
-            elif not has_eof_anomaly:
-                anomalies.append({
-                    "title": "No metadata anomalies detected",
-                    "description": "Container markers and header chunks appear consistent.",
-                    "severity": "INFO"
-                })
-
-            chi_score = min(99, int(p_val * 100)) if p_val > 0.05 else int(embedding_likelihood * 0.8)
-            rs_score = min(99, int(embedding_likelihood * 0.95))
-            sp_score = min(99, int(embedding_likelihood * 0.9))
-            entropy_score = min(99, int((entropy_8 / 8.0) * embedding_likelihood))
-
-            report_data = {
-                "file": {
-                    "name": file_name,
-                    "type": file_type,
-                    "size": formatted_size,
-                    "dimensions": dimensions_str,
-                    "analyzedAt": now_str,
-                },
-                "fileName": file_name,
-                "fileType": file_type,
-                "fileSize": formatted_size,
-                "dimensions": dimensions_str,
-                "analyzedAt": now_str,
-                "threatLevel": threat_level,
-                "embeddingLikelihood": embedding_likelihood,
-                "summary": summary,
-                "lsbDistribution": lsb_dist_dict,
-                "channels": channels_data,
-                "tests": [
-                    {
-                        "id": "chi-square",
-                        "name": "Chi-square attack",
-                        "description": "Compares adjacent value pairs against untouched pixel distribution.",
-                        "value": f"p = {p_val:.4f} — {chi_score}%",
-                        "score": chi_score,
-                        "status": "critical" if chi_score > 60 else "clean"
-                    },
-                    {
-                        "id": "rs-analysis",
-                        "name": "RS analysis",
-                        "description": "Measures mask flipping responses to detect modification.",
-                        "value": f"estimated {max(0.01, round(embedding_likelihood * 0.002, 2))} bpp — {rs_score}%",
-                        "score": rs_score,
-                        "status": "critical" if rs_score > 60 else "clean"
-                    },
-                    {
-                        "id": "sample-pairs",
-                        "name": "Sample pairs",
-                        "description": "Estimates embedding rate from adjacent sample values.",
-                        "value": f"rate {max(0.02, round(embedding_likelihood * 0.0018, 2))} — {sp_score}%",
-                        "score": sp_score,
-                        "status": "critical" if sp_score > 60 else "clean"
-                    },
-                    {
-                        "id": "lsb-entropy",
-                        "name": "LSB plane entropy",
-                        "description": "Measures bit plane noise randomness.",
-                        "value": f"{entropy_8:.2f} / 8.00 bits — {entropy_score}%",
-                        "score": entropy_score,
-                        "status": "critical" if entropy_score > 60 else "clean"
-                    }
-                ],
-                "anomalies": anomalies
-            }
-            return {"success": True, "data": report_data}
-
-        else:
-            try:
-                with wave.open(io.BytesIO(contents), mode="rb") as wav_file:
-                    n_channels = wav_file.getnchannels()
-                    n_frames = wav_file.getnframes()
-                    framerate = wav_file.getframerate()
-                    frames = wav_file.readframes(n_frames)
-                
-                frames_arr = np.frombuffer(frames, dtype=np.int16)
-                lsb = frames_arr & 1
-                zero_pct = round(float(np.mean(lsb == 0) * 100), 1)
-                one_pct = round(float(np.mean(lsb == 1) * 100), 1)
-                duration_sec = round(n_frames / framerate, 2)
-                dim_str = f"{duration_sec}s ({n_channels} ch @ {framerate}Hz)"
-            except Exception:
-                dim_str = "Audio Stream"
-                zero_pct, one_pct = 50.0, 50.0
-
-            report_data = {
-                "file": {
-                    "name": file_name,
-                    "type": file_type,
-                    "size": formatted_size,
-                    "dimensions": dim_str,
-                    "analyzedAt": now_str,
-                },
-                "fileName": file_name,
-                "fileType": file_type,
-                "fileSize": formatted_size,
-                "dimensions": dim_str,
-                "analyzedAt": now_str,
-                "threatLevel": "CLEAN THREAT",
-                "embeddingLikelihood": 5,
-                "summary": "Audio LSB structure shows standard acoustic noise distribution without suspicious quantization.",
-                "lsbDistribution": {
-                    "audio": {"zero": zero_pct, "one": one_pct, "lsb0": zero_pct, "lsb1": one_pct}
-                },
-                "channels": [{"name": "Audio LSB", "lsb0": zero_pct, "lsb1": one_pct}],
-                "tests": [
-                    {
-                        "id": "audio-lsb",
-                        "name": "Audio LSB variance",
-                        "description": "Analyzes sample bit-level distribution across audio frames.",
-                        "value": f"0/1 ratio = {zero_pct}% / {one_pct}%",
-                        "score": 5,
-                        "status": "clean"
-                    }
-                ],
-                "anomalies": [
-                    {
-                        "title": "Audio Stream Validated",
-                        "description": "WAV container chunks and audio frame headers are valid.",
-                        "severity": "INFO"
-                    }
-                ]
-            }
-            return {"success": True, "data": report_data}
-
-    except HTTPException as he:
-        raise he
+        # A few seconds of NumPy on a large file: run it off the event loop.
+        report = await run_in_threadpool(analyze, contents, file_name, file_type)
+    except UnsupportedMedia as e:
+        return error_response(str(e))
     except Exception as e:
-        return {"success": False, "error": {"message": str(e)}}
+        return error_response(f"Analysis failed: {e}", status_code=500)
+    return {"success": True, "data": report}
 
 
 # ==========================================
@@ -706,8 +577,9 @@ async def extract_lsb_image(
         img_array = np.array(pil_img)
 
         flat_array = img_array.flatten()
-        bits = "".join([str(flat_array[i] & 1) for i in range(len(flat_array))])
-        extracted_raw = bits_to_text(bits)
+        extracted_raw = payload_from_bits(flat_array & 1)
+        if extracted_raw is None:
+            return {"success": False, "error": {"message": NO_PAYLOAD_MESSAGE}}
 
         if extracted_raw.startswith("ENC:"):
             if not password or not password.strip():
@@ -882,6 +754,8 @@ async def extract_dwt_image(
 
         contents = await input_image.read()
         extracted_raw = extract_dwt(contents)
+        if extracted_raw is None:
+            return {"success": False, "error": {"message": NO_PAYLOAD_MESSAGE}}
 
         if extracted_raw.startswith("ENC:"):
             if not password or not password.strip():
@@ -1010,8 +884,9 @@ async def extract_wav_audio(
         with wave.open(io.BytesIO(contents), mode='rb') as wav_in:
             frames = bytearray(wav_in.readframes(wav_in.getnframes()))
 
-        bits = "".join(str(frames[i] & 1) for i in range(len(frames)))
-        extracted_raw = bits_to_text(bits)
+        extracted_raw = payload_from_bits(np.frombuffer(bytes(frames), dtype=np.uint8) & 1)
+        if extracted_raw is None:
+            return {"success": False, "error": {"message": NO_PAYLOAD_MESSAGE}}
 
         if extracted_raw.startswith("ENC:"):
             if not password or not password.strip():
@@ -1033,64 +908,44 @@ async def extract_wav_audio(
 @app.post("/api/encoding/process")
 @app.api_route("/api/encoding/process", methods=["GET", "POST", "OPTIONS"])
 async def process_encoding_request(request: Request):
+    fields = await read_fields(request)
+    raw_input = first_field(fields, "text", "payload", "input", "data")
+    action = first_field(fields, "mode", "action", "operation").lower()
+    enc_type = (first_field(fields, "encoding_type", "type", "codec") or "base64").lower()
+
+    if not raw_input:
+        return error_response("Nothing to convert: the input text is empty.")
+
+    is_decode = "decode" in action
+
     try:
-        try:
-            body = await request.json()
-        except Exception:
-            body = {}
-
-        raw_input = str(
-            body.get("text")
-            or body.get("payload")
-            or body.get("input")
-            or body.get("data")
-            or ""
-        )
-        action = str(
-            body.get("mode")
-            or body.get("action")
-            or body.get("operation")
-            or ""
-        ).lower()
-
-        enc_type = str(
-            body.get("encoding_type")
-            or body.get("type")
-            or body.get("codec")
-            or "base64"
-        ).lower()
-
-        is_decode = "decode" in action
-
         if is_decode:
             if enc_type == "base64":
-                clean_input = raw_input.split(",")[-1].strip()
-                missing_padding = len(clean_input) % 4
-                if missing_padding:
-                    clean_input += '=' * (4 - missing_padding)
-                output = base64.b64decode(clean_input).decode('utf-8', errors='ignore')
+                output = decode_base64_text(raw_input)
 
             elif enc_type == "base32":
                 clean_input = raw_input.strip().upper()
                 missing_padding = len(clean_input) % 8
                 if missing_padding:
                     clean_input += '=' * (8 - missing_padding)
-                output = base64.b32decode(clean_input).decode('utf-8', errors='ignore')
+                output = base64.b32decode(clean_input).decode('utf-8')
 
             elif enc_type in ("hex", "hexadecimal"):
                 clean_input = raw_input.strip().replace("0x", "").replace(" ", "")
-                output = bytes.fromhex(clean_input).decode('utf-8', errors='ignore')
+                output = bytes.fromhex(clean_input).decode('utf-8')
 
             elif enc_type == "binary":
                 tokens = raw_input.strip().split()
-                output = bytes([int(b, 2) for b in tokens if b]).decode('utf-8', errors='ignore')
+                output = bytes([int(b, 2) for b in tokens if b]).decode('utf-8')
 
             elif enc_type == "url":
                 output = urllib.parse.unquote(raw_input)
 
             elif enc_type == "ascii":
                 tokens = raw_input.strip().replace(",", " ").split()
-                output = "".join(chr(int(c)) for c in tokens if c.isdigit())
+                # int() and chr() raise on a non-number or an out-of-range code,
+                # instead of the old silent skip that turned "abc" into "".
+                output = "".join(chr(int(c)) for c in tokens)
 
             else:
                 output = raw_input
@@ -1129,5 +984,13 @@ async def process_encoding_request(request: Request):
                 "payload": output
             }
         }
+    except (ValueError, OverflowError) as e:
+        # decode_base64_text already words its own message; the others raise
+        # Python's ("non-hexadecimal number found in fromhex()"), which says
+        # nothing useful to someone who pasted the wrong text.
+        if enc_type == "base64":
+            return error_response(str(e))
+        names = {"base32": "Base32", "hex": "hex", "hexadecimal": "hex", "binary": "binary", "ascii": "ASCII code"}
+        return error_response(f"Input is not valid {names.get(enc_type, enc_type)} text.")
     except Exception as e:
-        return {"success": False, "error": {"message": str(e)}}
+        return error_response(str(e))

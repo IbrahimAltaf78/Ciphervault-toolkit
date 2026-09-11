@@ -2,38 +2,14 @@
 
 import React, { useState, ChangeEvent, FormEvent, DragEvent, useRef } from "react";
 import { Upload, Lock, Shield, Eye, Download, AlertCircle, RefreshCw } from "lucide-react";
+import { describeError } from "@/lib/errors";
+import { API_BASE_URL } from "@/lib/backend";
 
 interface ImageStegoUIProps {
     initialAlgorithm?: string;
 }
 
 // Safely converts FastAPI 422 arrays & nested objects into readable strings
-const formatError = (err: any): string => {
-    if (!err) return "An unexpected error occurred.";
-    if (typeof err === "string") return err;
-
-    if (Array.isArray(err)) {
-        return err
-            .map((item) => {
-                if (typeof item === "object" && item !== null) {
-                    const loc = item.loc ? item.loc.join(" -> ") : "";
-                    const msg = item.msg || JSON.stringify(item);
-                    return loc ? `${loc}: ${msg}` : msg;
-                }
-                return String(item);
-            })
-            .join(" | ");
-    }
-
-    if (typeof err === "object") {
-        if (err.detail) return formatError(err.detail);
-        if (err.message) return formatError(err.message);
-        if (err.error) return formatError(err.error);
-        return JSON.stringify(err);
-    }
-
-    return String(err);
-};
 
 /** What each algorithm does to the carrier, in one line. */
 const IMAGE_DESCRIPTIONS: Record<string, string> = {
@@ -133,12 +109,14 @@ export default function ImageStegoUI({ initialAlgorithm = "lsb" }: ImageStegoUIP
             const formData = new FormData();
             formData.append("image", selectedFile);
             formData.append("secretText", secretText);
-            formData.append("algorithm", algorithm);
             if (password.trim()) {
                 formData.append("password", password.trim());
             }
 
-            const res = await fetch("http://127.0.0.1:8000/api/stego/image/hide", {
+            // One endpoint per algorithm. This used to post everything to
+            // /api/stego/image/hide — the LSB handler, which ignores an
+            // "algorithm" field — so choosing DWT quietly did LSB.
+            const res = await fetch(`${API_BASE_URL}/api/stego/image/${algorithm}/hide`, {
                 method: "POST",
                 body: formData,
             });
@@ -153,8 +131,8 @@ export default function ImageStegoUI({ initialAlgorithm = "lsb" }: ImageStegoUIP
             if (data.data?.filename || data.filename) {
                 setDownloadFilename(data.data?.filename || data.filename);
             }
-        } catch (err: any) {
-            setErrorMsg(formatError(err));
+        } catch (err: unknown) {
+            setErrorMsg(describeError(err));
         } finally {
             setLoading(false);
         }
@@ -173,12 +151,11 @@ export default function ImageStegoUI({ initialAlgorithm = "lsb" }: ImageStegoUIP
         try {
             const formData = new FormData();
             formData.append("image", selectedFile);
-            formData.append("algorithm", algorithm);
             if (password.trim()) {
                 formData.append("password", password.trim());
             }
 
-            const res = await fetch("http://127.0.0.1:8000/api/stego/image/extract", {
+            const res = await fetch(`${API_BASE_URL}/api/stego/image/${algorithm}/extract`, {
                 method: "POST",
                 body: formData,
             });
@@ -190,8 +167,8 @@ export default function ImageStegoUI({ initialAlgorithm = "lsb" }: ImageStegoUIP
             }
 
             setExtractedResult(data.data?.secretText ?? data.secretText ?? "");
-        } catch (err: any) {
-            setErrorMsg(formatError(err));
+        } catch (err: unknown) {
+            setErrorMsg(describeError(err));
         } finally {
             setLoading(false);
         }
@@ -247,6 +224,7 @@ export default function ImageStegoUI({ initialAlgorithm = "lsb" }: ImageStegoUIP
                         className="w-full rounded-lg bg-phos-deep/80 border border-edge p-2.5 text-xs text-phos-white focus:outline-none focus:border-[#60A5FA]"
                     >
                         <option value="lsb">LSB (Least Significant Bit)</option>
+                        <option value="dct">DCT (Discrete Cosine Transform)</option>
                         <option value="dwt">DWT (Discrete Wavelet Transform)</option>
                     </select>
                 </div>

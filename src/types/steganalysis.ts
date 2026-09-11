@@ -10,5 +10,5 @@ export interface AnalysisReport {
     probability_score: number;
     is_suspicious: boolean;
     anomalies: Anomaly[];
-    metadata: Record<string, any>;
+    metadata: Record<string, unknown>;
 }

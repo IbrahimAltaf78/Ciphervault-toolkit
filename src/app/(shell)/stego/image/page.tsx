@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, ChangeEvent, FormEvent, DragEvent, useRef } from "react";
-import { EyeOff, Upload, Lock, Shield, Eye, Download, AlertCircle, RefreshCw } from "lucide-react";
+import { Upload, Lock, Shield, Eye, Download, AlertCircle, RefreshCw } from "lucide-react";
+import { describeError } from "@/lib/errors";
+import { API_BASE_URL } from "@/lib/backend";
 
 export default function ImageStegoPage() {
     const [activeTab, setActiveTab] = useState<"hide" | "extract">("hide");
@@ -97,7 +99,7 @@ export default function ImageStegoPage() {
                 formData.append("password", password.trim());
             }
 
-            const res = await fetch("http://127.0.0.1:8000/api/stego/image/hide", {
+            const res = await fetch(`${API_BASE_URL}/api/stego/image/hide`, {
                 method: "POST",
                 body: formData,
             });
@@ -112,8 +114,8 @@ export default function ImageStegoPage() {
             if (data.data.filename) {
                 setDownloadFilename(data.data.filename);
             }
-        } catch (err: any) {
-            setErrorMsg(typeof err === "string" ? err : err.message || JSON.stringify(err));
+        } catch (err: unknown) {
+            setErrorMsg(describeError(err));
         } finally {
             setLoading(false);
         }
@@ -136,7 +138,7 @@ export default function ImageStegoPage() {
                 formData.append("password", password.trim());
             }
 
-            const res = await fetch("http://127.0.0.1:8000/api/stego/image/extract", {
+            const res = await fetch(`${API_BASE_URL}/api/stego/image/extract`, {
                 method: "POST",
                 body: formData,
             });
@@ -148,8 +150,8 @@ export default function ImageStegoPage() {
             }
 
             setExtractedResult(data.data.secretText);
-        } catch (err: any) {
-            setErrorMsg(typeof err === "string" ? err : err.message || JSON.stringify(err));
+        } catch (err: unknown) {
+            setErrorMsg(describeError(err));
         } finally {
             setLoading(false);
         }
@@ -160,10 +162,6 @@ export default function ImageStegoPage() {
             <div className="max-w-3xl mx-auto space-y-6">
                 {/* Page Header */}
                 <div className="text-center space-y-2">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-phos/10 border border-phos/20 text-phos-hot text-xs font-semibold">
-                        <EyeOff className="h-4 w-4" />
-                        <span>LSB & DWT Steganography</span>
-                    </div>
                     <h1 className="text-3xl font-extrabold tracking-tight text-phos-white">
                         Image Steganography
                     </h1>

@@ -19,11 +19,11 @@ export const MAX_FILE_BYTES = 10 * 1024 * 1024;
  * a JPEG needs DCT-domain analysis, which is a different test set entirely.
  */
 export const ACCEPTED_IMAGE_TYPES = ["image/png", "image/bmp", "image/tiff", "image/webp"];
-export const ACCEPTED_AUDIO_TYPES = ["audio/wav", "audio/x-wav", "audio/flac", "audio/aiff"];
+/** WAV only: the engine reads audio with Python's wave module, which has no
+ *  FLAC or AIFF decoder. */
+export const ACCEPTED_AUDIO_TYPES = ["audio/wav", "audio/x-wav", "audio/wave", "audio/vnd.wave"];
 
-export const ACCEPT_ATTRIBUTE = [
-  ".png", ".bmp", ".tif", ".tiff", ".webp", ".wav", ".flac", ".aiff", ".aif",
-].join(",");
+export const ACCEPT_ATTRIBUTE = [".png", ".bmp", ".tif", ".tiff", ".webp", ".wav"].join(",");
 
 export type FileCheck =
   | { ok: true; kind: SuspectKind }
@@ -46,8 +46,12 @@ export function checkFile(file: File): FileCheck {
   if (ACCEPTED_IMAGE_TYPES.includes(type) || /\.(png|bmp|tiff?|webp)$/.test(name)) {
     return { ok: true, kind: "image" };
   }
-  if (ACCEPTED_AUDIO_TYPES.includes(type) || /\.(wav|flac|aiff?)$/.test(name)) {
+  if (ACCEPTED_AUDIO_TYPES.includes(type) || /\.wav$/.test(name)) {
     return { ok: true, kind: "audio" };
+  }
+
+  if (/\.(flac|aiff?)$/.test(name) || type === "audio/flac" || type === "audio/aiff") {
+    return { ok: false, error: "Only WAV audio can be analysed. Convert FLAC or AIFF files to WAV first." };
   }
 
   if (/\.(jpe?g)$/.test(name) || type === "image/jpeg") {
@@ -60,6 +64,6 @@ export function checkFile(file: File): FileCheck {
 
   return {
     ok: false,
-    error: "Unsupported format. Accepted: PNG, BMP, TIFF, WEBP, WAV, FLAC, AIFF.",
+    error: "Unsupported format. Accepted: PNG, BMP, TIFF, WEBP, WAV.",
   };
 }

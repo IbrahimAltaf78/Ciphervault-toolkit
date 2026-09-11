@@ -8,6 +8,8 @@ from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 
 router = APIRouter(prefix="/api/stego/video", tags=["video_steganography"])
 DELIMITER = "###END###"
+MAX_FRAMES = 150  # frames written by hide, and so the most extract needs to read
+NO_PAYLOAD_MESSAGE = "No hidden text found. This file wasn't made with this method, or it has changed since."
 
 def text_to_bits(text: str) -> str:
     return ''.join(format(ord(char), '08b') for char in text + DELIMITER)
@@ -55,9 +57,9 @@ def process_video_hide(input_path: str, output_path: str, payload: str):
         out.write(frame)
         frame_count += 1
         
-        # SAFETY CAP: Stop processing after 150 frames (~5 seconds of playback).
+        # SAFETY CAP: Stop processing after MAX_FRAMES frames (~5 seconds of playback).
         # Prevents massive Base64 JSON payloads that crash the browser memory.
-        if frame_count >= 150:
+        if frame_count >= MAX_FRAMES:
             break
 
     cap.release()
@@ -81,38 +83,40 @@ def process_video_extract(input_path: str):
             raise ValueError("Cannot read video file for extraction.")
 
     extracted_chunks = []
-    extracted_raw = ""
+    extracted_raw = None
     frame_count = 0
 
-    while True:
+    # Hiding writes at most MAX_FRAMES frames, so a payload can't sit past
+    # them. Reading further only loaded a long clean video's every frame into
+    # memory before giving up.
+    while frame_count < MAX_FRAMES:
         ret, frame = cap.read()
         if not ret:
             break
 
         frame_count += 1
-        flat = frame.reshape(-1)
-        frame_bits = (flat & 1).astype(np.uint8)
-        extracted_chunks.append(frame_bits)
+        extracted_chunks.append((frame.reshape(-1) & 1).astype(np.uint8))
 
         # Check for our delimiter every 20 frames to avoid memory overload
         if frame_count % 20 == 0:
-            all_bits = np.concatenate(extracted_chunks)
-            raw_bytes = np.packbits(all_bits).tobytes()
-            raw_text = raw_bytes.decode('latin1', errors='ignore')
-
-            if DELIMITER in raw_text:
-                extracted_raw = raw_text.split(DELIMITER)[0]
+            extracted_raw = _payload_from_chunks(extracted_chunks)
+            if extracted_raw is not None:
                 break
-    else:
-        # If loop finishes without breaking, check one last time
-        if extracted_chunks:
-            all_bits = np.concatenate(extracted_chunks)
-            raw_bytes = np.packbits(all_bits).tobytes()
-            raw_text = raw_bytes.decode('latin1', errors='ignore')
-            extracted_raw = raw_text.split(DELIMITER)[0] if DELIMITER in raw_text else raw_text
+
+    # The frames after the last check. This used to sit in a while-else that
+    # never ran (the loop always ends in a break), so a video shorter than 20
+    # frames, or a marker in its last few, came back as an empty "success".
+    if extracted_raw is None and extracted_chunks:
+        extracted_raw = _payload_from_chunks(extracted_chunks)
 
     cap.release()
     return extracted_raw
+
+
+def _payload_from_chunks(chunks) -> str | None:
+    """The text before the end marker in the LSBs read so far, or None."""
+    raw_text = np.packbits(np.concatenate(chunks)).tobytes().decode('latin1')
+    return raw_text.split(DELIMITER)[0] if DELIMITER in raw_text else None
 
 
 @router.post("/hide")
@@ -137,11 +141,10 @@ async def hide_video(
 
         payload = secretText
         if password and password.strip():
-            try:
-                from main import encrypt_payload
-                payload = f"ENC:{encrypt_payload(secretText, password.strip())}"
-            except Exception:
-                pass
+            # No fallback: this used to swallow any failure here and hide the
+            # text unencrypted while the user believed it was protected.
+            from main import encrypt_payload
+            payload = f"ENC:{encrypt_payload(secretText, password.strip())}"
 
         # Offload the heavy CPU blocking task to a background thread
         encoded = await asyncio.to_thread(process_video_hide, input_path, output_path, payload)
@@ -182,6 +185,8 @@ async def extract_video(
 
         # Offload the heavy CPU blocking task to a background thread
         extracted_raw = await asyncio.to_thread(process_video_extract, input_path)
+        if extracted_raw is None:
+            return {"success": False, "error": {"message": NO_PAYLOAD_MESSAGE}}
 
         if extracted_raw.startswith("ENC:"):
             if not password or not password.strip():

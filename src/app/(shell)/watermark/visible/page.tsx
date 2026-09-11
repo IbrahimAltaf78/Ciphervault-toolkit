@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, DragEvent, ChangeEvent } from "react";
+import { describeError } from "@/lib/errors";
+import { postForm } from "@/lib/backend";
 
 export default function VisibleWatermarkPage() {
     const [file, setFile] = useState<File | null>(null);
@@ -50,33 +52,19 @@ export default function VisibleWatermarkPage() {
         setError(null);
 
         const formData = new FormData();
-        // Updated field names based on FastAPI validation schema
-        formData.append("base_image", file);
         formData.append("file", file);
         formData.append("text", watermarkText);
-        formData.append("watermark_text", watermarkText);
 
         try {
-            const res = await fetch("http://localhost:8000/api/watermark/visible/embed", {
-                method: "POST",
-                body: formData,
-            });
-
-            if (!res.ok) {
-                const errorData = await res.json().catch(() => null);
-                const errorMessage = errorData?.detail
-                    ? typeof errorData.detail === "string"
-                        ? errorData.detail
-                        : JSON.stringify(errorData.detail)
-                    : `Server returned status ${res.status}`;
-                throw new Error(errorMessage);
-            }
-
-            const blob = await res.blob();
-            if (watermarkedImageUrl) URL.revokeObjectURL(watermarkedImageUrl);
-            setWatermarkedImageUrl(URL.createObjectURL(blob));
-        } catch (err: any) {
-            setError(err.message || "Failed to embed visible watermark.");
+            // The backend replies with JSON carrying the image as a data URL.
+            // This page used to read the reply as raw PNG bytes, which turned
+            // that JSON into a broken image.
+            const data = await postForm<{ image: string }>(
+                "/api/watermark/visible/embed", formData, "Failed to embed visible watermark.",
+            );
+            setWatermarkedImageUrl(data.image);
+        } catch (err: unknown) {
+            setError(describeError(err, "Failed to embed visible watermark."));
         } finally {
             setLoading(false);
         }

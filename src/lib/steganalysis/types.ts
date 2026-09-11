@@ -1,3 +1,6 @@
+/** What a suspect file is, as far as the engine is concerned. */
+export type SuspectKind = "image" | "audio";
+
 export interface SuspectFile {
   name: string;
   type?: string;
@@ -48,6 +51,8 @@ export interface AnalysisReport {
   summary?: string;
   lsbDistribution?: LsbDistribution;
   channels?: Array<{ name: string; lsb0: number; lsb1: number; zero?: number; one?: number }>;
+  /** Value counts per channel in 64 equal bins, keyed like lsbDistribution. */
+  histograms?: Record<string, number[]>;
   tests?: DetectionTest[];
   anomalies?: MetadataAnomaly[];
 }

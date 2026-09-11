@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { Activity, ShieldAlert, BarChart3, Upload, RefreshCw, FileAudio, Image as ImageIcon, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 interface AnalysisResults {

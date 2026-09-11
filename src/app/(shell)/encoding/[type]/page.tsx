@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useParams } from "next/navigation";
+import { describeError } from "@/lib/errors";
+import { API_BASE_URL } from "@/lib/backend";
 
 export default function EncodingToolPage() {
   const params = useParams();
@@ -28,7 +30,7 @@ export default function EncodingToolPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:8000/api/encoding/process", {
+      const res = await fetch(`${API_BASE_URL}/api/encoding/process`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -45,8 +47,8 @@ export default function EncodingToolPage() {
 
       const data = await res.json();
       setOutput(data.result);
-    } catch (err: any) {
-      setError(err.message || "An error occurred during transformation.");
+    } catch (err: unknown) {
+      setError(describeError(err, "An error occurred during transformation."));
     } finally {
       setLoading(false);
     }

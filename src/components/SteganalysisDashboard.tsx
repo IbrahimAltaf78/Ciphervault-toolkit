@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { AnalysisReport, Anomaly } from '@/types/steganalysis';
+import { describeError } from "@/lib/errors";
 
 export default function SteganalysisDashboard() {
     const [file, setFile] = useState<File | null>(null);
@@ -37,8 +38,8 @@ export default function SteganalysisDashboard() {
 
             const data: AnalysisReport = await response.json();
             setReport(data);
-        } catch (err: any) {
-            setError(err.message || 'An error occurred during analysis.');
+        } catch (err: unknown) {
+            setError(describeError(err) || 'An error occurred during analysis.');
         } finally {
             setLoading(false);
         }

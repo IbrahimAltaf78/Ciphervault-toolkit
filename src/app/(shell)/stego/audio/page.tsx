@@ -1,34 +1,10 @@
 "use client";
 
 import React, { useState, ChangeEvent, FormEvent, DragEvent, useRef } from "react";
-import { Upload, Lock, Shield, Eye, Download, AlertCircle, RefreshCw, Music, Volume2 } from "lucide-react";
+import { Upload, Lock, Shield, Eye, Download, AlertCircle, RefreshCw, Volume2 } from "lucide-react";
+import { describeError } from "@/lib/errors";
+import { API_BASE_URL } from "@/lib/backend";
 
-const formatError = (err: any): string => {
-    if (!err) return "An unexpected error occurred.";
-    if (typeof err === "string") return err;
-
-    if (Array.isArray(err)) {
-        return err
-            .map((item) => {
-                if (typeof item === "object" && item !== null) {
-                    const loc = item.loc ? item.loc.join(" -> ") : "";
-                    const msg = item.msg || JSON.stringify(item);
-                    return loc ? `${loc}: ${msg}` : msg;
-                }
-                return String(item);
-            })
-            .join(" | ");
-    }
-
-    if (typeof err === "object") {
-        if (err.detail) return formatError(err.detail);
-        if (err.message) return formatError(err.message);
-        if (err.error) return formatError(err.error);
-        return JSON.stringify(err);
-    }
-
-    return String(err);
-};
 
 export default function AudioStegoPage() {
     const [activeTab, setActiveTab] = useState<"hide" | "extract">("hide");
@@ -122,7 +98,7 @@ export default function AudioStegoPage() {
                 formData.append("password", password.trim());
             }
 
-            const res = await fetch("http://127.0.0.1:8000/api/stego/audio/wav/hide", {
+            const res = await fetch(`${API_BASE_URL}/api/stego/audio/wav/hide`, {
                 method: "POST",
                 body: formData,
             });
@@ -137,8 +113,8 @@ export default function AudioStegoPage() {
             if (data.data?.filename || data.filename) {
                 setDownloadFilename(data.data?.filename || data.filename);
             }
-        } catch (err: any) {
-            setErrorMsg(formatError(err));
+        } catch (err: unknown) {
+            setErrorMsg(describeError(err));
         } finally {
             setLoading(false);
         }
@@ -161,7 +137,7 @@ export default function AudioStegoPage() {
                 formData.append("password", password.trim());
             }
 
-            const res = await fetch("http://127.0.0.1:8000/api/stego/audio/wav/extract", {
+            const res = await fetch(`${API_BASE_URL}/api/stego/audio/wav/extract`, {
                 method: "POST",
                 body: formData,
             });
@@ -173,8 +149,8 @@ export default function AudioStegoPage() {
             }
 
             setExtractedResult(data.data?.secretText ?? data.secretText ?? "");
-        } catch (err: any) {
-            setErrorMsg(formatError(err));
+        } catch (err: unknown) {
+            setErrorMsg(describeError(err));
         } finally {
             setLoading(false);
         }
@@ -185,10 +161,6 @@ export default function AudioStegoPage() {
             <div className="max-w-2xl mx-auto space-y-6">
                 {/* Header */}
                 <div className="text-center space-y-2">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#60A5FA]/10 border border-[#60A5FA]/20 text-[#60A5FA] text-xs font-semibold">
-                        <Music className="h-4 w-4" />
-                        <span>LSB Audio Steganography</span>
-                    </div>
                     <h1 className="text-3xl font-extrabold tracking-tight text-[#60A5FA]">
                         Audio Steganography
                     </h1>
