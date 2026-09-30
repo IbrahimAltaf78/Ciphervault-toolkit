@@ -13,16 +13,13 @@
 </div>
 
 ---
-## Author
-<div>
-- [Ibrahim Altaf]
-- [Hiba Abbas]
+
+<p><b>Created by: Ibrahim Altaf and Hiba Abbas</b></p>
 
 ---
 
 ## Contents
 
-- [Author](#author)
 - [Contents](#contents)
 - [Modules](#modules)
 - [Tech stack](#tech-stack)
