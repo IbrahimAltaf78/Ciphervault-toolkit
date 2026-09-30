@@ -15,9 +15,8 @@
 ---
 ## Author
 <div>
-- Ibrahim Altaf
-- Hiba Abbas 
-</div>
+- [Ibrahim Altaf]
+- [Hiba Abbas]
 
 ---
 
