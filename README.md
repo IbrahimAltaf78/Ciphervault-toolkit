@@ -14,7 +14,7 @@
 
 ---
 
-<p><b>Created by: Ibrahim Altaf and Hiba Abbas</b></p>
+**Created by: Ibrahim Altaf and Hiba Abbas**
 
 ---
 
