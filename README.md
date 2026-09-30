@@ -13,13 +13,25 @@
 </div>
 
 ---
+## Author
+<div>
+- Ibrahim Altaf
+- Hiba Abbas 
+</div>
+
+---
 
 ## Contents
 
+- [Author](#author)
+- [Contents](#contents)
 - [Modules](#modules)
 - [Tech stack](#tech-stack)
 - [Prerequisites](#prerequisites)
 - [Quick start](#quick-start)
+  - [1 · Frontend — terminal 1](#1--frontend--terminal-1)
+  - [2 · Backend — terminal 2](#2--backend--terminal-2)
+  - [3 · Check that both are running](#3--check-that-both-are-running)
 - [Running it again later](#running-it-again-later)
 - [Tests](#tests)
 - [Troubleshooting](#troubleshooting)
@@ -30,14 +42,14 @@
 
 ## Modules
 
-| # | Module | What it does | Route |
-|---|---|---|---|
-| 01 | **Steganography** | Hide a payload inside an image (LSB, DCT/DWT), WAV audio, or MP4/AVI video — and extract it again | `/stego` |
-| 02 | **Steganalysis** | Test a PNG/BMP/TIFF/WebP image or WAV file for a hidden payload (CipherVault signature, RS analysis, sample pairs, weighted stego, chi-square, appended data) | `/steganalysis` |
-| 03 | **Cryptography** | AES, DES, Triple DES, RSA, ECC, SHA-2, SHA-3 and hybrid encryption, run in the browser | `/cryptography` |
-| 04 | **Text Hiding** | Hide a message inside ordinary text — zero-width Unicode, whitespace, capitalisation, punctuation, acrostic, word choice | `/text-hiding` |
-| 05 | **Watermarking** | Visible, invisible, robust (survives compression) and fragile (detects tampering) watermarks | `/watermark` |
-| 06 | **Encoding** | Base64, Base32, hexadecimal, binary, URL and ASCII conversion | `/encoding` |
+| #   | Module            | What it does                                                                                                                                                  | Route           |
+| --- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| 01  | **Steganography** | Hide a payload inside an image (LSB, DCT/DWT), WAV audio, or MP4/AVI video — and extract it again                                                             | `/stego`        |
+| 02  | **Steganalysis**  | Test a PNG/BMP/TIFF/WebP image or WAV file for a hidden payload (CipherVault signature, RS analysis, sample pairs, weighted stego, chi-square, appended data) | `/steganalysis` |
+| 03  | **Cryptography**  | AES, DES, Triple DES, RSA, ECC, SHA-2, SHA-3 and hybrid encryption, run in the browser                                                                        | `/cryptography` |
+| 04  | **Text Hiding**   | Hide a message inside ordinary text — zero-width Unicode, whitespace, capitalisation, punctuation, acrostic, word choice                                      | `/text-hiding`  |
+| 05  | **Watermarking**  | Visible, invisible, robust (survives compression) and fragile (detects tampering) watermarks                                                                  | `/watermark`    |
+| 06  | **Encoding**      | Base64, Base32, hexadecimal, binary, URL and ASCII conversion                                                                                                 | `/encoding`     |
 
 The site opens on a cover page at `/`. **Go to website** leads to the console at `/console`, where all six modules sit on one rack — hover a card to bring it forward, click to open it.
 
@@ -45,12 +57,12 @@ The site opens on a cover page at `/`. **Go to website** leads to the console at
 
 ## Tech stack
 
-| Layer | Technology |
-|---|---|
-| **Frontend** | Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Lucide icons |
-| **Backend** | FastAPI (Python), served by Uvicorn |
-| **Image / audio / video processing** | Pillow, OpenCV, NumPy, SciPy, PyWavelets |
-| **Cryptography** | Browser WebCrypto API (frontend), `cryptography` (backend) |
+| Layer                                | Technology                                                                              |
+| ------------------------------------ | --------------------------------------------------------------------------------------- |
+| **Frontend**                         | Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, Lucide icons |
+| **Backend**                          | FastAPI (Python), served by Uvicorn                                                     |
+| **Image / audio / video processing** | Pillow, OpenCV, NumPy, SciPy, PyWavelets                                                |
+| **Cryptography**                     | Browser WebCrypto API (frontend), `cryptography` (backend)                              |
 
 ---
 
@@ -58,11 +70,11 @@ The site opens on a cover page at `/`. **Go to website** leads to the console at
 
 Install these once before anything else:
 
-| Tool | Version | Check with |
-|---|---|---|
-| **Node.js** | 20.9 or newer (tested on 24) | `node --version` |
-| **Python** | 3.11 or newer (tested on 3.12) | `python --version` |
-| **Git** | any recent version | `git --version` |
+| Tool        | Version                        | Check with         |
+| ----------- | ------------------------------ | ------------------ |
+| **Node.js** | 20.9 or newer (tested on 24)   | `node --version`   |
+| **Python**  | 3.11 or newer (tested on 3.12) | `python --version` |
+| **Git**     | any recent version             | `git --version`    |
 
 > **Windows:** when installing Python from [python.org](https://www.python.org/downloads/), tick **"Add python.exe to PATH"** on the first screen of the installer.
 
@@ -81,10 +93,10 @@ npm install
 npm run dev
 ```
 
-| Command | What it does |
-|---|---|
+| Command       | What it does                                                                                                                     |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | `npm install` | Downloads every package the website needs into `node_modules/`. **Only needed the first time**, or after `package.json` changes. |
-| `npm run dev` | Starts the website in development mode. |
+| `npm run dev` | Starts the website in development mode.                                                                                          |
 
 Open **http://localhost:3000**.
 
@@ -112,13 +124,13 @@ pip install -r requirements.txt
 python -m uvicorn main:app --reload
 ```
 
-| Command | What it does |
-|---|---|
-| `cd backend` | Moves into the backend folder. **Every backend command must run from here** — see [Troubleshooting](#troubleshooting). |
-| `python -m venv .venv` | Creates a **virtual environment** in a folder called `.venv`: a private copy of Python just for this project, so its packages don't clash with anything else on your computer. **Only needed the first time.** |
-| `.\.venv\Scripts\Activate.ps1` | Switches this terminal to use that private Python. Your prompt will start with `(.venv)` when it's active. **Needed every time you open a new terminal.** |
-| `pip install -r requirements.txt` | Installs every backend package listed in `requirements.txt` into the virtual environment. **Only needed the first time**, or after `requirements.txt` changes. |
-| `python -m uvicorn main:app --reload` | Starts the API. `--reload` restarts it automatically whenever you save a Python file. |
+| Command                               | What it does                                                                                                                                                                                                   |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cd backend`                          | Moves into the backend folder. **Every backend command must run from here** — see [Troubleshooting](#troubleshooting).                                                                                         |
+| `python -m venv .venv`                | Creates a **virtual environment** in a folder called `.venv`: a private copy of Python just for this project, so its packages don't clash with anything else on your computer. **Only needed the first time.** |
+| `.\.venv\Scripts\Activate.ps1`        | Switches this terminal to use that private Python. Your prompt will start with `(.venv)` when it's active. **Needed every time you open a new terminal.**                                                      |
+| `pip install -r requirements.txt`     | Installs every backend package listed in `requirements.txt` into the virtual environment. **Only needed the first time**, or after `requirements.txt` changes.                                                 |
+| `python -m uvicorn main:app --reload` | Starts the API. `--reload` restarts it automatically whenever you save a Python file.                                                                                                                          |
 
 The API is now at **http://127.0.0.1:8000**. Interactive API docs (try every endpoint in the browser) are at **http://127.0.0.1:8000/docs**.
 
@@ -128,9 +140,9 @@ The API is now at **http://127.0.0.1:8000**. Interactive API docs (try every end
 
 ### 3 · Check that both are running
 
-| URL | You should see |
-|---|---|
-| http://localhost:3000 | The CipherVault cover page |
+| URL                          | You should see                           |
+| ---------------------------- | ---------------------------------------- |
+| http://localhost:3000        | The CipherVault cover page               |
 | http://127.0.0.1:8000/health | `{"status":"healthy","version":"1.0.0"}` |
 
 ---
@@ -271,13 +283,13 @@ Ciphervault-toolkit/
 
 ## Project documents
 
-| Document | Contents |
-|---|---|
-| [`PRD.md`](PRD.md) | Product requirements — what CipherVault is for and who uses it |
-| [`ARCHITECTURE.md`](ARCHITECTURE.md) | How the frontend and backend fit together |
-| [`DESIGN.md`](DESIGN.md) | Visual design and colour system |
-| [`RULES.md`](RULES.md) | Development rules — stateless processing, allowed libraries, security standards |
-| [`PHASES.md`](PHASES.md) | Delivery phases |
+| Document                             | Contents                                                                        |
+| ------------------------------------ | ------------------------------------------------------------------------------- |
+| [`PRD.md`](PRD.md)                   | Product requirements — what CipherVault is for and who uses it                  |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | How the frontend and backend fit together                                       |
+| [`DESIGN.md`](DESIGN.md)             | Visual design and colour system                                                 |
+| [`RULES.md`](RULES.md)               | Development rules — stateless processing, allowed libraries, security standards |
+| [`PHASES.md`](PHASES.md)             | Delivery phases                                                                 |
 
 ---
 
